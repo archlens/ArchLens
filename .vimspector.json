@@ -1,0 +1,13 @@
+{
+  "configurations": {
+    "<name>: Launch": {
+      "adapter": "debugpy",
+      "configuration": {
+        "type": "python",
+        "request": "launch",
+        "program": "main.py",
+        "python": "${workspaceRoot}/.lvenv/bin/python"
+      }
+    }
+  }
+}
