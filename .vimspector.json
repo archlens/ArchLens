@@ -6,7 +6,7 @@
         "type": "python",
         "request": "launch",
         "program": "main.py",
-        "python": "${workspaceRoot}/.lvenv/bin/python"
+        "python": "/usr/sbin/python"
       }
     }
   }
