@@ -1,12 +1,30 @@
 {
   "configurations": {
-    "<name>: Launch": {
+    "(1) Debug core": {
       "adapter": "debugpy",
       "configuration": {
         "type": "python",
         "request": "launch",
-        "program": "main.py",
-        "python": "/usr/sbin/python"
+        "program": "src/core.py",
+        "cwd": "${workspaceRoot}",
+        "python": "/usr/sbin/python",
+        "env": {
+          "PYTHONPATH": "${workspaceRoot}"
+        }
+      }
+    },
+    "(2) Debug cli": {
+      "adapter": "debugpy",
+      "configuration": {
+        "type": "python",
+        "request": "launch",
+        "program": "src/cli_interface.py",
+        "cwd": "${workspaceRoot}",
+        "python": "/usr/sbin/python",
+        "env": {
+          "PYTHONPATH": "${workspaceRoot}"
+        },
+        "args": ["test_config.py", "--only-validate=true"]
       }
     }
   }

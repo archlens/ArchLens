@@ -1,33 +1,20 @@
-from diagrams import Diagram
 from diagrams import Node
+import os
 
-from test_project.core import core
-from test_project.api import api
-from test_project.controller import controller
 
 import astroid
 
 
-def test_module_check():
-    with Diagram("Test project diagram", show=False):
-        api_node = BTNode(connected_code=api, label="api")
-        core_node = BTNode(connected_code=core, label="core")
-        controller_node = BTNode(connected_code=controller, label="controller")
-        third_party_api = BTNode(label="Awesome API")
-
-        nodes = [api_node, core_node, controller_node, third_party_api]
-
-        api_node >> core_node
-        api_node >> controller_node
-        core_node >> controller_node
-        api_node >> third_party_api
-
+def validate_graph(nodes: list) -> bool:
     for node in nodes:
         if not node.validate():
             print(f"error in node {node.label}")
-            break
+            return False
+    return True
 
-    print("done")
+
+def _should_render():
+    return os.getenv("BT_DIAGRAM_RENDER", "") == "true"
 
 
 class BTNode:
@@ -47,7 +34,8 @@ class BTNode:
                 connected_code
             )
         self._edge_to = []
-        self.diagram_node = Node(label=label)
+        if _should_render():
+            self.diagram_node = Node(label=label)
 
     def validate(self) -> bool:
         if self._ast is None:
@@ -56,20 +44,20 @@ class BTNode:
         for sub_node in self._ast.body:
             if isinstance(sub_node, astroid.node_classes.ImportFrom):
                 sub_node: astroid.node_classes.ImportFrom = sub_node
-                if sub_node.modname not in [
-                    edge._ast.name
+                module_node = astroid.MANAGER.ast_from_module_name(
+                    sub_node.modname
+                )
+                valid_edges = [
+                    edge._ast.file
                     for edge in self._edge_to
                     if edge._ast is not None
-                ]:
+                ]
+                if module_node.file not in valid_edges:
                     return False
         return True
 
     def __rshift__(self, other: "BTNode"):
         self._edge_to.append(other)
         print(f"{self.label} -> {other.label}")
-        self.diagram_node >> other.diagram_node
-
-
-if __name__ == "__main__":
-    # main()
-    test_module_check()
+        if _should_render():
+            self.diagram_node >> other.diagram_node
