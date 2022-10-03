@@ -13,7 +13,7 @@
         }
       }
     },
-    "(2) Debug cli": {
+    "(2) Debug cli render": {
       "adapter": "debugpy",
       "configuration": {
         "type": "python",
@@ -24,7 +24,21 @@
         "env": {
           "PYTHONPATH": "${workspaceRoot}"
         },
-        "args": ["test_config.py", "--only-validate=true"]
+        "args": ["render", "test_config.py"]
+      }
+    },
+    "(3) Debug cli validate": {
+      "adapter": "debugpy",
+      "configuration": {
+        "type": "python",
+        "request": "launch",
+        "program": "src/cli_interface.py",
+        "cwd": "${workspaceRoot}",
+        "python": "/usr/sbin/python",
+        "env": {
+          "PYTHONPATH": "${workspaceRoot}"
+        },
+        "args": ["validate", "test_config.py"]
       }
     }
   }

@@ -17,15 +17,29 @@ def _should_render():
     return os.getenv("BT_DIAGRAM_RENDER", "") == "true"
 
 
+def get_imported_modules(ast: astroid.Module):
+    imported_modules = []
+    for sub_node in ast.body:
+        if isinstance(sub_node, astroid.node_classes.ImportFrom):
+            sub_node: astroid.node_classes.ImportFrom = sub_node
+            module_node = astroid.MANAGER.ast_from_module_name(
+                sub_node.modname
+            )
+            imported_modules.append(module_node)
+
+    return imported_modules
+
+
 class BTNode:
     connected_code = None
     label: str = ""
 
-    _edge_to: list["BTNode"] = []
+    _edge_to: list["BTNode"] = None
     _ast = None
     diagram_node: Node = None
 
     def __init__(self, label: str, connected_code=None):
+        print(f"create {label}")
         self.connected_code = connected_code
         self.label = label
         self._ast = None
@@ -36,6 +50,12 @@ class BTNode:
         self._edge_to = []
         if _should_render():
             self.diagram_node = Node(label=label)
+
+    @property
+    def file(self):
+        if self._ast:
+            return self._ast.file
+        return ""
 
     def validate(self) -> bool:
         if self._ast is None:
@@ -59,5 +79,3 @@ class BTNode:
     def __rshift__(self, other: "BTNode"):
         self._edge_to.append(other)
         print(f"{self.label} -> {other.label}")
-        if _should_render():
-            self.diagram_node >> other.diagram_node
