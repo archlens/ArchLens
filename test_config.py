@@ -14,14 +14,19 @@ def setup():
     controller_node = BTNode(connected_code=controller, label="controller")
     third_party_api = BTNode(label="Awesome API")
 
-    nodes = [api_node, core_node, controller_node, third_party_api, core_extra_node]
+    nodes = [
+        api_node,
+        core_node,
+        controller_node,
+        third_party_api,
+        core_extra_node,
+    ]
 
     api_node >> core_node
     api_node >> controller_node
     core_node >> controller_node  # Comment for error
     core_node >> core_extra_node  # Comment for error
     api_node >> third_party_api
-
     return nodes
 
 
