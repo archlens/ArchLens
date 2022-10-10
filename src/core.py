@@ -16,7 +16,10 @@ class BTGraph:
         self.DEFAULT_SETTINGS.update(settings())
 
         try:
+
+            os.environ["EDGE_AS_RULE"] = "true"
             nodes = setup()
+            del os.environ["EDGE_AS_RULE"]
             real_nodes = {node._ast.file: node for node in nodes if node._ast}
             extra_nodes = [node for node in nodes if not node._ast]
 
@@ -81,7 +84,7 @@ class BTGraph:
 
         for node in self.graph:
             edges = node._edge_to
-            node_map[node.uid] >> [node_map[edge.uid] for edge in edges]
+            node_map[node.uid] >> [node_map[edge.node.uid] for edge in edges]
 
 
 def setup():
@@ -90,10 +93,6 @@ def setup():
 
 def settings():
     pass  # overridden by config file
-
-
-def _should_render():
-    return os.getenv("BT_DIAGRAM_RENDER", "") == "true"
 
 
 def get_imported_modules(ast: astroid.Module):
@@ -111,7 +110,7 @@ class BTNode:
     connected_code = None
     label: str = ""
 
-    _edge_to: list["BTNode"] = None
+    _edge_to: list["BTEdge"] = None
     _ast = None
     uid: str = None
 
@@ -148,30 +147,27 @@ class BTNode:
                     return False
         return True
 
-    def __rshift__(self, other):
+    def __rshift__(self, other, rule=False):
+        if os.getenv("EDGE_AS_RULE", "") == "true":
+            rule = True
         if isinstance(other, list):
             existing_edges = set(
-                [edge.file for edge in self._edge_to if edge.file != ""]
+                [edge.node.file for edge in self._edge_to if edge.node.file != ""]
             )
-            new_list = filter(lambda e: e.file not in existing_edges, other)
-            self._edge_to.extend(new_list)
-            for edge in new_list:
-                print(f"{self.label} -> {edge.label}")
+            new_node_list = filter(lambda e: e.file not in existing_edges, other)
+            self._edge_to.extend([BTEdge(node, rule) for node in new_node_list])
         else:
             edges = set([edge.file for edge in self._edge_to])
             if other.file in edges:
                 return
 
-            self._edge_to.append(other)
-            print(f"{self.label} -> {other.label}")
+            self._edge_to.append(BTEdge(other, rule))
 
 
 class BTEdge:
-    from_node: BTNode
-    to_node: BTNode
+    node: BTNode
     is_rule: bool
 
-    def __init__(self, from_node: BTNode, to_node: BTNode, is_rule=False) -> None:
-        self.from_node = from_node
-        self.to_node = to_node
+    def __init__(self, node: BTNode, is_rule=False) -> None:
+        self.node = node
         self.is_rule = is_rule
