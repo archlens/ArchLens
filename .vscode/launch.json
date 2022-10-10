@@ -5,12 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "CLI Render",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "program": "${workspaceFolder}/src/cli_interface.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "args": [
+                "render",
+                "test_config.py"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "CLI Validate",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "args": [
+                "validate",
+                "test_config.py"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }

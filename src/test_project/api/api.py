@@ -1,4 +1,5 @@
 from test_project.core.core import add
+from test_project.interface.cosmos_interface import write
 
 
 def get(x, y):

@@ -23,10 +23,10 @@ def setup():
     ]
 
     api_node >> core_node
-    api_node >> controller_node
-    core_node >> controller_node  # Comment for error
-    core_node >> core_extra_node  # Comment for error
-    api_node >> third_party_api
+    core_node >> controller_node
+    # core_node >> controller_node  # Comment for error
+    # core_node >> core_extra_node  # Comment for error
+    # api_node >> third_party_api
     return nodes
 
 
