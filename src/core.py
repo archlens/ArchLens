@@ -28,17 +28,34 @@ class BTGraph:
         )
 
         for file in file_list:
-            if file not in real_nodes.keys():
-                if not file.endswith(".py"):
-                    continue
-                node = BTNode(label=file.split("/")[-1])
-                node.ast = astroid.MANAGER.ast_from_file(file)
-                real_nodes[file] = node
+            try:
+                if file not in real_nodes.keys():
+                    if not file.endswith(".py"):
+                        continue
+                    node = BTNode(label=file.split("/")[-1])
+                    node.ast = astroid.MANAGER.ast_from_file(file)
+                    real_nodes[file] = node
+            except Exception as e:
+                print(e)
+                continue
+
+        os.environ[
+            "PYTHONPATH"
+        ] = "/home/perlt/BT-diagrams/test_projects/test_project"  # TODO
+        os.chdir("/home/perlt/BT-diagrams/test_projects/test_project")
 
         for file in file_list:
-            file_ast = astroid.MANAGER.ast_from_file(file)
-            imported_modules = get_imported_modules(file_ast)
-            real_nodes[file] >> [real_nodes[module.file] for module in imported_modules]
+            try:
+                if not file.endswith(".py"):
+                    continue
+                file_ast = astroid.MANAGER.ast_from_file(file)
+                imported_modules = get_imported_modules(file_ast)
+                real_nodes[file] >> [
+                    real_nodes[module.file] for module in imported_modules
+                ]
+            except Exception as e:
+                print(e)
+                continue
 
         self.graph = list(real_nodes.values())
         self.graph.extend(extra_nodes)

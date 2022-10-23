@@ -16,20 +16,8 @@ def render(config_path: str):
     g = BT_core.BTGraph()
     g.build_graph(config_path)
 
-    with Diagram(DEFAULT_SETTINGS["diagram_name"], show=False):
+    with Diagram(g.DEFAULT_SETTINGS.get("diagram_name", "unkown"), show=False):
         g.render_graph()
-
-
-def _get_files_recursive(path: str) -> list[str]:
-    file_list = []
-    t = list(os.walk(path))
-    for root, _, files in t:
-        for file in files:
-            file_list.append(os.path.join(root, file))
-
-    file_list = [file for file in file_list if "__" not in file]
-
-    return file_list
 
 
 @app.command()
