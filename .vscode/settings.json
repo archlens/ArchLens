@@ -4,5 +4,6 @@
         "modname",
         "typer",
         "zeeguu"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "off"
 }

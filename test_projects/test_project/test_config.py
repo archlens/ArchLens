@@ -2,7 +2,6 @@ import test_project
 
 
 def setup():
-
     return []
 
 

@@ -1,6 +1,4 @@
-# from test_projects.zeeguu-api import zeeguu
-# from test_projects import test_project as zeeguu
-from test_projects import zeeguu
+import zeeguu
 
 
 def setup():

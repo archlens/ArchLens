@@ -65,9 +65,7 @@ class Bookmark(db.Model):
 
     learned_time = db.Column(db.DateTime)
 
-    bookmark = db.relationship('WordToStudy', backref='bookmark', passive_deletes=True)
-
-
+    bookmark = db.relationship("WordToStudy", backref="bookmark", passive_deletes=True)
 
     def __init__(
         self,
@@ -166,6 +164,7 @@ class Bookmark(db.Model):
 
         # plugging in the new scheduler
         from zeeguu.core.word_scheduling.basicSR.basicSR import BasicSRSchedule
+
         BasicSRSchedule.update(
             db_session, self, exercise_outcome == ExerciseOutcome.CORRECT
         )
@@ -175,7 +174,6 @@ class Bookmark(db.Model):
 
         UserExerciseSession.update_exercise_session(exercise, db_session)
         # BookmarkPriorityUpdater.update_bookmark_priority(db, self.user)
-
 
     def json_serializable_dict(self, with_context=True, with_title=False):
         try:

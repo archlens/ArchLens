@@ -10,13 +10,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/src/cli_interface.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
             "args": [
                 "render",
-                "test_config.py"
+                "${input:config_path}"
             ],
+            "cwd": "${workspaceFolder}/test_projects/zeeguu/",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py"
             }
         },
         {
@@ -27,26 +28,23 @@
             "console": "integratedTerminal",
             "args": [
                 "validate",
-                "test_config.py"
+                "${input:config_path}"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
         },
+    ],
+    "inputs": [
         {
-            "name": "Docker: Python - General",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "python": {
-                "pathMappings": [
-                    {
-                        "localRoot": "${workspaceFolder}",
-                        "remoteRoot": "/app"
-                    }
-                ],
-                "projectType": "general"
-            }
-        }
+            "type": "pickString",
+            "id": "config_path",
+            "description": "What config would you like to run",
+            "options": [
+                "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py",
+                "${workspaceFolder}/test_projects/test_project/test_config.py",
+            ],
+            "default": "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py"
+        },
     ]
 }

@@ -1,20 +1,26 @@
 from hashlib import blake2b
 import numbers
+import sys
 from diagrams import Node
 import os
 
 
 import astroid
+from astroid.exceptions import AstroidImportError
 
 
 class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
     graph: list["BTNode"] = []
+    root_location: str = None
 
     def build_graph(self, config_path: str):
+        root_location = "/".join(config_path.split("/")[:-1]) + "/"
+        self.root_location = root_location
+
         source_code = self._get_source_code(config_path)
 
-        self._compile_source_code(source_code)
+        self._compile_source_code(source_code, root_location)
         self.DEFAULT_SETTINGS.update(settings())
 
         nodes = setup()
@@ -22,10 +28,7 @@ class BTGraph:
         real_nodes = {node.ast.file: node for node in nodes if node.ast}
         extra_nodes = [node for node in nodes if not node.ast]
 
-        project_ast = astroid.MANAGER.ast_from_module(self.DEFAULT_SETTINGS["project"])
-        file_list = self._get_files_recursive(
-            project_ast.file.replace("__init__.py", "")[:-1]
-        )
+        file_list = self._get_files_recursive(root_location)
 
         for file in file_list:
             try:
@@ -39,19 +42,17 @@ class BTGraph:
                 print(e)
                 continue
 
-        os.environ[
-            "PYTHONPATH"
-        ] = "/home/perlt/BT-diagrams/test_projects/test_project"  # TODO
-        os.chdir("/home/perlt/BT-diagrams/test_projects/test_project")
-
         for file in file_list:
             try:
                 if not file.endswith(".py"):
                     continue
                 file_ast = astroid.MANAGER.ast_from_file(file)
-                imported_modules = get_imported_modules(file_ast)
+                imported_modules = get_imported_modules(file_ast, root_location)
+
                 real_nodes[file] >> [
-                    real_nodes[module.file] for module in imported_modules
+                    real_nodes[module.file]
+                    for module in imported_modules
+                    if module.file is not None and module.file in real_nodes
                 ]
             except Exception as e:
                 print(e)
@@ -67,7 +68,7 @@ class BTGraph:
             for file in files:
                 file_list.append(os.path.join(root, file))
 
-        file_list = [file for file in file_list if "__" not in file]
+        file_list = [file for file in file_list]
 
         return file_list
 
@@ -76,7 +77,8 @@ class BTGraph:
             code_str = file.read()
         return code_str
 
-    def _compile_source_code(self, source):
+    def _compile_source_code(self, source, root_location: str):
+        sys.path.append(root_location)
         code = compile(source, "config.py", "exec")
         exec(code, globals())
 
@@ -90,7 +92,8 @@ class BTGraph:
     def render_graph(self):
         node_map = {}
         for node in self.graph:
-            n = Node(label=node.label)
+            f = "".join(node.file.rsplit(self.root_location))
+            n = Node(label=f)
             node_map[node.uid] = n
 
         for node in self.graph:
@@ -106,18 +109,24 @@ def settings():
     pass  # overridden by config file
 
 
-def get_imported_modules(ast: astroid.Module):
+def get_imported_modules(ast: astroid.Module, root_location: str):
     imported_modules = []
     for sub_node in ast.body:
-        if isinstance(sub_node, astroid.node_classes.ImportFrom):
-            sub_node: astroid.node_classes.ImportFrom = sub_node
+        try:
+            if isinstance(sub_node, astroid.node_classes.ImportFrom):
+                sub_node: astroid.node_classes.ImportFrom = sub_node
 
-            module_node = astroid.MANAGER.ast_from_module_name(sub_node.modname)
+                module_node = astroid.MANAGER.ast_from_module_name(
+                    sub_node.modname,
+                    context_file=root_location,
+                )
+                imported_modules.append(module_node)
 
-            imported_modules.append(module_node)
+            if isinstance(sub_node, astroid.node_classes.Import):
+                pass  # TODO!!
 
-        if isinstance(sub_node, astroid.node_classes.Import):
-            pass  # TODO!!
+        except AstroidImportError:
+            continue
 
     return imported_modules
 
