@@ -5,26 +5,19 @@ from src.core.policies import BTPolicy, BlacklistPolicy, WhitelistPolicy
 
 
 class BTNode:
-    connected_code = None
     label: str = ""
     policies: list[BTPolicy] = None
-
     edge_to: list["BTNode"] = None
     ast = None
-    uid: str = None
 
-    def __init__(self, label: str, connected_code: str = None):
+    def __init__(self, label: str, code_path: str = None):
         print(f"create {label}")
-        self.connected_code = connected_code
         self.label = label
         self.ast = None
-        if self.connected_code is not None:
-            self.ast: astroid.Module = astroid.MANAGER.ast_from_module_name(
-                connected_code
-            )
-            self.uid = self.ast.file
-        else:
-            self.uid = label  # TODO Make this actual uid
+
+        if code_path is not None:
+            self.ast: astroid.Module = astroid.MANAGER.ast_from_module_name(code_path)
+
         self.edge_to = []
         self.policies = []
 
@@ -33,6 +26,13 @@ class BTNode:
         if self.ast:
             return self.ast.file
         return ""
+
+    @property
+    def uid(self):
+        if self.ast:
+            return self.ast.file
+        else:
+            return self.label
 
     def validate(self) -> bool:
         for policy in self.policies:
@@ -54,11 +54,11 @@ class BTNode:
 
             self.edge_to.append(other)
 
-    def __ne__(self, other):
+    def blacklist(self, other):
         policy = BlacklistPolicy(self.edge_to, other)
         self.policies.append(policy)
 
-    def __eq__(self, other):
+    def whitelist(self, other):
         policy = WhitelistPolicy(self.edge_to, other)
         self.policies.append(policy)
 

@@ -3,12 +3,12 @@ from src.core.bt_node import BTNode
 
 
 def setup():
-    app_node = BTNode(connected_code="zeeguu.api.app", label="encoding")
+    app_node = BTNode(code_path="zeeguu.api.app", label="encoding")
     config_node = BTNode(
-        connected_code="zeeguu.core.configuration.configuration", label="config"
+        code_path="zeeguu.core.configuration.configuration", label="config"
     )
 
-    app_node == config_node
+    app_node.whitelist(config_node)
 
     return [app_node, config_node]
 
