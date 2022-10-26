@@ -75,7 +75,7 @@ class BTGraph:
         return code_str
 
     def _compile_source_code(self, source, root_location: str):
-        sys.path.append("/home/perlt/BT-diagrams/")
+        sys.path.append("/home/perlt/BT-diagrams")
         sys.path.append(root_location)
         code = compile(source, "config.py", "exec")
         exec(code, globals())

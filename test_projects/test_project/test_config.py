@@ -1,10 +1,10 @@
 from src.core.bt_node import BTNode
-import test_project
+import tp_src as test_project
 
 
 def setup():
-    api_node = BTNode(connected_code="api.api", label="hejkme ddig")
-    core_node = BTNode(connected_code="tp_core.core", label="core")
+    api_node = BTNode(connected_code="tp_src.api.api", label="hejkme ddig")
+    core_node = BTNode(connected_code="tp_src.tp_core.core", label="core")
     added_node = BTNode(label="Third party api")
 
     api_node == core_node
