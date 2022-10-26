@@ -1,4 +1,4 @@
-from src.core import BTNode
+from src.core.bt_node import BTNode
 import test_project
 
 

@@ -1,7 +1,7 @@
 import typer
 from diagrams import Diagram
 
-import core as BT_core
+from src.core.bt_graph import BTGraph
 
 DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
 
@@ -10,7 +10,7 @@ app = typer.Typer()
 
 @app.command()
 def render(config_path: str):
-    g = BT_core.BTGraph()
+    g = BTGraph()
     g.build_graph(config_path)
 
     with Diagram(g.DEFAULT_SETTINGS.get("diagram_name", "unkown"), show=False):
@@ -19,7 +19,7 @@ def render(config_path: str):
 
 @app.command()
 def validate(config_path: str):
-    g = BT_core.BTGraph()
+    g = BTGraph()
     g.build_graph(config_path)
     if not g.validate_graph():
         exit(1)

@@ -1,5 +1,5 @@
 import zeeguu
-from src.core import BTNode
+from src.core.bt_node import BTNode
 
 
 def setup():

@@ -17,7 +17,7 @@
             ],
             "cwd": "${workspaceFolder}/test_projects/zeeguu/",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py"
+                "PYTHONPATH": "${workspaceFolder}"
             }
         },
         {
