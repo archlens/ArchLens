@@ -15,7 +15,6 @@
                 "render",
                 "${input:config_path}"
             ],
-            "cwd": "${workspaceFolder}/test_projects/zeeguu/",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
@@ -43,6 +42,7 @@
             "options": [
                 "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py",
                 "${workspaceFolder}/test_projects/test_project/test_config.py",
+                "${workspaceFolder}/test_projects/qtile/qtile_config.py",
             ],
             "default": "${workspaceFolder}/test_projects/test_project/test_config.py",
         },
