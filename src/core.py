@@ -78,6 +78,7 @@ class BTGraph:
         return code_str
 
     def _compile_source_code(self, source, root_location: str):
+        sys.path.append("/home/perlt/BT-diagrams/")
         sys.path.append(root_location)
         code = compile(source, "config.py", "exec")
         exec(code, globals())
@@ -92,8 +93,8 @@ class BTGraph:
     def render_graph(self):
         node_map = {}
         for node in self.graph:
-            f = "".join(node.file.rsplit(self.root_location))
-            n = Node(label=f)
+            label = "".join(node.file.rsplit(self.root_location))
+            n = Node(label=label)
             node_map[node.uid] = n
 
         for node in self.graph:
@@ -140,13 +141,15 @@ class BTNode:
     ast = None
     uid: str = None
 
-    def __init__(self, label: str, connected_code=None):
+    def __init__(self, label: str, connected_code: str = None):
         print(f"create {label}")
         self.connected_code = connected_code
         self.label = label
         self.ast = None
         if self.connected_code is not None:
-            self.ast: astroid.Module = astroid.MANAGER.ast_from_module(connected_code)
+            self.ast: astroid.Module = astroid.MANAGER.ast_from_module_name(
+                connected_code
+            )
             self.uid = self.ast.file
         else:
             self.uid = label  # TODO Make this actual uid

@@ -1,4 +1,4 @@
-from core.core import add
+from tp_core.core import add
 
 # from test_project.interface.cosmos_interface import write
 import json

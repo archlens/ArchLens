@@ -44,7 +44,7 @@
                 "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py",
                 "${workspaceFolder}/test_projects/test_project/test_config.py",
             ],
-            "default": "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py"
+            "default": "${workspaceFolder}/test_projects/test_project/test_config.py",
         },
     ]
 }

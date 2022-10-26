@@ -1,9 +1,6 @@
 import typer
 from diagrams import Diagram
 
-# from core import validate_graph
-import os
-import astroid
 import core as BT_core
 
 DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
