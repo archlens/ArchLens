@@ -1,9 +1,8 @@
 {
-	"name": "Python 3",
+	"name": "BT-diagrams",
 	"build": {
 		"dockerfile": "Dockerfile",
-		"context": "..",
-		"args": {}
+		"context": ".."
 	},
 	"customizations": {
 		"vscode": {
@@ -14,5 +13,9 @@
 			]
 		}
 	},
-	"postCreateCommand": "pip install -r requirements.txt"
+	"postCreateCommand": "pip install -r requirements.txt",
+	"runArgs": [
+		"--name",
+		"BT-diagrams"
+	]
 }
