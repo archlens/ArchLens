@@ -4,10 +4,10 @@ from astroid.exceptions import AstroidImportError
 from src.core.policies import BTPolicy, BlacklistPolicy, WhitelistPolicy
 
 
-class BTNode:
+class BTFile:
     label: str = ""
     policies: list[BTPolicy] = None
-    edge_to: list["BTNode"] = None
+    edge_to: list["BTFile"] = None
     ast = None
 
     def __init__(self, label: str, code_path: str = None):

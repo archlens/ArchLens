@@ -4,8 +4,8 @@ class BTPolicy:
 
 
 class BlacklistPolicy(BTPolicy):
-    edges: list["BTNode"] = None
-    blacklisted_node: "BTNode" = None
+    edges: list["BTFile"] = None
+    blacklisted_node: "BTFile" = None
 
     def __init__(self, edges, blacklisted_node) -> None:
         super().__init__()
@@ -20,8 +20,8 @@ class BlacklistPolicy(BTPolicy):
 
 
 class WhitelistPolicy(BTPolicy):
-    edges: list["BTNode"] = None
-    whitelisted_node: "BTNode" = None
+    edges: list["BTFile"] = None
+    whitelisted_node: "BTFile" = None
 
     def __init__(self, edges, whitelisted_node) -> None:
         super().__init__()

@@ -33,6 +33,17 @@
                 "PYTHONPATH": "${workspaceFolder}"
             }
         },
+        {
+            "name": "Debug Sandbox",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/sandbox.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
     ],
     "inputs": [
         {

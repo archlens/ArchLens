@@ -2,7 +2,7 @@ import astroid
 import sys
 import os
 
-from src.core.bt_node import BTNode, get_imported_modules
+from src.core.bt_file import BTFile, get_imported_modules
 import diagrams
 
 from src.core.policies import BlacklistPolicy, WhitelistPolicy
@@ -10,7 +10,7 @@ from src.core.policies import BlacklistPolicy, WhitelistPolicy
 
 class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
-    graph: list[BTNode] = []
+    graph: list[BTFile] = []
     target_project_location: str = None
 
     def build_graph(self, config_path: str):
@@ -34,7 +34,7 @@ class BTGraph:
                 if file not in real_nodes.keys():
                     if not file.endswith(".py"):
                         continue
-                    node = BTNode(label=file.split("/")[-1])
+                    node = BTFile(label=file.split("/")[-1])
                     node.ast = astroid.MANAGER.ast_from_file(file)
                     real_nodes[file] = node
             except Exception as e:

@@ -1,10 +1,10 @@
 import zeeguu
-from src.core.bt_node import BTNode
+from src.core.bt_file import BTFile
 
 
 def setup():
-    app_node = BTNode(code_path="zeeguu.api.app", label="encoding")
-    config_node = BTNode(
+    app_node = BTFile(code_path="zeeguu.api.app", label="encoding")
+    config_node = BTFile(
         code_path="zeeguu.core.configuration.configuration", label="config"
     )
 
