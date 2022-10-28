@@ -34,6 +34,12 @@ class BTFile:
         else:
             return self.label
 
+    @property
+    def module_path(self) -> str | None:
+        if not self.ast:
+            return None
+        return "/".join(self.file.split("/")[:-1])
+
     def validate(self) -> bool:
         for policy in self.policies:
             if not policy.validate():
