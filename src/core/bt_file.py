@@ -1,12 +1,16 @@
 import astroid
 from astroid.exceptions import AstroidImportError
 
-from src.core.policies import BTPolicy, BlacklistPolicy, WhitelistPolicy
+from src.core.policies.FilePolicies import (
+    BTFilePolicy,
+    FilePolicyCantDependPolicy,
+    FilePolicyMustDependPolicy,
+)
 
 
 class BTFile:
     label: str = ""
-    policies: list[BTPolicy] = None
+    policies: list[BTFilePolicy] = None
     edge_to: list["BTFile"] = None
     ast = None
 
@@ -60,12 +64,12 @@ class BTFile:
 
             self.edge_to.append(other)
 
-    def blacklist(self, other):
-        policy = BlacklistPolicy(other)
+    def cant_depend(self, other):
+        policy = FilePolicyCantDependPolicy(other)
         self.policies.append(policy)
 
-    def whitelist(self, other):
-        policy = WhitelistPolicy(other)
+    def must_depend(self, other):
+        policy = FilePolicyMustDependPolicy(other)
         self.policies.append(policy)
 
 

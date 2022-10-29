@@ -1,22 +1,16 @@
 from src.core.bt_file import BTFile
+from src.core.bt_graph import BTGraph
 import tp_src as test_project
 
 
-def setup():
-    # return []
-    api_node = BTFile(code_path="tp_src.api.api", label="api")
-    core_node = BTFile(code_path="tp_src.tp_core.core", label="core")
-    controller_node = BTFile(
-        code_path="tp_src.controller.controller", label="controller"
-    )
-    added_node = BTFile(label="Third party api")
+def update(graph: BTGraph):
+    api_file = graph.get_bt_file("api.api")
+    core_file = graph.get_bt_file("tp_core.core")
+    api_file.must_depend(core_file)
 
-    api_node.whitelist(core_node)
-    api_node.blacklist(controller_node)
-
-    api_node >> added_node
-
-    return [api_node, core_node, added_node]
+    api_module = graph.get_bt_module("api")
+    core_module = graph.get_bt_module("tp_core")
+    api_module.cant_depend(core_module)
 
 
 def settings():

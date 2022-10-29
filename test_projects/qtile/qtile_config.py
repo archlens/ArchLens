@@ -1,8 +1,9 @@
 import libqtile as qtile
+from src.core.bt_graph import BTGraph
 
 
-def setup():
-    return []
+def update(graph: BTGraph):
+    t = graph.get_bt_file("widget.bluetooth")
 
 
 def settings():

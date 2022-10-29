@@ -7,7 +7,10 @@ import diagrams
 from diagrams.programming.language import Python as pythonNode
 from src.core.bt_module import BTModule
 
-from src.core.policies import BlacklistPolicy, WhitelistPolicy
+from src.core.policies.FilePolicies import (
+    FilePolicyCantDependPolicy,
+    FilePolicyMustDependPolicy,
+)
 
 
 class BTGraph:
@@ -25,8 +28,7 @@ class BTGraph:
             self.DEFAULT_SETTINGS["project"].__file__
         )
         self.target_project_base_location = os.path.dirname(config_path)
-
-        nodes: list[BTFile] = setup()  # TODO !
+        sys.path.append(self.root_module_location)
 
         bt_module_list: list[BTModule] = []
 
@@ -57,7 +59,7 @@ class BTGraph:
         )
 
         # Set BTFiles dependencies
-        btf_map = self.get_all_bf_files_map()
+        btf_map = self.get_all_bt_files_map()
 
         for bt_file in btf_map.values():
             imported_modules = get_imported_modules(
@@ -69,24 +71,25 @@ class BTGraph:
                 if module.file in btf_map
             ]
 
-        for temp_btf in nodes:
-            bt_file = btf_map.get(temp_btf.file)
-            if not bt_file:
-                continue
-            bt_file.policies.extend(temp_btf.policies)
+        update(self)
 
-    def get_all_bf_files_map(self) -> dict[str, BTFile]:
-        def get_bt_files(module: BTModule) -> list[BTFile]:
-            bt_files: dict[str, BTFile] = {}
+    def get_bt_file(self, path: str) -> BTFile:
+        file_path = astroid.MANAGER.ast_from_module_name(path).file
+        bt_file = self.get_all_bt_files_map()[file_path]
+        return bt_file
 
-            bt_files.update({btf.file: btf for btf in module.file_list})
+    def get_bt_module(self, path: str) -> BTModule:
+        path_list = path.split(".")
+        current_module = self.root_module
+        while path_list:
+            current_module = next(
+                filter(lambda e: e.name == path_list[0], current_module.child_module)
+            )
+            path_list.pop(0)
+        return current_module
 
-            for child_module in module.child_module:
-                bt_files.update(get_bt_files(child_module))
-
-            return bt_files
-
-        return get_bt_files(self.root_module)
+    def get_all_bt_files_map(self) -> dict[str, BTFile]:
+        return {btf.file: btf for btf in self.root_module.get_all_files_recursive()}
 
     def _get_files_recursive(self, path: str) -> list[str]:
         file_list = []
@@ -110,9 +113,13 @@ class BTGraph:
         exec(code, globals())
 
     def validate_graph(self) -> bool:
-        for node in self.get_all_bf_files_map().values():
+        for node in self.get_all_bt_files_map().values():
             if not node.validate():
                 print(f"error in node {node.label}")
+                return False
+        for module in self.root_module.get_submodules_recursive():
+            if not module.validate():
+                print(f"error in module {module.name}")
                 return False
         return True
 
@@ -134,15 +141,15 @@ class BTGraph:
                 edges = bt_node.edge_to
                 diagram_node = node_map[bt_node.uid]
                 white_listed_nodes = [
-                    policy.whitelisted_node
+                    policy.must_depend_node
                     for policy in bt_node.policies
-                    if isinstance(policy, WhitelistPolicy)
+                    if isinstance(policy, FilePolicyMustDependPolicy)
                 ]
 
                 black_listed_nodes = [
-                    policy.blacklisted_node
+                    policy.cant_depend_node
                     for policy in bt_node.policies
-                    if isinstance(policy, BlacklistPolicy)
+                    if isinstance(policy, FilePolicyCantDependPolicy)
                 ]
 
                 for edge in edges:
@@ -171,4 +178,8 @@ def setup():
 
 
 def settings():
+    pass  # overridden by config file
+
+
+def update():
     pass  # overridden by config file
