@@ -13,8 +13,9 @@ class BTFile:
     policies: list[BTFilePolicy] = None
     edge_to: list["BTFile"] = None
     ast = None
+    module: "BTModule" = None
 
-    def __init__(self, label: str, code_path: str = None):
+    def __init__(self, label: str, module, code_path: str = None):
         print(f"create {label}")
         self.label = label
         self.ast = None
@@ -24,6 +25,7 @@ class BTFile:
 
         self.edge_to = []
         self.policies = []
+        self.module = module
 
     @property
     def file(self):
@@ -64,11 +66,11 @@ class BTFile:
 
             self.edge_to.append(other)
 
-    def cant_depend(self, other):
+    def cant_depend_on(self, other):
         policy = FilePolicyCantDependPolicy(other)
         self.policies.append(policy)
 
-    def must_depend(self, other):
+    def must_depend_on(self, other):
         policy = FilePolicyMustDependPolicy(other)
         self.policies.append(policy)
 
@@ -80,16 +82,22 @@ def get_imported_modules(ast: astroid.Module, root_location: str):
             if isinstance(sub_node, astroid.node_classes.ImportFrom):
                 sub_node: astroid.node_classes.ImportFrom = sub_node
 
-                module_node = astroid.MANAGER.ast_from_module_name(
-                    sub_node.modname,
-                    context_file=root_location,
-                )
+                try:
+                    module_node = astroid.MANAGER.ast_from_module_name(
+                        sub_node.modname + "." + sub_node.names[0][0],
+                        context_file=root_location,
+                    )
+                except Exception:
+                    module_node = astroid.MANAGER.ast_from_module_name(
+                        sub_node.modname,
+                        context_file=root_location,
+                    )
                 imported_modules.append(module_node)
 
             if isinstance(sub_node, astroid.node_classes.Import):
                 pass  # TODO!!
 
-        except AstroidImportError:
+        except AstroidImportError as e:
             continue
 
     return imported_modules

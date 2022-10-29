@@ -36,18 +36,15 @@ class BTModule:
         ]
 
         for file in files:
-            bt_file = BTFile(label=file.split("/")[-1])
+            bt_file = BTFile(label=file.split("/")[-1], module=self)
             bt_file.ast = astroid.MANAGER.ast_from_file(os.path.join(self.path, file))
             self.file_list.append(bt_file)
 
-    def get_all_files_recursive(self) -> list[BTFile]:
-        def inner_function(module: BTModule):
-            temp_file_list = module.file_list.copy()
-            for child_module in module.child_module:
-                temp_file_list.extend(inner_function(child_module))
-            return temp_file_list
-
-        return inner_function(self)
+    def get_files_recursive(self) -> list[BTFile]:
+        temp_file_list = self.file_list.copy()
+        for child_module in self.child_module:
+            temp_file_list.extend(child_module.get_files_recursive())
+        return temp_file_list
 
     def get_submodules_recursive(self) -> list["BTModule"]:
         submodule_list = self.child_module.copy()
@@ -55,11 +52,18 @@ class BTModule:
             submodule_list.extend(submodule.get_submodules_recursive())
         return submodule_list
 
+    def get_parent_module_recursive(self):
+        if self.parent_module is None:
+            return []
+        parent_module_list = [self.parent_module]
+        parent_module_list.extend(self.parent_module.get_parent_module_recursive())
+        return parent_module_list
+
     def validate(self) -> bool:
         for policy in self.policies:
-            if not policy.validate(self):
+            if not policy.validate():
                 return False
         return True
 
-    def cant_depend(self, other: "BTModule"):
-        self.policies.append(ModulePolicyCantDepend(other))
+    def cant_depend_on(self, other: "BTModule"):
+        self.policies.append(ModulePolicyCantDepend(other, self))

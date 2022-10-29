@@ -79,7 +79,7 @@ class BTGraph:
         return bt_file
 
     def get_bt_module(self, path: str) -> BTModule:
-        path_list = path.split(".")
+        path_list = path.split(".")[1:]
         current_module = self.root_module
         while path_list:
             current_module = next(
@@ -89,7 +89,7 @@ class BTGraph:
         return current_module
 
     def get_all_bt_files_map(self) -> dict[str, BTFile]:
-        return {btf.file: btf for btf in self.root_module.get_all_files_recursive()}
+        return {btf.file: btf for btf in self.root_module.get_files_recursive()}
 
     def _get_files_recursive(self, path: str) -> list[str]:
         file_list = []
