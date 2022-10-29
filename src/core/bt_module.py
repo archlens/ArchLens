@@ -1,4 +1,7 @@
 import astroid
+import os
+
+from src.core.bt_file import BTFile
 
 
 class BTModule:
@@ -21,3 +24,15 @@ class BTModule:
     @property
     def path(self):
         return "/".join(self.ast.file.split("/")[:-1])
+
+    def add_files(self):
+        files = [
+            element
+            for element in os.listdir(self.path)
+            if element.endswith(".py") and "__" not in element
+        ]
+
+        for file in files:
+            bt_file = BTFile(label=file.split("/")[-1])
+            bt_file.ast = astroid.MANAGER.ast_from_file(os.path.join(self.path, file))
+            self.file_list.append(bt_file)

@@ -4,6 +4,7 @@ import os
 
 from src.core.bt_file import BTFile, get_imported_modules
 import diagrams
+from diagrams.programming.language import Python as pythonNode
 from src.core.bt_module import BTModule
 
 from src.core.policies import BlacklistPolicy, WhitelistPolicy
@@ -11,27 +12,25 @@ from src.core.policies import BlacklistPolicy, WhitelistPolicy
 
 class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
-    graph: list[BTFile] = []
-    modules: list[BTModule] = []
-    target_project_location: str = None
+    root_module_location: str = None
+    target_project_base_location: str = None
+    root_module = None
 
     def build_graph(self, config_path: str):
-        target_project_location = "/".join(config_path.split("/")[:-1]) + "/"
-        self.target_project_location = target_project_location
-
         source_code = self._get_source_code(config_path)
-
-        self._compile_source_code(source_code)
+        self._compile_source_code(source_code, os.path.dirname(config_path))
         self.DEFAULT_SETTINGS.update(settings())
 
-        nodes = setup()
+        self.root_module_location = os.path.dirname(
+            self.DEFAULT_SETTINGS["project"].__file__
+        )
+        self.target_project_base_location = os.path.dirname(config_path)
 
-        bt_file_list = {node.ast.file: node for node in nodes if node.ast}
-        extra_nodes = [node for node in nodes if not node.ast]
+        nodes = setup()  # TODO !
 
         bt_module_list: list[BTModule] = []
 
-        file_list = self._get_files_recursive(self.target_project_location)
+        file_list = self._get_files_recursive(self.root_module_location)
 
         # Create modules
         for file in file_list:
@@ -39,6 +38,7 @@ class BTGraph:
                 if not file.endswith("__init__.py"):
                     continue
                 bt_module = BTModule(file)
+                bt_module.add_files()
                 bt_module_list.append(bt_module)
             except Exception as e:
                 print(e)
@@ -48,50 +48,38 @@ class BTGraph:
             for parent_module in bt_module_list:
                 if module == parent_module:
                     continue
-                t = "/".join(module.path.split("/")[:-1])
-                if parent_module.path == t:
+                if parent_module.path == "/".join(module.path.split("/")[:-1]):
                     parent_module.child_module.append(module)
                     module.parent_module = parent_module
 
-        # Create all bt files
-        for file in file_list:
-            try:
-                if file not in bt_file_list.keys():
-                    if not file.endswith(".py") or file.endswith("__init__.py"):
-                        continue
-                    node = BTFile(label=file.split("/")[-1])
-                    node.ast = astroid.MANAGER.ast_from_file(file)
-                    bt_module = next(
-                        (x for x in bt_module_list if x.path == node.module_path), None
-                    )
-                    bt_file_list[file] = node
-                    if bt_module:
-                        bt_module.file_list.append(node)
-            except Exception as e:
-                print(e)
-                continue
+        self.root_module = next(
+            filter(lambda e: e.parent_module is None, bt_module_list)
+        )
 
-        for file in file_list:
-            try:
-                if file not in bt_file_list:
-                    continue
-                file_ast = astroid.MANAGER.ast_from_file(file)
-                imported_modules = get_imported_modules(
-                    file_ast, self.target_project_location
-                )
+        # Set BTFiles dependencies
+        btf_map = self.get_all_bf_files_map()
+        for bt_file in btf_map.values():
+            imported_modules = get_imported_modules(
+                bt_file.ast, self.target_project_base_location
+            )
+            bt_file >> [
+                btf_map[module.file]
+                for module in imported_modules
+                if module.file in btf_map
+            ]
 
-                bt_file_list[file] >> [
-                    bt_file_list[module.file]
-                    for module in imported_modules
-                    if module.file is not None and module.file in bt_file_list
-                ]
-            except Exception as e:
-                print(e)
-                continue
+    def get_all_bf_files_map(self) -> dict[str, BTFile]:
+        def get_bt_files(module: BTModule) -> list[BTFile]:
+            bt_files: dict[str, BTFile] = {}
 
-        self.graph = list(bt_file_list.values())
-        self.graph.extend(extra_nodes)
-        self.modules = bt_module_list
+            bt_files.update({btf.file: btf for btf in module.file_list})
+
+            for child_module in module.child_module:
+                bt_files.update(get_bt_files(child_module))
+
+            return bt_files
+
+        return get_bt_files(self.root_module)
 
     def _get_files_recursive(self, path: str) -> list[str]:
         file_list = []
@@ -109,8 +97,8 @@ class BTGraph:
             code_str = file.read()
         return code_str
 
-    def _compile_source_code(self, source):
-        sys.path.append(self.target_project_location)
+    def _compile_source_code(self, source, config_folder):
+        sys.path.append(config_folder)
         code = compile(source, "config.py", "exec")
         exec(code, globals())
 
@@ -132,9 +120,7 @@ class BTGraph:
                 for child_module in module.child_module:
                     create_nodes(child_module)
 
-        root_modules = list(filter(lambda e: not e.parent_module, self.modules))
-        for module in root_modules:
-            create_nodes(module)
+        create_nodes(self.root_module)
 
         def render_module(module: BTModule):
             for bt_node in module.file_list:
@@ -170,10 +156,7 @@ class BTGraph:
             for child_module in module.child_module:
                 render_module(child_module)
 
-        root_modules = list(filter(lambda e: not e.parent_module, self.modules))
-
-        for module in root_modules:
-            render_module(module)
+        render_module(self.root_module)
 
 
 def setup():
