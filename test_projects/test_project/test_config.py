@@ -3,7 +3,7 @@ import tp_src as test_project
 
 
 def setup():
-    return []
+    # return []
     api_node = BTFile(code_path="tp_src.api.api", label="api")
     core_node = BTFile(code_path="tp_src.tp_core.core", label="core")
     controller_node = BTFile(

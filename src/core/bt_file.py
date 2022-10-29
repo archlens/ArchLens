@@ -42,7 +42,7 @@ class BTFile:
 
     def validate(self) -> bool:
         for policy in self.policies:
-            if not policy.validate():
+            if not policy.validate(self.edge_to):
                 return False
         return True
 
@@ -61,11 +61,11 @@ class BTFile:
             self.edge_to.append(other)
 
     def blacklist(self, other):
-        policy = BlacklistPolicy(self.edge_to, other)
+        policy = BlacklistPolicy(other)
         self.policies.append(policy)
 
     def whitelist(self, other):
-        policy = WhitelistPolicy(self.edge_to, other)
+        policy = WhitelistPolicy(other)
         self.policies.append(policy)
 
 

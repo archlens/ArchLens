@@ -26,7 +26,7 @@ class BTGraph:
         )
         self.target_project_base_location = os.path.dirname(config_path)
 
-        nodes = setup()  # TODO !
+        nodes: list[BTFile] = setup()  # TODO !
 
         bt_module_list: list[BTModule] = []
 
@@ -58,6 +58,7 @@ class BTGraph:
 
         # Set BTFiles dependencies
         btf_map = self.get_all_bf_files_map()
+
         for bt_file in btf_map.values():
             imported_modules = get_imported_modules(
                 bt_file.ast, self.target_project_base_location
@@ -67,6 +68,12 @@ class BTGraph:
                 for module in imported_modules
                 if module.file in btf_map
             ]
+
+        for temp_btf in nodes:
+            bt_file = btf_map.get(temp_btf.file)
+            if not bt_file:
+                continue
+            bt_file.policies.extend(temp_btf.policies)
 
     def get_all_bf_files_map(self) -> dict[str, BTFile]:
         def get_bt_files(module: BTModule) -> list[BTFile]:
@@ -103,7 +110,7 @@ class BTGraph:
         exec(code, globals())
 
     def validate_graph(self) -> bool:
-        for node in self.graph:
+        for node in self.get_all_bf_files_map().values():
             if not node.validate():
                 print(f"error in node {node.label}")
                 return False
