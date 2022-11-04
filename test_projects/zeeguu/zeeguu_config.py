@@ -3,17 +3,6 @@ import zeeguu
 from src.core.bt_file import BTFile
 
 
-# def setup():
-#     app_node = BTFile(code_path="zeeguu.api.app", label="encoding")
-#     config_node = BTFile(
-#         code_path="zeeguu.core.configuration.configuration", label="config"
-#     )
-
-#     app_node.must_depend(config_node)
-
-#     return [app_node, config_node]
-
-
 def update(graph: BTGraph):
     utils_module = graph.get_bt_module("zeeguu.core.util")
     model_module = graph.get_bt_module("zeeguu.core.model")
