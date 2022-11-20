@@ -14,7 +14,7 @@ def render(config_path: str):
     g.build_graph(config_path)
 
     with Diagram(g.DEFAULT_SETTINGS.get("diagram_name", "unknown"), show=False):
-        g.render_graph()
+        g.render_graph("file")
 
 
 @app.command()

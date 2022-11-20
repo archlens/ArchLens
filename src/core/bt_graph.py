@@ -123,7 +123,9 @@ class BTGraph:
                 return False
         return True
 
-    def render_graph(self):
+    def render_graph(self, type: str):
+        assert type in ["file", "module"]
+
         node_map = {}
 
         def create_nodes(module: BTModule):
