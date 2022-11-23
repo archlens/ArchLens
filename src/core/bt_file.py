@@ -7,6 +7,11 @@ from src.core.policies.FilePolicies import (
     FilePolicyMustDependPolicy,
 )
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.core.bt_module import BTModule
+
 
 class BTFile:
     label: str = ""

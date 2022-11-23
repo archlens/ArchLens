@@ -59,6 +59,12 @@ class BTModule:
         parent_module_list.extend(self.parent_module.get_parent_module_recursive())
         return parent_module_list
 
+    def get_module_dependencies(self):
+        dependencies = set()
+        for child in self.file_list:
+            dependencies.update(map(lambda e: e.module, child.edge_to))
+        return dependencies
+
     def validate(self) -> bool:
         for policy in self.policies:
             if not policy.validate():
