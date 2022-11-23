@@ -2,7 +2,9 @@ import diagrams
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
+    from src.core.bt_module import BTModule
     from src.core.bt_graph import BTGraph
 
 
@@ -13,13 +15,17 @@ def render(graph: "BTGraph"):
     for module in modules:
         dependencies_map[module] = module.get_module_dependencies()
 
-    def create_nodes(module: BTModule):
+    node_map = {}
+
+    def create_nodes(module: "BTModule"):
         with diagrams.Cluster(label=module.name):
-            for bt_node in module.file_list:
-                n = diagrams.Node(label=bt_node.label)
-                node_map[bt_node.uid] = n
+            n = diagrams.Node(label=module.name)
+            node_map[module.path] = n
             for child_module in module.child_module:
                 create_nodes(child_module)
+
+    for module, dependencies in dependencies_map.items():
+        pass
 
     create_nodes(root_module)
 
