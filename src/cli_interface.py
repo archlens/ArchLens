@@ -9,12 +9,12 @@ app = typer.Typer()
 
 
 @app.command()
-def render(config_path: str):
+def render(config_path: str, renderer: str):
     g = BTGraph()
     g.build_graph(config_path)
 
     with Diagram(g.DEFAULT_SETTINGS.get("diagram_name", "unknown"), show=False):
-        g.render_graph("file")
+        g.render_graph(renderer)
 
 
 @app.command()
