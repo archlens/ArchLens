@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 def render(graph: "BTGraph"):
     root_module = graph.root_module
     modules = root_module.get_submodules_recursive()
-    dependencies_map = {}
+    dependencies_map: dict["BTModule", list["BTModule"]] = {}
     for module in modules:
         dependencies_map[module] = module.get_module_dependencies()
 
@@ -24,9 +24,10 @@ def render(graph: "BTGraph"):
             for child_module in module.child_module:
                 create_nodes(child_module)
 
-    for module, dependencies in dependencies_map.items():
-        pass
-
     create_nodes(root_module)
+
+    for module, dependencies in dependencies_map.items():
+        diagram_node = node_map[module.path]
+        diagram_node >> [node_map[d.path] for d in dependencies]
 
     print("test")
