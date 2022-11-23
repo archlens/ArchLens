@@ -13,7 +13,8 @@ def render(config_path: str, renderer: str):
     g = BTGraph()
     g.build_graph(config_path)
 
-    with Diagram(g.DEFAULT_SETTINGS.get("diagram_name", "unknown"), show=False):
+    diagram_name = g.DEFAULT_SETTINGS.get("diagram_name", "unknown")
+    with Diagram(f"{diagram_name}-{renderer}", show=False):
         g.render_graph(renderer)
 
 
