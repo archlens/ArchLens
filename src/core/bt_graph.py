@@ -94,7 +94,7 @@ class BTGraph:
             path_list.pop(0)
         return current_module
 
-    def change_root_module(self, path: str):
+    def change_scope(self, path: str):
         self.root_module = self.get_bt_module(path)
 
     def get_all_bt_files_map(self) -> dict[str, BTFile]:

@@ -15,7 +15,7 @@ def update(graph: BTGraph):
     api_module.cant_depend_on(controller_module)
     sub_api_module.cant_depend_on(core_module)
 
-    graph.change_root_module("tp_src.api")
+    graph.change_scope("tp_src.api")
 
 
 def settings():
