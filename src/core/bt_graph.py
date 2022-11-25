@@ -22,6 +22,7 @@ class BTGraph:
     root_module_location: str = None
     target_project_base_location: str = None
     root_module = None
+    base_module = None
 
     def build_graph(self, config_path: str):
         source_code = self._get_source_code(config_path)
@@ -61,6 +62,7 @@ class BTGraph:
         self.root_module = next(
             filter(lambda e: e.parent_module is None, bt_module_list)
         )
+        self.base_module = self.root_module
 
         # Set BTFiles dependencies
         btf_map = self.get_all_bt_files_map()
@@ -91,6 +93,9 @@ class BTGraph:
             )
             path_list.pop(0)
         return current_module
+
+    def change_root_module(self, path: str):
+        self.root_module = self.get_bt_module(path)
 
     def get_all_bt_files_map(self) -> dict[str, BTFile]:
         return {btf.file: btf for btf in self.root_module.get_files_recursive()}

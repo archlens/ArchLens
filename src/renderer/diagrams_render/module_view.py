@@ -28,4 +28,4 @@ def render(graph: "BTGraph"):
 
     for module, dependencies in dependencies_map.items():
         diagram_node = node_map[module.path]
-        diagram_node >> [node_map[d.path] for d in dependencies]
+        diagram_node >> [node_map[d.path] for d in dependencies if d.path in node_map]
