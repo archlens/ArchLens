@@ -11,12 +11,6 @@ from src.renderer.diagrams_render import file_view
 from src.renderer.diagrams_render import module_view
 
 
-from src.core.policies.FilePolicies import (
-    FilePolicyCantDependPolicy,
-    FilePolicyMustDependPolicy,
-)
-
-
 class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
     root_module_location: str = None
