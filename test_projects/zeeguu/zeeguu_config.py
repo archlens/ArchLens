@@ -18,6 +18,7 @@ def update(graph: BTGraph):
         "zeeguu.core.elastic.converting_from_mysql"
     )
     article_downloader_file.cant_depend_on(converting_from_mysql_file)  # Policy fails
+    graph.change_scope("zeeguu.core.word_scheduling")
 
 
 def settings():

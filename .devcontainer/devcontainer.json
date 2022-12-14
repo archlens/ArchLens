@@ -16,6 +16,6 @@
 	"postCreateCommand": "pip install -r requirements.txt",
 	"runArgs": [
 		"--name",
-		"BT-diagrams-jesper"
+		"BT-diagrams"
 	]
 }

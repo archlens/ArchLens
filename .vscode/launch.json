@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "CLI help",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--help"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "CLI Render",
             "type": "python",
             "request": "launch",
