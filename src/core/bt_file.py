@@ -100,7 +100,7 @@ def get_imported_modules(ast: astroid.Module, root_location: str):
                 imported_modules.append(module_node)
 
             if isinstance(sub_node, astroid.node_classes.Import):
-                pass  # TODO!!
+                pass
 
         except AstroidImportError as e:
             continue

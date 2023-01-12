@@ -3,18 +3,24 @@ import tp_src as test_project
 
 
 def update(graph: BTGraph):
+    # Get files
     api_file = graph.get_bt_file("tp_src.api.api")
+    api_sub_file = graph.get_bt_file("tp_src.api.sub_api.sub_api")
     core_file = graph.get_bt_file("tp_src.tp_core.core")
 
+    # Add file constraints
     api_file.must_depend_on(core_file)
+    api_sub_file.must_depend_on(core_file)
 
+    # Get modules
     api_module = graph.get_bt_module("tp_src.api")
-    controller_module = graph.get_bt_module("tp_src.controller")
     core_module = graph.get_bt_module("tp_src.tp_core")
+    controller_module = graph.get_bt_module("tp_src.controller")
 
-    api_module.cant_depend_on(core_module)
-
-    # graph.change_scope("tp_src.api")
+    # Add module constraints
+    controller_module.cant_depend_on(core_module)
+    controller_module.cant_depend_on(api_module)
+    core_module.cant_depend_on(api_module)
 
 
 def settings():

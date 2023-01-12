@@ -19,21 +19,26 @@ class BTGraph:
     base_module = None
 
     def build_graph(self, config_path: str):
+        # Read the config file and compile it creating a update and settings function
         source_code = self._get_source_code(config_path)
         self._compile_source_code(source_code, os.path.dirname(config_path))
         self.DEFAULT_SETTINGS.update(settings())
 
+        # Setup the root location of the project
         self.root_module_location = os.path.dirname(
             self.DEFAULT_SETTINGS["project"].__file__
         )
+        # Set the base location of the project
         self.target_project_base_location = os.path.dirname(config_path)
+        # Add that location to syspath
         sys.path.append(self.root_module_location)
 
         bt_module_list: list[BTModule] = []
 
+        # Read all the python files within the project
         file_list = self._get_files_recursive(self.root_module_location)
 
-        # Create modules
+        # Create modules and add them to module list (No relations between them yet)
         for file in file_list:
             try:
                 if not file.endswith("__init__.py"):
@@ -45,6 +50,7 @@ class BTGraph:
                 print(e)
                 continue
 
+        # Add relations between the modules (parent and child nodes)
         for module in bt_module_list:
             for parent_module in bt_module_list:
                 if module == parent_module:
@@ -53,12 +59,13 @@ class BTGraph:
                     parent_module.child_module.append(module)
                     module.parent_module = parent_module
 
+        # Find the root node
         self.root_module = next(
             filter(lambda e: e.parent_module is None, bt_module_list)
         )
         self.base_module = self.root_module
 
-        # Set BTFiles dependencies
+        # Add dependencies between all the files
         btf_map = self.get_all_bt_files_map()
 
         for bt_file in btf_map.values():
@@ -71,6 +78,7 @@ class BTGraph:
                 if module.file in btf_map
             ]
 
+        # Call the update app from the provided config file, to create constraints
         update(self)
 
     def get_bt_file(self, path: str) -> BTFile:
