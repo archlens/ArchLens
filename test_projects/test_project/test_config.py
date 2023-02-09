@@ -21,6 +21,8 @@ def update(graph: BTGraph):
     controller_module.cant_depend_on(core_module)
     controller_module.cant_depend_on(api_module)
     core_module.cant_depend_on(api_module)
+    
+    
 
 
 def settings():
