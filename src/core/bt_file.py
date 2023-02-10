@@ -1,12 +1,6 @@
 import astroid
 from astroid.exceptions import AstroidImportError
 
-from src.core.policies.FilePolicies import (
-    BTFilePolicy,
-    FilePolicyCantDependPolicy,
-    FilePolicyMustDependPolicy,
-)
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,7 +9,6 @@ if TYPE_CHECKING:
 
 class BTFile:
     label: str = ""
-    policies: list[BTFilePolicy] = None
     edge_to: list["BTFile"] = None
     ast = None
     module: "BTModule" = None
@@ -29,7 +22,6 @@ class BTFile:
             self.ast: astroid.Module = astroid.MANAGER.ast_from_module_name(code_path)
 
         self.edge_to = []
-        self.policies = []
         self.module = module
 
     @property
@@ -51,12 +43,6 @@ class BTFile:
             return None
         return "/".join(self.file.split("/")[:-1])
 
-    def validate(self) -> bool:
-        for policy in self.policies:
-            if not policy.validate(self.edge_to):
-                return False
-        return True
-
     def __rshift__(self, other):
         if isinstance(other, list):
             existing_edges = set(
@@ -70,14 +56,6 @@ class BTFile:
                 return
 
             self.edge_to.append(other)
-
-    def cant_depend_on(self, other):
-        policy = FilePolicyCantDependPolicy(other)
-        self.policies.append(policy)
-
-    def must_depend_on(self, other):
-        policy = FilePolicyMustDependPolicy(other)
-        self.policies.append(policy)
 
 
 def get_imported_modules(ast: astroid.Module, root_location: str):

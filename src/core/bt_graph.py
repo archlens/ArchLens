@@ -5,6 +5,7 @@ import os
 from src.core.bt_file import BTFile, get_imported_modules
 from src.core.bt_module import BTModule
 
+
 class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
     root_module_location: str = None
@@ -117,16 +118,6 @@ class BTGraph:
         code = compile(source, "config.py", "exec")
         exec(code, globals())
 
-    def validate_graph(self) -> bool:
-        for node in self.get_all_bt_files_map().values():
-            if not node.validate():
-                print(f"error in node {node.label}")
-                return False
-        for module in self.root_module.get_submodules_recursive():
-            if not module.validate():
-                print(f"error in module {module.name}")
-                return False
-        return True
 
 def setup():
     pass  # overridden by config file

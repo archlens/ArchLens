@@ -2,7 +2,6 @@ import astroid
 import os
 
 from src.core.bt_file import BTFile
-from src.core.policies.ModulePolicies import BTModulePolicy, ModulePolicyCantDepend
 
 
 class BTModule:
@@ -12,13 +11,11 @@ class BTModule:
     file_list: list["BTFile"] = None
 
     ast: astroid.Module = None
-    policies: list[BTModulePolicy] = None
 
     def __init__(self, file_path: str) -> None:
         self.ast = astroid.MANAGER.ast_from_file(file_path)
         self.child_module = []
         self.file_list = []
-        self.policies = []
 
     @property
     def name(self):
@@ -64,12 +61,3 @@ class BTModule:
         for child in self.file_list:
             dependencies.update(map(lambda e: e.module, child.edge_to))
         return dependencies
-
-    def validate(self) -> bool:
-        for policy in self.policies:
-            if not policy.validate():
-                return False
-        return True
-
-    def cant_depend_on(self, other: "BTModule"):
-        self.policies.append(ModulePolicyCantDepend(other, self))

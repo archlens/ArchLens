@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "CLI Render",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "${input:config_path}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "CLI help",
             "type": "python",
             "request": "launch",
@@ -14,47 +28,6 @@
             "args": [
                 "--help"
             ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "CLI Render",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/cli_interface.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "render",
-                "${input:config_path}",
-                "${input:render_type}"
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "CLI Validate",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/cli_interface.py",
-            "console": "integratedTerminal",
-            "args": [
-                "validate",
-                "${input:config_path}"
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Debug Sandbox",
-            "type": "python",
-            "request": "launch",
-            "program": "${workspaceFolder}/src/sandbox.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
@@ -71,16 +44,6 @@
                 "${workspaceFolder}/test_projects/qtile/qtile_config.py",
             ],
             "default": "${workspaceFolder}/test_projects/test_project/test_config.py",
-        },
-        {
-            "type": "pickString",
-            "id": "render_type",
-            "description": "What kind of rendering should take place",
-            "options": [
-                "module",
-                "file"
-            ],
-            "default": "module",
-        },
+        }
     ]
 }
