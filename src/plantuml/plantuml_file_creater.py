@@ -2,7 +2,7 @@
 import os
 from src.core.bt_module import BTModule
 
-def plantuml_diagram_creator_entire_domain(root_node, diagram_name):
+def plantuml_diagram_creator_entire_domain(root_node, diagram_name, save_location="./"):
     
     print("start")
     
@@ -16,7 +16,7 @@ def plantuml_diagram_creator_entire_domain(root_node, diagram_name):
     
     diagram_name = diagram_name.replace(" ", "_")
     
-    diagram_name_txt = diagram_name+".txt"
+    diagram_name_txt = save_location+diagram_name+".txt"
     
     if os.path.exists(diagram_name_txt):
         os.remove(diagram_name_txt)
@@ -77,11 +77,11 @@ def create_file(name):
 #"test_project/tp_src/api"
 #"test_project/tp_src/tp_core/tp_sub_core"
 #this would give the 2 sub-systems starting at api and tp_sub_core and how/if they relate in a drawing
-def plantuml_diagram_creator_sub_domains(root_node, diagram_name, list_of_subdomains):
+def plantuml_diagram_creator_sub_domains(root_node, diagram_name, list_of_subdomains, save_location="./"):
     
     diagram_type = "package "
     diagram_name = diagram_name.replace(" ", "_")
-    diagram_name_txt = diagram_name+"_filtered.txt"
+    diagram_name_txt = save_location+diagram_name+"_filtered.txt"
     
     que:Queue[BTModule] = Queue()
     que.enqueue(root_node)

@@ -1,7 +1,0 @@
-@startuml 
-package api
-package sub_api
-package sub_core
-api-->sub_api
-sub_core-->sub_api
-@enduml

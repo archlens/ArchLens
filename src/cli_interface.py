@@ -1,5 +1,4 @@
 import typer
-from diagrams import Diagram
 import os
 
 from src.core.bt_graph import BTGraph
@@ -25,21 +24,7 @@ def render(config_path: str, renderer: str):
     #testing filtered view
     views = ["test_project/tp_src/api", "test_project/tp_src/tp_core/sub_core"]
     
-    plantuml_diagram_creator_sub_domains(g.root_module, diagram_name, views)
-
-    
-
-
-
-@app.command()
-def validate(config_path: str):
-    g = BTGraph()
-    g.build_graph(config_path)
-    if not g.validate_graph():
-        exit(1)
-    else:
-        exit(0)
-
+    plantuml_diagram_creator_sub_domains(g.root_module, diagram_name, views, "./diagrams/")
 
 if __name__ == "__main__":
     app()

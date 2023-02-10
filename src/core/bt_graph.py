@@ -3,13 +3,7 @@ import sys
 import os
 
 from src.core.bt_file import BTFile, get_imported_modules
-import diagrams
-from diagrams.programming.language import Python as pythonNode
 from src.core.bt_module import BTModule
-
-from src.renderer.diagrams_render import file_view
-from src.renderer.diagrams_render import module_view
-
 
 class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
@@ -133,14 +127,6 @@ class BTGraph:
                 print(f"error in module {module.name}")
                 return False
         return True
-
-    def render_graph(self, type: str):
-        assert type in ["file", "module"]
-        if type == "file":
-            file_view.render(self)
-        if type == "module":
-            module_view.render(self)
-
 
 def setup():
     pass  # overridden by config file
