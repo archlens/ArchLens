@@ -1,6 +1,7 @@
 import astroid
 import sys
 import os
+import json
 
 from src.core.bt_file import BTFile, get_imported_modules
 from src.core.bt_module import BTModule
@@ -13,19 +14,12 @@ class BTGraph:
     root_module = None
     base_module = None
 
-    def build_graph(self, config_path: str):
-        # Read the config file and compile it creating a update and settings function
-        source_code = self._get_source_code(config_path)
-        self._compile_source_code(source_code, os.path.dirname(config_path))
-        self.DEFAULT_SETTINGS.update(settings())
+    def build_graph(self, config: dict):
+        config_path = config.get("_config_path")
+        self.root_module_location = os.path.join(config_path, config.get("rootFolder"))
+        self.target_project_base_location = config_path
 
-        # Setup the root location of the project
-        self.root_module_location = os.path.dirname(
-            self.DEFAULT_SETTINGS["project"].__file__
-        )
-        # Set the base location of the project
-        self.target_project_base_location = os.path.dirname(config_path)
-        # Add that location to syspath
+        sys.path.append(config_path)
         sys.path.append(self.root_module_location)
 
         bt_module_list: list[BTModule] = []
@@ -73,9 +67,6 @@ class BTGraph:
                 if module.file in btf_map
             ]
 
-        # Call the update app from the provided config file, to create constraints
-        update(self)
-
     def get_bt_file(self, path: str) -> BTFile:
         file_path = astroid.MANAGER.ast_from_module_name(path).file
         bt_file = self.get_all_bt_files_map()[file_path]
@@ -107,25 +98,3 @@ class BTGraph:
         file_list = [file for file in file_list]
 
         return file_list
-
-    def _get_source_code(self, path):
-        with open(path, "r") as file:
-            code_str = file.read()
-        return code_str
-
-    def _compile_source_code(self, source, config_folder):
-        sys.path.append(config_folder)
-        code = compile(source, "config.py", "exec")
-        exec(code, globals())
-
-
-def setup():
-    pass  # overridden by config file
-
-
-def settings():
-    pass  # overridden by config file
-
-
-def update():
-    pass  # overridden by config file

@@ -107,7 +107,7 @@ def plantuml_diagram_creator_sub_domains(
         f.write("@startuml \n")
         f.close()
 
-    while que.isEmpty() != True:
+    while not que.isEmpty():
 
         curr_node = que.dequeue()
 
@@ -127,7 +127,7 @@ def plantuml_diagram_creator_sub_domains(
     # adding all dependencies
     que.enqueue(root_node)
     node_tracker = {}
-    while que.isEmpty() != True:
+    while not que.isEmpty():
 
         curr_node: BTModule = que.dequeue()
 

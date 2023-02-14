@@ -1,6 +1,7 @@
 {
     "python.formatting.provider": "black",
     "cSpell.words": [
+        "jsonschema",
         "modname",
         "typer",
         "zeeguu"
@@ -9,5 +10,13 @@
     "python.linting.enabled": false,
     "python.linting.pylintEnabled": true,
     "python.linting.flake8Enabled": false,
-    "python.linting.banditEnabled": false
+    "python.linting.banditEnabled": false,
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/*/bt_config.json",
+            ],
+            "url": "./config.schema.json"
+        }
+    ]
 }
