@@ -1,0 +1,12 @@
+@startuml 
+package tp_src
+package "api"
+package "controller"
+package "tp_core"
+package "sub_api"
+package "parent:tp_core * module:tp_core"
+"api"-->"sub_api"
+"api"-->"tp_core"
+"tp_core"-->"parent:tp_core * module:tp_core"
+"tp_core"-->"controller"
+@enduml

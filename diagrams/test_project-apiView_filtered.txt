@@ -1,0 +1,5 @@
+@startuml 
+package "api"
+package "sub_api"
+"api"-->"sub_api"
+@enduml
