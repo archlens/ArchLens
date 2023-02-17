@@ -2,6 +2,6 @@
     "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
     "name": "",
     "rootFolder": "",
-    "SaveLocation": "./diagrams/",
+    "saveLocation": "./diagrams/",
     "views": {}
 }
