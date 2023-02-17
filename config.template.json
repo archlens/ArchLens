@@ -3,5 +3,10 @@
     "name": "",
     "rootFolder": "",
     "saveLocation": "./diagrams/",
-    "views": {}
+    "views": {
+        "completeView": {
+            "views": [],
+            "ignoreModules": []
+        }
+    }
 }
