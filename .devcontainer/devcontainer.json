@@ -1,5 +1,5 @@
 {
-	"name": "BT-diagrams",
+	"name": "MT-diagrams",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": ".."
@@ -17,6 +17,6 @@
 	"postCreateCommand": "pip install -r requirements.txt",
 	"runArgs": [
 		"--name",
-		"BT-diagrams"
+		"MT-diagrams"
 	]
 }
