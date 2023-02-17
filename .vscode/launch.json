@@ -12,6 +12,8 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
+                "render",
+                "--config-path",
                 "${input:config_path}"
             ],
             "env": {
@@ -39,11 +41,10 @@
             "id": "config_path",
             "description": "What config would you like to run",
             "options": [
-                "${workspaceFolder}/test_projects/zeeguu/zeeguu_config.py",
-                "${workspaceFolder}/test_projects/test_project/bt_config.json",
-                "${workspaceFolder}/test_projects/qtile/qtile_config.py",
+                "${workspaceFolder}/test_projects/test_project/mt_config.json",
+                "${workspaceFolder}/test_projects/test_project/test.json",
             ],
-            "default": "${workspaceFolder}/test_projects/test_project/bt_config.json",
+            "default": "${workspaceFolder}/test_projects/test_project/mt_config.json",
         }
     ]
 }

@@ -18,5 +18,6 @@
             ],
             "url": "./config.schema.json"
         }
-    ]
+    ],
+    "editor.formatOnSave": true
 }

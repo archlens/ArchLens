@@ -1,0 +1,12 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "name": "qtile",
+    "rootFolder": "libqtile",
+    "saveLocation": "./diagrams/",
+    "views": {
+        "completeView": {
+            "views": [],
+            "ignoreModules": []
+        }
+    }
+}

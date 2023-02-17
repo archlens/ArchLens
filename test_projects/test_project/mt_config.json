@@ -1,0 +1,12 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "name": "test project",
+    "rootFolder": "tp_src",
+    "saveLocation": "./diagrams/",
+    "views": {
+        "completeView": {
+            "views": [],
+            "ignoreModules": []
+        }
+    }
+}
