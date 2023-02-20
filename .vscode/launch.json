@@ -42,7 +42,7 @@
             "description": "What config would you like to run",
             "options": [
                 "${workspaceFolder}/test_projects/test_project/mt_config.json",
-                "${workspaceFolder}/test_projects/test_project/test.json",
+                "${workspaceFolder}/test_projects/zeeguu/mt_config.json",
             ],
             "default": "${workspaceFolder}/test_projects/test_project/mt_config.json",
         }

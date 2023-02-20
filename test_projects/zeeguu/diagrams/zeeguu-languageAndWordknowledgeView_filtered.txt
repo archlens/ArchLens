@@ -1,0 +1,9 @@
+@startuml 
+package "language"
+package "strategies"
+package "word_knowledge"
+"language"-->"language"
+"language"-->"strategies"
+"strategies"-->"word_knowledge"
+"strategies"-->"language"
+@enduml

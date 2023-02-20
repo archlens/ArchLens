@@ -1,0 +1,44 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "name": "zeeguu",
+    "github": {
+        "url": "",
+        "branch": ""
+    },
+    "rootFolder": "zeeguu",
+    "saveLocation": "./diagrams/",
+    "views": {
+        "entireView": {
+            "views": [],
+            "ignoreModules": [
+                "test",
+                "exercise",
+                "util",
+                "tool"
+            ]
+        },
+        "languageAndWordknowledgeView": {
+            "views": [
+                "core/language",
+                "core/model/word_knowledge"
+            ],
+            "ignoreModules": [
+                "test",
+                "exercise",
+                "util",
+                "tool"
+            ]
+        },
+        "coreView": {
+            "views": [
+                "core"
+            ],
+            "ignoreModules": [
+                "test",
+                "exercise",
+                "util",
+                "tool"
+            ]
+        }
+    }
+}
