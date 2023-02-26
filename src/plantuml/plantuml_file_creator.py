@@ -8,7 +8,7 @@ from pathlib import Path
 # "test_project/tp_src/tp_core/tp_sub_core"
 # this would give the 2 sub-systems starting at api and tp_sub_core and how/if they relate in a drawing
 def plantuml_diagram_creator_sub_domains(
-    root_node, diagram_name, list_of_subdomains, ignore_modules, save_location="./"
+    root_node, diagram_name, packages, ignore_packages, save_location="./"
 ):
     create_directory_if_not_exist(save_location)
 
@@ -30,7 +30,7 @@ def plantuml_diagram_creator_sub_domains(
 
     # adding root to the drawing IF its meant to be in there
 
-    if check_if_module_should_be_in_filtered_graph(root_node.path, list_of_subdomains):
+    if check_if_module_should_be_in_filtered_graph(root_node.path, packages):
         f = open(diagram_name_txt, "a")
         f.write("@startuml \n")
         f.write("title " + diagram_name + "\n")
@@ -48,11 +48,11 @@ def plantuml_diagram_creator_sub_domains(
         # adds all modules we want in our subgraph
         for child in curr_node.child_module:
             if child.path not in node_tracker and not ignore_modules_check(
-                ignore_modules, child.name
+                ignore_packages, child.name
             ):
                 duplicate_name_check(name_tracker, child)
                 if check_if_module_should_be_in_filtered_graph(
-                    child.path, list_of_subdomains
+                    child.path, packages
                 ):
                     f = open(diagram_name_txt, "a")
                     f.write(
@@ -77,7 +77,7 @@ def plantuml_diagram_creator_sub_domains(
         for child in curr_node.child_module:
             if (
                 child.path not in node_tracker_dependencies
-                and not ignore_modules_check(ignore_modules, child.name)
+                and not ignore_modules_check(ignore_packages, child.name)
             ):
                 que.enqueue(child)
                 node_tracker_dependencies[child.path] = True
@@ -86,12 +86,14 @@ def plantuml_diagram_creator_sub_domains(
         name_curr_node = get_name_for_module_duplicate_checker(curr_node)
 
         for dependency in dependencies:
-            if not ignore_modules_check(ignore_modules, dependency.name):
-                name_dependency = get_name_for_module_duplicate_checker(dependency)
+            if not ignore_modules_check(ignore_packages, dependency.name):
+                name_dependency = get_name_for_module_duplicate_checker(
+                    dependency
+                )
                 if check_if_module_should_be_in_filtered_graph(
-                    dependency.path, list_of_subdomains
+                    dependency.path, packages
                 ) and check_if_module_should_be_in_filtered_graph(
-                    curr_node.path, list_of_subdomains
+                    curr_node.path, packages
                 ):
                     # this if statement is made so that we dont point to ourselves
                     if name_curr_node != name_dependency:

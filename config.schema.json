@@ -28,18 +28,19 @@
                     "description": "The name of the view",
                     "type": "object",
                     "properties": {
-                        "views": {
+                        "packages": {
+                            "description": "The packages to include in the view. Leave empty to include all packages",
                             "type": "array",
                             "items": {
                                 "type": "string"
                             }
                         },
-                        "ignoreModules": {
+                        "ignorePackages": {
                             "type": "array",
                             "items": {
                                 "type": "string"
                             },
-                            "description": "Defines the modules to ignore"
+                            "description": "Defines the packages to ignore"
                         }
                     }
                 }

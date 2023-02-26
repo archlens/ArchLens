@@ -9,8 +9,8 @@
     "saveLocation": "./diagrams/",
     "views": {
         "entireView": {
-            "views": [],
-            "ignoreModules": [
+            "packages": [],
+            "ignorePackages": [
                 "test",
                 "exercise",
                 "util",
@@ -18,11 +18,11 @@
             ]
         },
         "languageAndWordknowledgeView": {
-            "views": [
+            "packages": [
                 "core/language",
                 "core/model/word_knowledge"
             ],
-            "ignoreModules": [
+            "ignorePackages": [
                 "test",
                 "exercise",
                 "util",
@@ -30,10 +30,10 @@
             ]
         },
         "coreView": {
-            "views": [
+            "packages": [
                 "core"
             ],
-            "ignoreModules": [
+            "ignorePackages": [
                 "test",
                 "exercise",
                 "util",

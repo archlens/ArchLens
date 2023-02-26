@@ -5,8 +5,8 @@
     "saveLocation": "./diagrams/",
     "views": {
         "completeView": {
-            "views": [],
-            "ignoreModules": []
+            "packages": [],
+            "ignorePackages": []
         }
     }
 }
