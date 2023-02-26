@@ -16,3 +16,4 @@ flake8
 requests
 jsonschema
 gitpython
+six

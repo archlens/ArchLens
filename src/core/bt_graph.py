@@ -46,7 +46,7 @@ class BTGraph:
             for parent_module in bt_module_list:
                 if module == parent_module:
                     continue
-                if parent_module.path == "/".join(module.path.split("/")[:-1]):
+                if parent_module.path == os.path.dirname(module.path):
                     parent_module.child_module.append(module)
                     module.parent_module = parent_module
 
