@@ -1,1 +1,0 @@
-FORMAT_ARGB32: int
