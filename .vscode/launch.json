@@ -21,6 +21,22 @@
             }
         },
         {
+            "name": "CLI Render diff",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "render-diff",
+                "--config-path",
+                "${input:config_path}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "CLI help",
             "type": "python",
             "request": "launch",
@@ -43,6 +59,7 @@
             "options": [
                 "${workspaceFolder}/test_projects/test_project/mt_config.json",
                 "${workspaceFolder}/test_projects/zeeguu/mt_config.json",
+                "${workspaceFolder}/test_projects/api/mt_config.json",
             ],
             "default": "${workspaceFolder}/test_projects/test_project/mt_config.json",
         }

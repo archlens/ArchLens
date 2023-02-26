@@ -19,8 +19,8 @@ class BTGraph:
         self.root_module_location = os.path.join(config_path, config.get("rootFolder"))
         self.target_project_base_location = config_path
 
-        sys.path.append(config_path)
-        sys.path.append(self.root_module_location)
+        sys.path.insert(0, config_path)
+        sys.path.insert(1, self.root_module_location)
 
         bt_module_list: list[BTModule] = []
 
@@ -66,6 +66,9 @@ class BTGraph:
                 for module in imported_modules
                 if module.file in btf_map
             ]
+
+        sys.path = sys.path[2:]
+        astroid.manager.AstroidManager().clear_cache()
 
     def get_bt_file(self, path: str) -> BTFile:
         file_path = astroid.MANAGER.ast_from_module_name(path).file

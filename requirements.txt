@@ -15,4 +15,4 @@ plantuml
 flake8
 requests
 jsonschema
-plantuml
+gitpython

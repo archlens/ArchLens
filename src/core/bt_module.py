@@ -7,7 +7,7 @@ from src.core.bt_file import BTFile
 class BTModule:
     parent_module: "BTModule" = None
     child_module: list["BTModule"] = None
-    
+
     name_if_duplicate_exists = None
 
     file_list: list["BTFile"] = None
