@@ -68,4 +68,4 @@ The CLI tool has four available commands:
 
 - `mt-diagrams render-diff`: This command generates a package diagram highlighting differences between the working branch and the specified branch in the config file. This command is useful for comparing package dependencies between different branches in a project.
 
-- `mt-diagrams create-config`: This command generates a basic configuration file defining a view that showcases all packages included in the system. This command is useful for quickly generating a configuration file to get started with the tool. This command should be run on the root of your project
+- `mt-diagrams create-config`: This command generates a basic configuration file defining a view that showcases all packages included in the system. This command is useful for quickly generating a configuration file to get started with the tool. This command should be run in the root of your project
