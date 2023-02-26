@@ -7,7 +7,7 @@ For illustration purposes, we'll use the [Zeeguu](https://github.com/zeeguu/api)
 ![Zeeguu core view](.github/readme/zeeguu-coreView.png)
 
 
-In addition, the system can identify and highlight the differences between two branches, including added or removed dependencies, as well as created or deleted packages.
+In addition, the system can identify and highlight the differences between your working branch and a specified remote branch, including added or removed dependencies, as well as created or deleted packages.
 
 To demonstrate this functionality, take a look at the following view that illustrates the differences between two branches in the Zeeguu project.
 
@@ -66,6 +66,6 @@ The CLI tool has four available commands:
 
 - `mt-diagrams render`: This command generates a package diagram based on the configuration file. This is the main command used to generate diagrams based on the provided configuration file.
 
-- `mt-diagrams render-diff`: This command generates a package diagram highlighting differences between two specified branches. This command is useful for comparing package dependencies between different branches in a project.
+- `mt-diagrams render-diff`: This command generates a package diagram highlighting differences between the working branch and the specified branch in the config file. This command is useful for comparing package dependencies between different branches in a project.
 
-- `mt-diagrams create-config`: This command generates a basic configuration file defining a view that showcases all packages included in the system. This command is useful for quickly generating a configuration file to get started with the tool.
+- `mt-diagrams create-config`: This command generates a basic configuration file defining a view that showcases all packages included in the system. This command is useful for quickly generating a configuration file to get started with the tool. This command should be run on the root of your project
