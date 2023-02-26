@@ -14,7 +14,7 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash ./.devcontainer/postCreateScript.sh",
+	"postCreateCommand": "source ./.devcontainer/postCreateScript.sh",
 	"runArgs": [
 		"--name",
 		"MT-diagrams"
