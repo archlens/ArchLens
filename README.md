@@ -17,7 +17,7 @@ To demonstrate this functionality, take a look at the following view that illust
 
 To install mt-diagrams, simply use the pip package manager by running the following command:
 
-`pip install mt-diagrams --user`
+`pip install mt-diagrams`
 
 This will download and install the necessary files and dependencies needed for mt-diagrams to run properly.
 
