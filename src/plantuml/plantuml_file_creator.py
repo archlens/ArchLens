@@ -2,6 +2,7 @@ import os
 from src.core.bt_module import BTModule
 from pathlib import Path
 import fileinput
+import sys
 
 
 # list of subdomains is a set of strings, could be:
@@ -63,8 +64,12 @@ def plantuml_diagram_creator_sub_domains(
             if child.path not in node_tracker and not ignore_modules_check(
                 ignore_packages, child.name
             ):
-                duplicate_name_check(name_tracker, child, node_tracker, None, True)
-                if check_if_module_should_be_in_filtered_graph(child.path, packages):
+                duplicate_name_check(
+                    name_tracker, child, node_tracker, None, True
+                )
+                if check_if_module_should_be_in_filtered_graph(
+                    child.path, packages
+                ):
                     f = open(diagram_name_txt, "a")
                     f.write(
                         diagram_type
@@ -100,7 +105,9 @@ def plantuml_diagram_creator_sub_domains(
 
         for dependency in dependencies:
             if not ignore_modules_check(ignore_packages, dependency.name):
-                name_dependency = get_name_for_module_duplicate_checker(dependency)
+                name_dependency = get_name_for_module_duplicate_checker(
+                    dependency
+                )
                 if check_if_module_should_be_in_filtered_graph(
                     dependency.path, packages
                 ) and check_if_module_should_be_in_filtered_graph(
@@ -110,7 +117,9 @@ def plantuml_diagram_creator_sub_domains(
                     if name_curr_node != name_dependency:
                         # used to detect dependency changes
                         if name_curr_node in dependencies_map:
-                            dependency_list: list = dependencies_map[name_curr_node]
+                            dependency_list: list = dependencies_map[
+                                name_curr_node
+                            ]
                             dependency_list.append(dependency)
                             dependencies_map[name_curr_node] = dependency_list
                         else:
@@ -145,8 +154,9 @@ def plantuml_diagram_creator_sub_domains(
         while not que.isEmpty():
             curr_node: BTModule = que.dequeue()
             for child in curr_node.child_module:
-                if child.path not in bfs_node_tracker and not ignore_modules_check(
-                    ignore_packages, child.name
+                if (
+                    child.path not in bfs_node_tracker
+                    and not ignore_modules_check(ignore_packages, child.name)
                 ):
                     que.enqueue(child)
                     bfs_node_tracker[child.path] = True
@@ -160,8 +170,11 @@ def plantuml_diagram_creator_sub_domains(
                         main_nodes[child.name] = child
 
                         # this will be true, if the package has been deleted
-                        if child.name not in name_tracker and not ignore_modules_check(
-                            ignore_packages, child.name
+                        if (
+                            child.name not in name_tracker
+                            and not ignore_modules_check(
+                                ignore_packages, child.name
+                            )
                         ):
                             f = open(diagram_name_txt, "a")
                             f.write(
@@ -206,7 +219,9 @@ def plantuml_diagram_creator_sub_domains(
                 name_of_child = get_name_for_module_duplicate_checker(child)
                 if (
                     child.path not in node_tracker_dependencies
-                    and not ignore_modules_check(ignore_packages, name_of_child)
+                    and not ignore_modules_check(
+                        ignore_packages, name_of_child
+                    )
                 ):
                     que.enqueue(child)
                     node_tracker_dependencies[child.path] = True
@@ -222,7 +237,9 @@ def plantuml_diagram_creator_sub_domains(
 
             for dependency in list_of_red_dependencies:
                 if not ignore_modules_check(ignore_packages, dependency.name):
-                    name_dependency = get_name_for_module_duplicate_checker(dependency)
+                    name_dependency = get_name_for_module_duplicate_checker(
+                        dependency
+                    )
                     if check_if_module_should_be_in_filtered_graph(
                         dependency.path, packages
                     ) and check_if_module_should_be_in_filtered_graph(
@@ -249,7 +266,9 @@ def plantuml_diagram_creator_sub_domains(
 
             list_of_old_dependencies = []
             if dependency in dependencies_map_main_graph:
-                list_of_old_dependencies = dependencies_map_main_graph[dependency]
+                list_of_old_dependencies = dependencies_map_main_graph[
+                    dependency
+                ]
 
             for dep in list_of_new_dependencies:
                 not_found_partner = True
@@ -258,10 +277,18 @@ def plantuml_diagram_creator_sub_domains(
                         not_found_partner = False
                         break
                 if not_found_partner:
-                    for line in fileinput.input(diagram_name_txt, inplace=True):
+                    for line in fileinput.input(
+                        diagram_name_txt, inplace=True
+                    ):
                         print(
                             line.replace(
-                                '"' + dependency + '"' + "-->" + '"' + dep.name + '"',
+                                '"'
+                                + dependency
+                                + '"'
+                                + "-->"
+                                + '"'
+                                + dep.name
+                                + '"',
                                 '"'
                                 + dependency
                                 + '"'
@@ -289,7 +316,9 @@ def plantuml_diagram_creator_sub_domains(
     os.remove(diagram_name_txt)
 
 
-def find_red_dependencies(new_dependencies, node_name, old_dependencies: set[BTModule]):
+def find_red_dependencies(
+    new_dependencies, node_name, old_dependencies: set[BTModule]
+):
     res = []
 
     if node_name not in new_dependencies:
@@ -309,7 +338,8 @@ def find_red_dependencies(new_dependencies, node_name, old_dependencies: set[BTM
 
 
 def create_file(name):
-    os.system("python -m plantuml " + name)
+    python_executable = sys.executable
+    os.system(python_executable + " -m plantuml " + name)
 
 
 def get_name_for_module_duplicate_checker(module: BTModule):
@@ -330,13 +360,17 @@ def duplicate_name_check(
         if not curr_node.name_if_duplicate_exists:
             if curr_node.name in node_names:
                 curr_node_split = split_path(curr_node.path)
-                curr_node_name = curr_node_split[-2] + "/" + curr_node_split[-1]
+                curr_node_name = (
+                    curr_node_split[-2] + "/" + curr_node_split[-1]
+                )
                 curr_node.name_if_duplicate_exists = curr_node_name
     else:
         if first:
             if curr_node.name in node_names:
                 curr_node_split = split_path(curr_node.path)
-                curr_node_name = curr_node_split[-2] + "/" + curr_node_split[-1]
+                curr_node_name = (
+                    curr_node_split[-2] + "/" + curr_node_split[-1]
+                )
                 curr_node.name_if_duplicate_exists = curr_node_name
 
 
