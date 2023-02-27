@@ -1,0 +1,16 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "name": "mt-diagrams",
+    "rootFolder": "src",
+    "github": {
+        "url": "https://github.com/Perlten/MT-diagrams",
+        "branch": "master"
+    },
+    "saveLocation": "./diagrams/",
+    "views": {
+        "completeView": {
+            "packages": [],
+            "ignorePackages": []
+        }
+    }
+}

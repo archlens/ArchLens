@@ -5,3 +5,5 @@ ENV SHELL /bin/bash
 RUN sudo apk add python3
 RUN sudo apk add py3-pip
 
+
+ENV PATH="${PATH}:/home/perlt/.local/bin"
