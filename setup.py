@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="MT-diagrams",
-    version="0.0.5",
+    version="0.0.6",
     description="Thesis project",
     author="Nikolai Perlt",
     author_email="npe@itu.dk",
@@ -20,6 +20,7 @@ setup(
     ],
     classifiers=[
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.9",
     ],
     entry_points={
         "console_scripts": [
