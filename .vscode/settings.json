@@ -7,9 +7,9 @@
         "zeeguu"
     ],
     "python.analysis.typeCheckingMode": "off",
-    "python.linting.enabled": false,
-    "python.linting.pylintEnabled": true,
-    "python.linting.flake8Enabled": false,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
     "python.linting.banditEnabled": false,
     "json.schemas": [
         {
@@ -19,5 +19,8 @@
             "url": "./config.schema.json"
         }
     ],
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "python.linting.flake8Args": [
+        "--max-line-length=120"
+    ]
 }

@@ -11,7 +11,9 @@ from src.core.bt_graph import BTGraph
 
 from src.plantuml.fetch_git import fetch_git_repo
 
-from src.plantuml.plantuml_file_creator import plantuml_diagram_creator_sub_domains
+from src.plantuml.plantuml_file_creator import (
+    plantuml_diagram_creator_sub_domains,
+)
 
 app = typer.Typer(add_completion=True)
 
@@ -105,8 +107,6 @@ def read_config_file(config_path):
 def main():
     app()
 
-
-import sys
 
 if __name__ == "__main__":
     main()

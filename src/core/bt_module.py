@@ -36,9 +36,7 @@ class BTModule:
 
         for file in files:
             bt_file = BTFile(label=file.split("/")[-1], module=self)
-            bt_file.ast = astroid.MANAGER.ast_from_file(
-                os.path.join(self.path, file)
-            )
+            bt_file.ast = astroid.MANAGER.ast_from_file(os.path.join(self.path, file))
             self.file_list.append(bt_file)
 
     def get_files_recursive(self) -> list[BTFile]:
@@ -57,9 +55,7 @@ class BTModule:
         if self.parent_module is None:
             return []
         parent_module_list = [self.parent_module]
-        parent_module_list.extend(
-            self.parent_module.get_parent_module_recursive()
-        )
+        parent_module_list.extend(self.parent_module.get_parent_module_recursive())
         return parent_module_list
 
     def get_module_dependencies(self):
