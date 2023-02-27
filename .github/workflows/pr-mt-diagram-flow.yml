@@ -1,6 +1,8 @@
 name: MT-diagrams
+
 on:
   - pull_request
+
 jobs:
   upload-MT-diagrams:
     runs-on: ubuntu-latest
@@ -13,6 +15,6 @@ jobs:
       - id: mt-diagrams
         uses: Perlten/mt-gh-action@test
         with:
-          config-path: "./mt_config.json"
+          config-path: "mt_config.json"
           imgur-secret-id: ${{ secrets.IMGUR_CLIENT_ID }}
-          render-diff: "true"
+          render-diff: "false"
