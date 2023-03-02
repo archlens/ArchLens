@@ -66,7 +66,7 @@ For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`
     Here is an example of how to use ignorePackages:
 
     Example:
-    
+    ```json
     ignorePackages: [
 
         - "api/car",  // This removes the package at the path "api/car" from the diagram
@@ -74,7 +74,7 @@ For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`
         - "*test*"     // This will remove any package with the name "test" in its path from the diagram
     
     ]
-
+    ```
     
 
     - `usePackagePathAsLabel`:

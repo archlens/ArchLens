@@ -342,9 +342,9 @@ def get_name_for_module_duplicate_checker(module: BTModule, path, diff_graph=Fal
         split_mod = split_path(module.path)
 
         if diff_graph:
-            module_split = "/".join(split_mod[3:])
+            module_split = "/".join(split_mod[3:])  # TODO
         else:
-            module_split = "/".join(split_mod[5:])
+            module_split = "/".join(split_mod[5:])  # TODO
 
         return module_split
     if module.name_if_duplicate_exists is not None:
@@ -406,7 +406,7 @@ def ignore_modules_check(list_ignore, module, root_folder):
                 # case for if you match directly on a path
                 # e.g if you type zeeguu/core, this would remove the zeeguu/core module
                 split_mod = split_path(module)
-                module = "/".join(split_mod[3:])
+                module = "/".join(split_mod[3:])  # TODO
                 if word == module:
                     return True
     return False
@@ -419,7 +419,7 @@ def check_if_module_should_be_in_filtered_graph(
         return True
     if compare_graph_root is not None:
         split_mod = split_path(module)
-        module = "/".join(split_mod[3:])
+        module = "/".join(split_mod[3:])  # TODO
     for module_curr in allowed_modules:
         if module_curr in module:
             return True
