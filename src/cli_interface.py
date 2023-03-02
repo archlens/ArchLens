@@ -39,6 +39,7 @@ def render(config_path: str = "mt_config.json"):
             views["ignorePackages"],
             None,
             config.get("rootFolder"),
+            views.get("usePackagePathAsLabel", True),
             save_location=config.get("saveLocation"),
         )
 
@@ -77,6 +78,7 @@ def render_diff(config_path: str = "mt_config.json"):
                 views["ignorePackages"],
                 g_git.root_module,
                 config.get("rootFolder"),
+                views.get("usePackagePathAsLabel", True),
                 save_location=config.get("saveLocation"),
             )
 

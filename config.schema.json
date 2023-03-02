@@ -59,6 +59,10 @@
                                 "type": "string"
                             },
                             "description": "Defines the packages to ignore"
+                        },
+                        "usePackagePathAsLabel": {
+                            "type": "boolean",
+                            "description": "If true, paths of each package will be displayed, if false only package name will be displayed"
                         }
                     }
                 }
