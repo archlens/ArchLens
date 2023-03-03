@@ -6,6 +6,7 @@ import jsonschema
 import tempfile
 import shutil
 from pathlib import Path
+from src.utils.path_manager_singleton import PathManagerSingleton
 
 from src.core.bt_graph import BTGraph
 
@@ -58,6 +59,10 @@ def render_diff(config_path: str = "mt_config.json"):
             shutil.copyfile(config_path, tmp_dir + "/mt_config.json")
 
         config_git = read_config_file(tmp_dir + "/mt_config.json")
+
+        path_manager = PathManagerSingleton()
+        path_manager.setup(config, config_git)
+
         g_git = BTGraph()
         g_git.build_graph(config_git)
 
@@ -103,6 +108,10 @@ def read_config_file(config_path):
     jsonschema.validate(instance=config, schema=schema)
 
     config["_config_path"] = os.path.dirname(config_path)
+
+    mt_path_manager = PathManagerSingleton()
+    mt_path_manager.setup(config)
+
     return config
 
 

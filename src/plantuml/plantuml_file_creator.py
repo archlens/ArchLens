@@ -3,12 +3,14 @@ from src.core.bt_module import BTModule
 from pathlib import Path
 import fileinput
 import sys
-
+from src.utils.path_manager_singleton import PathManagerSingleton
 
 # list of subdomains is a set of strings, could be:
 # "test_project/tp_src/api"
 # "test_project/tp_src/tp_core/tp_sub_core"
 # this would give the 2 sub-systems starting at api and tp_sub_core and how/if they relate in a drawing
+
+
 def plantuml_diagram_creator_sub_domains(
     root_node,
     diagram_name,
@@ -270,6 +272,11 @@ def plantuml_diagram_creator_sub_domains(
                 list_of_old_dependencies = dependencies_map_main_graph[dependency]
 
             for dep in list_of_new_dependencies:
+                path_manager = PathManagerSingleton()
+                dep_name = path_manager.get_relative_path_from_project_root(dep.path)
+                if not path_view:
+                    dep_name = dep.name
+
                 not_found_partner = True
                 for dep_old in list_of_old_dependencies:
                     if dep.name == dep_old.name:
@@ -279,14 +286,14 @@ def plantuml_diagram_creator_sub_domains(
                     diff_checker = True
                     for line in fileinput.input(diagram_name_txt, inplace=True):
                         print(
-                            line.replace(
-                                '"' + dependency + '"' + "-->" + '"' + dep.name + '"',
+                            line.replace(  # TOOD: this replace does not work
+                                '"' + dependency + '"' + "-->" + '"' + dep_name + '"',
                                 '"'
                                 + dependency
                                 + '"'
                                 + "-->"
                                 + '"'
-                                + dep.name
+                                + dep_name
                                 + '" #green',
                             ),
                             end="",
@@ -309,8 +316,8 @@ def plantuml_diagram_creator_sub_domains(
     elif compare_graph_root is None:
         create_file(diagram_name_txt)
 
-    # comment in when done, but leaving it in atm for developing purposes
-    os.remove(diagram_name_txt)
+    if not os.getenv("MT_DEBUG"):
+        os.remove(diagram_name_txt)
 
 
 def find_red_dependencies(new_dependencies, node_name, old_dependencies: set[BTModule]):
@@ -339,13 +346,8 @@ def create_file(name):
 
 def get_name_for_module_duplicate_checker(module: BTModule, path, diff_graph=False):
     if path:
-        split_mod = split_path(module.path)
-
-        if diff_graph:
-            module_split = "/".join(split_mod[3:])  # TODO
-        else:
-            module_split = "/".join(split_mod[5:])  # TODO
-
+        path_manager = PathManagerSingleton()
+        module_split = path_manager.get_relative_path_from_project_root(module.path)
         return module_split
     if module.name_if_duplicate_exists is not None:
         return module.name_if_duplicate_exists
@@ -387,7 +389,26 @@ def was_node_in_original_graph(node: BTModule, path_tracker, root_folder):
         return False
 
 
-def ignore_modules_check(list_ignore, module, root_folder):
+def ignore_modules_check(
+    list_ignore: list[str], module, root_folder
+):  # TODO: remove root_folder if we go this direction
+    path_manager = PathManagerSingleton()
+    module = path_manager.get_relative_path_from_project_root(module, True)
+    for ignore_package in list_ignore:
+        if (
+            ignore_package.startswith("*")
+            and ignore_package.endswith("*")
+            and ignore_package[1:-1] in module
+        ):
+            return True
+
+        if module.startswith(ignore_package):
+            return True
+
+    return False
+
+
+def old_ignore_modules_check(list_ignore, module, root_folder):
     index = module.rindex(root_folder)
     module = module[index:]
     for word in list_ignore:
@@ -406,7 +427,7 @@ def ignore_modules_check(list_ignore, module, root_folder):
                 # case for if you match directly on a path
                 # e.g if you type zeeguu/core, this would remove the zeeguu/core module
                 split_mod = split_path(module)
-                module = "/".join(split_mod[3:])  # TODO
+                module = "/".join(split_mod[3:])
                 if word == module:
                     return True
     return False
@@ -418,8 +439,8 @@ def check_if_module_should_be_in_filtered_graph(
     if len(allowed_modules) == 0:
         return True
     if compare_graph_root is not None:
-        split_mod = split_path(module)
-        module = "/".join(split_mod[3:])  # TODO
+        path_manager = PathManagerSingleton()
+        module = path_manager.get_relative_path_from_project_root(module)
     for module_curr in allowed_modules:
         if module_curr in module:
             return True
