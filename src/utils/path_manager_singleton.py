@@ -19,23 +19,29 @@ class PathManagerSingleton:
         self._set_path(config, git_config=False)
         self._set_path(git_config, git_config=True)
 
-    def get_relative_path_from_project_root(self, path: str, append_root_folder=False):
+    def get_relative_path_from_project_root(
+        self, path: str, append_root_folder=False
+    ):
         if self._config_path is None:
-            raise Exception("Should call setup method before any other function")
+            raise Exception(
+                "Should call setup method before any other function"
+            )
         try:
-            config_path = (
+            current_config_path = (
                 self._config_root_folder_path
                 if append_root_folder
                 else self._config_path
             )
-            return Path(path).relative_to(config_path).as_posix()
+            print(f"1 -----> path:{path}   config_path: {current_config_path}")
+            return Path(path).relative_to(current_config_path).as_posix()
         except Exception:
-            config_path = (
+            current_config_path = (
                 self._git_root_folder_path
                 if append_root_folder
                 else self._git_config_path
             )
-            return Path(path).relative_to(config_path).as_posix()
+            print(f"2 -----> path:{path}   config_path: {current_config_path}")
+            return Path(path).relative_to(current_config_path).as_posix()
 
     def _set_path(self, config: dict, git_config: bool):
         if config is None:
@@ -46,7 +52,7 @@ class PathManagerSingleton:
         config_path = config_path.as_posix()
         config_root_folder_path.as_posix()
 
-        if git_config:
+        if not git_config:
             self._config_path = config_path
             self._config_root_folder_path = config_root_folder_path
         else:

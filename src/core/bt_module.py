@@ -29,9 +29,7 @@ class BTModule:
 
     def add_files(self):
         files = [
-            element
-            for element in os.listdir(self.path)
-            if element.endswith(".py") and "__" not in element
+            element for element in os.listdir(self.path) if element.endswith(".py")
         ]
 
         for file in files:
