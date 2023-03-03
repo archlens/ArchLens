@@ -37,8 +37,7 @@ def render(config_path: str = "mt_config.json"):
 
     for view_name, views in config.get("views").items():
         formatted_views = [
-            os.path.join(config.get("rootFolder"), view)
-            for view in views["packages"]
+            os.path.join(config.get("rootFolder"), view) for view in views["packages"]
         ]
         plantuml_diagram_creator_sub_domains(
             g.root_module,
@@ -59,9 +58,7 @@ def render_diff(config_path: str = "mt_config.json"):
         print("Created temporary directory:", tmp_dir)
         config = read_config_file(config_path)
 
-        fetch_git_repo(
-            tmp_dir, config["github"]["url"], config["github"]["branch"]
-        )
+        fetch_git_repo(tmp_dir, config["github"]["url"], config["github"]["branch"])
 
         my_file = Path(os.path.join(tmp_dir, config_path))
         if not my_file.is_file():

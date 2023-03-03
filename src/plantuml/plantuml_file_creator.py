@@ -70,7 +70,7 @@ def plantuml_diagram_creator_sub_domains(
                 node_tracker[child.path] = child
                 name_tracker[child.name] = child
 
-                if not ignore_modules_check(ignore_packages, child.path, root_folder):
+                if not ignore_modules_check(ignore_packages, child.path):
                     if check_if_module_should_be_in_filtered_graph(
                         child.path, packages
                     ):
@@ -100,11 +100,9 @@ def plantuml_diagram_creator_sub_domains(
         dependencies: set[BTModule] = curr_node.get_module_dependencies()
         name_curr_node = get_name_for_module_duplicate_checker(curr_node, path_view)
 
-        if not ignore_modules_check(ignore_packages, curr_node.path, root_folder):
+        if not ignore_modules_check(ignore_packages, curr_node.path):
             for dependency in dependencies:
-                if not ignore_modules_check(
-                    ignore_packages, dependency.path, root_folder
-                ):
+                if not ignore_modules_check(ignore_packages, dependency.path):
                     name_dependency = get_name_for_module_duplicate_checker(
                         dependency, path_view
                     )
@@ -156,9 +154,7 @@ def plantuml_diagram_creator_sub_domains(
                 if child.path not in bfs_node_tracker:
                     que.enqueue(child)
                     bfs_node_tracker[child.path] = True
-                    if not ignore_modules_check(
-                        ignore_packages, child.path, root_folder
-                    ):
+                    if not ignore_modules_check(ignore_packages, child.path):
                         duplicate_name_check(
                             main_nodes, child, node_tracker, root_folder, True
                         )
@@ -172,7 +168,7 @@ def plantuml_diagram_creator_sub_domains(
                             if (
                                 child.name not in name_tracker
                                 and not ignore_modules_check(
-                                    ignore_packages, child.path, root_folder
+                                    ignore_packages, child.path
                                 )
                             ):
                                 diff_checker = True
@@ -192,7 +188,7 @@ def plantuml_diagram_creator_sub_domains(
             # children from original graph
             if check_if_module_should_be_in_filtered_graph(
                 child.path, packages
-            ) and not ignore_modules_check(ignore_packages, child.path, root_folder):
+            ) and not ignore_modules_check(ignore_packages, child.path):
                 node: BTModule = child
                 name = node.name
                 if name not in main_nodes:
@@ -222,7 +218,7 @@ def plantuml_diagram_creator_sub_domains(
                     que.enqueue(child)
                     node_tracker_dependencies[child.path] = True
 
-            if not ignore_modules_check(ignore_packages, curr_node.path, root_folder):
+            if not ignore_modules_check(ignore_packages, curr_node.path):
 
                 name_curr_node = get_name_for_module_duplicate_checker(
                     curr_node, path_view, True
@@ -390,7 +386,7 @@ def was_node_in_original_graph(node: BTModule, path_tracker, root_folder):
 
 
 def ignore_modules_check(
-    list_ignore: list[str], module, root_folder
+    list_ignore: list[str], module
 ):  # TODO: remove root_folder if we go this direction
     path_manager = PathManagerSingleton()
     module = path_manager.get_relative_path_from_project_root(module, True)

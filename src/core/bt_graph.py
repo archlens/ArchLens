@@ -15,9 +15,7 @@ class BTGraph:
 
     def build_graph(self, config: dict):
         config_path = config.get("_config_path")
-        self.root_module_location = os.path.join(
-            config_path, config.get("rootFolder")
-        )
+        self.root_module_location = os.path.join(config_path, config.get("rootFolder"))
         self.target_project_base_location = config_path
 
         sys.path.insert(0, config_path)
@@ -93,15 +91,10 @@ class BTGraph:
         self.root_module = self.get_bt_module(path)
 
     def get_all_bt_files_map(self) -> dict[str, BTFile]:
-        return {
-            btf.file: btf for btf in self.root_module.get_files_recursive()
-        }
+        return {btf.file: btf for btf in self.root_module.get_files_recursive()}
 
     def get_all_bt_modules_map(self) -> dict[str, BTModule]:
-        return {
-            btm.path: btm
-            for btm in self.root_module.get_submodules_recursive()
-        }
+        return {btm.path: btm for btm in self.root_module.get_submodules_recursive()}
 
     def _get_files_recursive(self, path: str) -> list[str]:
         file_list = []
