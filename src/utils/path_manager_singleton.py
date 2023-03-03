@@ -32,7 +32,6 @@ class PathManagerSingleton:
                 if append_root_folder
                 else self._config_path
             )
-            print(f"1 -----> path:{path}   config_path: {current_config_path}")
             return Path(path).relative_to(current_config_path).as_posix()
         except Exception:
             current_config_path = (
@@ -40,7 +39,6 @@ class PathManagerSingleton:
                 if append_root_folder
                 else self._git_config_path
             )
-            print(f"2 -----> path:{path}   config_path: {current_config_path}")
             return Path(path).relative_to(current_config_path).as_posix()
 
     def _set_path(self, config: dict, git_config: bool):

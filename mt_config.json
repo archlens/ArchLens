@@ -10,8 +10,7 @@
     "views": {
         "completeView": {
             "packages": [],
-            "ignorePackages": [],
-            "usePackagePathAsLabel": true
+            "ignorePackages": []
         }
     }
 }

@@ -7,6 +7,7 @@ import tempfile
 import shutil
 from pathlib import Path
 from src.utils.path_manager_singleton import PathManagerSingleton
+from src.utils.functions import verify_config_options
 
 from src.core.bt_graph import BTGraph
 
@@ -24,8 +25,13 @@ def render(config_path: str = "mt_config.json"):
 
     config = read_config_file(config_path)
 
+    mt_path_manager = PathManagerSingleton()
+    mt_path_manager.setup(config)
+
     g = BTGraph()
     g.build_graph(config)
+
+    verify_config_options(config, g)
 
     project_name = config.get("name")
 
@@ -68,9 +74,11 @@ def render_diff(config_path: str = "mt_config.json"):
 
         g_git = BTGraph()
         g_git.build_graph(config_git)
+        verify_config_options(config_git, g_git)
 
         g = BTGraph()
         g.build_graph(config)
+        verify_config_options(config, g)
 
         project_name = config.get("name")
 
@@ -110,10 +118,7 @@ def read_config_file(config_path):
 
     jsonschema.validate(instance=config, schema=schema)
 
-    config["_config_path"] = os.path.dirname(config_path)
-
-    mt_path_manager = PathManagerSingleton()
-    mt_path_manager.setup(config)
+    config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
 
     return config
 
