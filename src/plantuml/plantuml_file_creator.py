@@ -232,9 +232,7 @@ def plantuml_diagram_creator_sub_domains(
                 )
 
                 for dependency in list_of_red_dependencies:
-                    if not ignore_modules_check(
-                        ignore_packages, dependency.path, root_folder
-                    ):
+                    if not ignore_modules_check(ignore_packages, dependency.path):
                         name_dependency = get_name_for_module_duplicate_checker(
                             dependency, path_view, True
                         )

@@ -60,6 +60,7 @@
             "id": "config_path",
             "description": "What config would you like to run",
             "options": [
+                "test_projects/test_project/mt_config.json",
                 "${workspaceFolder}/test_projects/test_project/mt_config.json",
                 "${workspaceFolder}/test_projects/zeeguu/mt_config.json",
                 "${workspaceFolder}/test_projects/mt-gh-action/test_project/mt_config.json",
