@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 from src.utils.path_manager_singleton import PathManagerSingleton
 from src.utils.functions import verify_config_options
+from src.utils.config_manager_singleton import ConfigManagerSingleton
 
 from src.core.bt_graph import BTGraph
 
@@ -69,9 +70,7 @@ def render_diff(config_path: str = "mt_config.json"):
 
         fetch_git_repo(tmp_dir, config["github"]["url"], config["github"]["branch"])
 
-        my_file = Path(os.path.join(tmp_dir, "mt_config.json"))
-        if not my_file.is_file():
-            shutil.copyfile(config_path, os.path.join(tmp_dir, "mt_config.json"))
+        shutil.copyfile(config_path, os.path.join(tmp_dir, "mt_config.json"))
 
         config_git = read_config_file(os.path.join(tmp_dir, "mt_config.json"))
 
@@ -143,6 +142,9 @@ def read_config_file(config_path):
         jsonschema.validate(instance=config, schema=schema)
 
     config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
+
+    config_manager = ConfigManagerSingleton()
+    config_manager.setup(config)
 
     return config
 

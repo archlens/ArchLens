@@ -62,3 +62,11 @@ class BTModule:
         for child in self.file_list:
             dependencies.update(map(lambda e: e.module, child.edge_to))
         return dependencies
+
+    def get_dependency_count(self, other: "BTModule"):
+        file_dependencies = other.get_files_recursive()
+        files = [
+            edge for element in self.get_files_recursive() for edge in element.edge_to
+        ]
+        count = len([element for element in files if element in file_dependencies])
+        return count

@@ -38,6 +38,17 @@
             "description": "The folder to which the diagrams should be saved in. If the folder does not exists it will be created",
             "default": "./diagrams/"
         },
+        "showDependencyCount": {
+            "type": "boolean",
+            "description": "If to showcase the number of dependencies between packages"
+        },
+        "packageColor": {
+            "type": "string",
+            "enum": [
+                "GoldenRod",
+                "Azure"
+            ]
+        },
         "views": {
             "type": "object",
             "description": "Defines the views available",
