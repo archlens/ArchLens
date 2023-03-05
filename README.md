@@ -65,11 +65,13 @@ For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`
     When entering paths in packages, you are telling the diagram that you only want to include those packages and their sub-packages and dependencies.
     Alternatively to providing a path which includes a package and its entire sub-domain, you can give the following object instead
     ```json
-    {
-    "packagePath": "api/test",
-    "depth": 2
-    },
-    "core/controller"
+    packages: [
+        {
+        "packagePath": "api/test",
+        "depth": 2
+        },
+        "core/controller"
+    ]
     ```
     This example will add "rootFolder/api/test" + the 2 layers below it to the diagram, aswell as "core/controller" and its sub-domain and show how all of those packages relate to eachother.
 
