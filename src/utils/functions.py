@@ -9,16 +9,18 @@ def verify_config_options(config: dict, graph: BTGraph):
     for view_data in views.values():
         packages = view_data.get("packages")
         ignore_packages = [
-            element for element in view_data.get("ignorePackages") if "*" not in element
+            element
+            for element in view_data.get("ignorePackages")
+            if "*" not in element
         ]
 
         total_packages = packages + ignore_packages
-        if os.name == "nt":
-            total_packages = [element.replace("/", "\\") for element in total_packages]
+        total_packages = total_packages.copy()
 
         for package in total_packages:
-
             if type(package) == str:
+                if os.name == "nt":
+                    package = package.replace("/", "\\")
                 t = os.path.join(root_path, package)
                 if package not in root_path:
                     if t not in modules:
@@ -26,6 +28,10 @@ def verify_config_options(config: dict, graph: BTGraph):
                             f"{package} package from config file does not exist in project"
                         )
             else:
+                if os.name == "nt":
+                    package["packagePath"] = package["packagePath"].replace(
+                        "/", "\\"
+                    )
                 t = os.path.join(root_path, package["packagePath"])
                 if package["packagePath"] not in root_path:
                     name = package["packagePath"]

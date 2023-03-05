@@ -23,7 +23,6 @@ app = typer.Typer(add_completion=True)
 
 @app.command()
 def render(config_path: str = "mt_config.json"):
-
     config = read_config_file(config_path)
 
     mt_path_manager = PathManagerSingleton()
@@ -37,15 +36,16 @@ def render(config_path: str = "mt_config.json"):
     project_name = config.get("name")
 
     for view_name, views in config.get("views").items():
-
         for view_name, views in config.get("views").items():
             formatted_views = []
             for view in views["packages"]:
                 if type(view) == str:
-                    formatted_views.append(os.path.join(config.get("rootFolder"), view))
+                    formatted_views.append(
+                        config.get("rootFolder") + f"/{view}"
+                    )
                 else:
-                    view["packagePath"] = os.path.join(
-                        config.get("rootFolder"), view["packagePath"]
+                    view["packagePath"] = (
+                        config.get("rootFolder") + "/" + view["packagePath"]
                     )
                     formatted_views.append(view)
 
@@ -63,12 +63,13 @@ def render(config_path: str = "mt_config.json"):
 
 @app.command()
 def render_diff(config_path: str = "mt_config.json"):
-
     with tempfile.TemporaryDirectory() as tmp_dir:
         print("Created temporary directory:", tmp_dir)
         config = read_config_file(config_path)
 
-        fetch_git_repo(tmp_dir, config["github"]["url"], config["github"]["branch"])
+        fetch_git_repo(
+            tmp_dir, config["github"]["url"], config["github"]["branch"]
+        )
 
         shutil.copyfile(config_path, os.path.join(tmp_dir, "mt_config.json"))
 
@@ -91,10 +92,12 @@ def render_diff(config_path: str = "mt_config.json"):
             formatted_views = []
             for view in views["packages"]:
                 if type(view) == str:
-                    formatted_views.append(os.path.join(config.get("rootFolder"), view))
+                    formatted_views.append(
+                        config.get("rootFolder") + f"/{view}"
+                    )
                 else:
-                    view["packagePath"] = os.path.join(
-                        config.get("rootFolder"), view["packagePath"]
+                    view["packagePath"] = (
+                        config.get("rootFolder") + "/" + view["packagePath"]
                     )
                     formatted_views.append(view)
             plantuml_diagram_creator_sub_domains(

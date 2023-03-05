@@ -163,7 +163,6 @@ def plantuml_diagram_creator_sub_domains(
 
     # here we decide if we are diff view
     if compare_graph_root is not None:
-
         diff_checker = False
 
         ##################################### #########################################
@@ -185,7 +184,6 @@ def plantuml_diagram_creator_sub_domains(
                         if check_if_module_should_be_in_filtered_graph(
                             child, packages
                         ):
-
                             main_nodes[child.name] = child
 
                             # this will be true, if the package has been deleted
@@ -245,7 +243,6 @@ def plantuml_diagram_creator_sub_domains(
                     node_tracker_dependencies[child.path] = True
 
             if not ignore_modules_check(ignore_packages, curr_node.path):
-
                 name_curr_node = get_name_for_module_duplicate_checker(
                     curr_node, path_view
                 )
@@ -317,7 +314,6 @@ def plantuml_diagram_creator_sub_domains(
                     for line in fileinput.input(
                         diagram_name_txt, inplace=True
                     ):
-
                         print(
                             line.replace(  # TOOD: this replace does not work
                                 f'"{dependency}"-->"{dep_name}"',
@@ -393,7 +389,6 @@ def duplicate_name_check(
     root_folder=None,
     first=False,
 ):
-
     if was_node_in_original_graph(curr_node, path_tracker, root_folder):
         if not curr_node.name_if_duplicate_exists:
             if curr_node.name in node_names:
