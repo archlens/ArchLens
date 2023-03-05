@@ -335,7 +335,11 @@ def find_red_dependencies(new_dependencies, node_name, old_dependencies: set[BTM
 
 def create_file(name):
     python_executable = sys.executable
-    os.system(python_executable + " -m plantuml " + name)
+    plantuml_server = os.getenv(
+        "PLANTUML_SERVER_URL",
+        "https://mt-plantuml-app-service.azurewebsites.net/img/",
+    )
+    os.system(f"{python_executable} -m plantuml --server {plantuml_server}  {name}")
 
 
 def get_name_for_module_duplicate_checker(module: BTModule, path, diff_graph=False):
