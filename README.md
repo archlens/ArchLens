@@ -4,12 +4,13 @@ MT-diagrams is a software tool designed for Python systems that enables you to c
 
 For illustration purposes, we'll use the [Zeeguu](https://github.com/zeeguu/api) GitHub project as an example. The following diagram highlights the core packages included in the project.
 
-![Zeeguu core view](.github/readme/zeeguu-coreView.png)
+Note: When running the tool for the first time in a while, it might take a while to generate a diagram, due to our plantuml server currently being hosted on a free plan. Once the service is awake, the speed increases.
 
+![Zeeguu core view](.github/readme/zeeguu-coreView.png)
 
 In addition, the system can identify and highlight the differences between your working branch and a specified remote branch, including added or removed dependencies, as well as created or deleted packages.
 
-To demonstrate this functionality, take a look at the following view that illustrates the differences between two branches in the Zeeguu project.
+To demonstrate this functionality, take a look at the following view that illustrates the differences between a development branch and the main branch of zeegu, on the development branch we can see that some dependencies have been added (green arrows), and some deleted (red arrows).
 
 ![Zeeguu diff view](.github/readme/zeeguu-diffview.png)
 
@@ -37,6 +38,8 @@ Below you can see the basic config file created
         "branch": "main"
     },
     "saveLocation": "./diagrams/",
+    "showDependencyCount": true,
+    "packageColor": "Azure",
     "views": {
         "completeView": {
             "packages": [],
@@ -47,7 +50,7 @@ Below you can see the basic config file created
 }
 ```
 
-For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`.
+For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`, name being the name of your project, and rootFolder the folder containing your source code, starting from your project root.
 
 - `name`: This value will be prefixed to all your diagrams.
 - `rootFolder`: This points to the folder containing the root packages in your system (usually named src or similar).
@@ -55,8 +58,24 @@ For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`
     - `url`: The url of the repository
     - `branch`: The branch for comparison
 - `saveLocation`: This is the folder where created views will be saved.
+- `showDependencyCount`: This is a boolean, if set to True the dependency arrows in the diagram will show how many imports there are between the packages.
+- `packageColor`: Color of packages, you can choose from "GoldenRod" or "Azure".
 - `views`: This contains a map with view names as keys and the following sub-fields: 
-    - `packages`: This specifies the packages to include in the project. You provide this as a path to the folder from the rootFolder (e.g., "api.server" will point to a sub-package in the api package named server).
+    - `packages`: This specifies the packages to include in the project. Each path will start at the root_folder, and any path given must exist in the project. If you provide the path "api/test", it means that you want to include the rootFolder/api/test in the graph.
+    When entering paths in packages, you are telling the diagram that you only want to include those packages and their sub-packages and dependencies.
+    Alternatively to providing a path which includes a package and its entire sub-domain, you can give the following object instead
+    ```json
+    "packages": [
+        {
+        "packagePath": "api/test",
+        "depth": 2
+        },
+        "core/controller"
+    ]
+    ```
+    This example will add "rootFolder/api/test" + the 2 layers below it to the diagram, aswell as "core/controller" and its sub-domain and show how all of those packages relate to eachother.
+
+    You provide this as a path to the folder from the rootFolder (e.g., "api.server" will point to a sub-package in the api package named server).
     - `IgnorePackages`:
     There are three different ways to ignore packages:
 
@@ -77,7 +96,7 @@ For mt-diagrams to work you will need to fill the fields `name` and `rootFolder`
     ```
     
 
-    - `usePackagePathAsLabel`:
+    - `usePackagePathAsLabel` (Optional: Set to true  by default):
     If usePackagePathAsLabel is set to false, the package name and the end of a path will be the names in the diagram. For example, api/car will have a module named "api" and one named "car".
 
     If usePackagePathAsLabel is set to true, the paths will be displayed instead. This would result in the packages being named: "api", "api/car".
@@ -94,3 +113,5 @@ The CLI tool has four available commands:
 - `mt-diagrams render-diff`: This command generates a package diagram highlighting differences between the working branch and the specified branch in the config file. This command is useful for comparing package dependencies between different branches in a project.
 
 - `mt-diagrams create-config`: This command generates a basic configuration file defining a view that showcases all packages included in the system. This command is useful for quickly generating a configuration file to get started with the tool. This command should be run in the root of your project
+
+- `mt-diagrams create-action`: This creates all of the necessary files for diagrams to be generated when creating a pull request. When creating a pull request, the branch you're working on will display the differences in comparison to the branch specified in the github["branch"] in the above config.
