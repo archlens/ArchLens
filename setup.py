@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="MT-diagrams",
-    version="0.1.1",
+    version="0.1.2",
     description="Thesis project",
     author="Nikolai Perlt",
     author_email="npe@itu.dk",
