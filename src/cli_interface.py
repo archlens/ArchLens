@@ -105,6 +105,18 @@ def create_config(config_path="./mt_config.json"):
         json.dump(schema, outfile, indent=4)
 
 
+@app.command()
+def create_action():
+    action_url = "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/.github/workflows/pr-mt-diagrams.yml"
+    action_path = Path(".github/workflows/pr-mt-diagrams.yml")
+    typer.secho(f"Creating the action at {action_path}", fg="green")
+    action_path.parent.mkdir(parents=True, exist_ok=True)
+    action = requests.get(action_url).text
+
+    with open(action_path, "w") as f:
+        f.write(action)
+
+
 def read_config_file(config_path):
     schema_url = "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json"
     config = None
