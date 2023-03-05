@@ -50,7 +50,26 @@
                             "description": "The packages to include in the view. Leave empty to include all packages",
                             "type": "array",
                             "items": {
-                                "type": "string"
+                                "oneOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "packagePath": {
+                                                "type": "string"
+                                            },
+                                            "depth": {
+                                                "type": "integer"
+                                            }
+                                        },
+                                        "required": [
+                                            "packagePath",
+                                            "depth"
+                                        ]
+                                    }
+                                ]
                             }
                         },
                         "ignorePackages": {

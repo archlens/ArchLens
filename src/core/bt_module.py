@@ -9,6 +9,7 @@ class BTModule:
     child_module: list["BTModule"] = None
 
     name_if_duplicate_exists = None
+    depth = None
 
     file_list: list["BTFile"] = None
 

@@ -36,9 +36,18 @@ def render(config_path: str = "mt_config.json"):
     project_name = config.get("name")
 
     for view_name, views in config.get("views").items():
-        formatted_views = [
-            os.path.join(config.get("rootFolder"), view) for view in views["packages"]
-        ]
+
+        for view_name, views in config.get("views").items():
+            formatted_views = []
+            for view in views["packages"]:
+                if type(view) == str:
+                    formatted_views.append(os.path.join(config.get("rootFolder"), view))
+                else:
+                    view["packagePath"] = os.path.join(
+                        config.get("rootFolder"), view["packagePath"]
+                    )
+                    formatted_views.append(view)
+
         plantuml_diagram_creator_sub_domains(
             g.root_module,
             f"{project_name}-{view_name}",
@@ -80,10 +89,15 @@ def render_diff(config_path: str = "mt_config.json"):
         project_name = config.get("name")
 
         for view_name, views in config.get("views").items():
-            formatted_views = [
-                os.path.join(config.get("rootFolder"), view)
-                for view in views["packages"]
-            ]
+            formatted_views = []
+            for view in views["packages"]:
+                if type(view) == str:
+                    formatted_views.append(os.path.join(config.get("rootFolder"), view))
+                else:
+                    view["packagePath"] = os.path.join(
+                        config.get("rootFolder"), view["packagePath"]
+                    )
+                    formatted_views.append(view)
             plantuml_diagram_creator_sub_domains(
                 g.root_module,
                 f"{project_name}-{view_name}",
@@ -125,7 +139,8 @@ def read_config_file(config_path):
 
     schema = requests.get(schema_url).json()
 
-    jsonschema.validate(instance=config, schema=schema)
+    if not os.getenv("MT_DEBUG"):
+        jsonschema.validate(instance=config, schema=schema)
 
     config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
 

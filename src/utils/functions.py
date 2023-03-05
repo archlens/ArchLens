@@ -17,6 +17,19 @@ def verify_config_options(config: dict, graph: BTGraph):
             total_packages = [element.replace("/", "\\") for element in total_packages]
 
         for package in total_packages:
-            t = os.path.join(root_path, package)
-            if t not in modules:
-                raise Exception(f"{package} package could not be found")
+
+            if type(package) == str:
+                t = os.path.join(root_path, package)
+                if package not in root_path:
+                    if t not in modules:
+                        raise Exception(
+                            f"{package} package from config file does not exist in project"
+                        )
+            else:
+                t = os.path.join(root_path, package["packagePath"])
+                if package["packagePath"] not in root_path:
+                    name = package["packagePath"]
+                    if t not in modules:
+                        raise Exception(
+                            f"{name} package from config file does not exist in project"
+                        )
