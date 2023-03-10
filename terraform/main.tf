@@ -54,8 +54,6 @@ resource "azurerm_linux_web_app" "main" {
     DOCKER_REGISTRY_SERVER_URL      = "https://index.docker.io/v1"
   }
   site_config {
-    always_on = false
-
     application_stack {
       docker_image     = "plantuml/plantuml-server"
       docker_image_tag = "tomcat"
