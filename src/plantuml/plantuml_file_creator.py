@@ -76,26 +76,20 @@ def plantuml_diagram_creator_sub_domains(
         # adds all modules we want in our subgraph
         for child in curr_node.child_module:
             if child.path not in node_tracker:
-                duplicate_name_check(
-                    name_tracker, child, node_tracker, None, True
-                )
+                duplicate_name_check(name_tracker, child, node_tracker, None, True)
                 que.enqueue(child)
                 node_tracker[child.path] = child
                 name_tracker[child.name] = child
 
                 if not ignore_modules_check(ignore_packages, child.path):
-                    if check_if_module_should_be_in_filtered_graph(
-                        child, packages
-                    ):
+                    if check_if_module_should_be_in_filtered_graph(child, packages):
                         config_manager = ConfigManagerSingleton()
                         package_color = config_manager.package_color
                         f = open(diagram_name_txt, "a")
                         f.write(
                             diagram_type
                             + '"'
-                            + get_name_for_module_duplicate_checker(
-                                child, path_view
-                            )
+                            + get_name_for_module_duplicate_checker(child, path_view)
                             + f'"#{package_color}'
                             + "\n"
                         )
@@ -115,9 +109,7 @@ def plantuml_diagram_creator_sub_domains(
                 node_tracker_dependencies[child.path] = True
 
         dependencies: set[BTModule] = curr_node.get_module_dependencies()
-        name_curr_node = get_name_for_module_duplicate_checker(
-            curr_node, path_view
-        )
+        name_curr_node = get_name_for_module_duplicate_checker(curr_node, path_view)
 
         if not ignore_modules_check(ignore_packages, curr_node.path):
             for dependency in dependencies:
@@ -134,19 +126,13 @@ def plantuml_diagram_creator_sub_domains(
                         if name_curr_node != name_dependency:
                             # used to detect dependency changes
                             if name_curr_node in dependencies_map:
-                                dependency_list: list = dependencies_map[
-                                    name_curr_node
-                                ]
+                                dependency_list: list = dependencies_map[name_curr_node]
                                 dependency_list.append(dependency)
-                                dependencies_map[
-                                    name_curr_node
-                                ] = dependency_list
+                                dependencies_map[name_curr_node] = dependency_list
                             else:
                                 dependency_list = []
                                 dependency_list.append(dependency)
-                                dependencies_map[
-                                    name_curr_node
-                                ] = dependency_list
+                                dependencies_map[name_curr_node] = dependency_list
 
                             f = open(diagram_name_txt, "a")
                             f.write(
@@ -181,9 +167,7 @@ def plantuml_diagram_creator_sub_domains(
                         duplicate_name_check(
                             main_nodes, child, node_tracker, root_folder, True
                         )
-                        if check_if_module_should_be_in_filtered_graph(
-                            child, packages
-                        ):
+                        if check_if_module_should_be_in_filtered_graph(child, packages):
                             main_nodes[child.name] = child
 
                             # this will be true, if the package has been deleted
@@ -219,9 +203,7 @@ def plantuml_diagram_creator_sub_domains(
                     f.write(
                         diagram_type
                         + '"'
-                        + get_name_for_module_duplicate_checker(
-                            node, path_view
-                        )
+                        + get_name_for_module_duplicate_checker(node, path_view)
                         + '" #green'
                         + "\n"
                     )
@@ -246,9 +228,7 @@ def plantuml_diagram_creator_sub_domains(
                 name_curr_node = get_name_for_module_duplicate_checker(
                     curr_node, path_view
                 )
-                dependencies: set[
-                    BTModule
-                ] = curr_node.get_module_dependencies()
+                dependencies: set[BTModule] = curr_node.get_module_dependencies()
 
                 dependencies_map_main_graph[name_curr_node] = dependencies
 
@@ -257,13 +237,9 @@ def plantuml_diagram_creator_sub_domains(
                 )
 
                 for dependency in list_of_red_dependencies:
-                    if not ignore_modules_check(
-                        ignore_packages, dependency.path
-                    ):
-                        name_dependency = (
-                            get_name_for_module_duplicate_checker(
-                                dependency, path_view
-                            )
+                    if not ignore_modules_check(ignore_packages, dependency.path):
+                        name_dependency = get_name_for_module_duplicate_checker(
+                            dependency, path_view
                         )
                         if check_if_module_should_be_in_filtered_graph(
                             dependency, packages
@@ -292,14 +268,10 @@ def plantuml_diagram_creator_sub_domains(
 
             list_of_old_dependencies = []
             if dependency in dependencies_map_main_graph:
-                list_of_old_dependencies = dependencies_map_main_graph[
-                    dependency
-                ]
+                list_of_old_dependencies = dependencies_map_main_graph[dependency]
 
             for dep in list_of_new_dependencies:
-                dep_name = get_name_for_module_duplicate_checker(
-                    dep, path_view
-                )
+                dep_name = get_name_for_module_duplicate_checker(dep, path_view)
                 if not path_view:
                     dep_name = dep.name
 
@@ -311,9 +283,7 @@ def plantuml_diagram_creator_sub_domains(
 
                 if not_found_partner:
                     diff_checker = True
-                    for line in fileinput.input(
-                        diagram_name_txt, inplace=True
-                    ):
+                    for line in fileinput.input(diagram_name_txt, inplace=True):
                         print(
                             line.replace(  # TOOD: this replace does not work
                                 f'"{dependency}"-->"{dep_name}"',
@@ -338,9 +308,7 @@ def plantuml_diagram_creator_sub_domains(
         os.remove(diagram_name_txt)
 
 
-def find_red_dependencies(
-    new_dependencies, node_name, old_dependencies: set[BTModule]
-):
+def find_red_dependencies(new_dependencies, node_name, old_dependencies: set[BTModule]):
     res = []
 
     if node_name not in new_dependencies:
@@ -365,9 +333,7 @@ def create_file(name):
         "PLANTUML_SERVER_URL",
         "https://mt-plantuml-app-service.azurewebsites.net/img/",
     )
-    os.system(
-        f"{python_executable} -m plantuml --server {plantuml_server}  {name}"
-    )
+    os.system(f"{python_executable} -m plantuml --server {plantuml_server}  {name}")
 
 
 def get_name_for_module_duplicate_checker(module: BTModule, path):
@@ -376,8 +342,12 @@ def get_name_for_module_duplicate_checker(module: BTModule, path):
         module_split = path_manager.get_relative_path_from_project_root(
             module.path, True
         )
+        module_split = module_split.replace("/", ".")
         return module_split
     if module.name_if_duplicate_exists is not None:
+        module.name_if_duplicate_exists = module.name_if_duplicate_exists.replace(
+            "/", "."
+        )
         return module.name_if_duplicate_exists
     return module.name
 
@@ -393,17 +363,13 @@ def duplicate_name_check(
         if not curr_node.name_if_duplicate_exists:
             if curr_node.name in node_names:
                 curr_node_split = split_path(curr_node.path)
-                curr_node_name = (
-                    curr_node_split[-2] + "/" + curr_node_split[-1]
-                )
+                curr_node_name = curr_node_split[-2] + "/" + curr_node_split[-1]
                 curr_node.name_if_duplicate_exists = curr_node_name
     else:
         if first:
             if curr_node.name in node_names:
                 curr_node_split = split_path(curr_node.path)
-                curr_node_name = (
-                    curr_node_split[-2] + "/" + curr_node_split[-1]
-                )
+                curr_node_name = curr_node_split[-2] + "/" + curr_node_split[-1]
                 curr_node.name_if_duplicate_exists = curr_node_name
 
 
@@ -478,9 +444,7 @@ def check_if_allowed_module_is_root(allowed_module):
     return allowed_module
 
 
-def check_if_module_should_be_in_filtered_graph(
-    module: BTModule, allowed_modules
-):
+def check_if_module_should_be_in_filtered_graph(module: BTModule, allowed_modules):
     if len(allowed_modules) == 0:
         return True
     path_manager = PathManagerSingleton()
