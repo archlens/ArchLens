@@ -27,10 +27,10 @@ def verify_config_options(config: dict, graph: BTGraph):
                         )
             else:
                 if os.name == "nt":
-                    package["packagePath"] = package["packagePath"].replace("/", "\\")
-                t = os.path.join(root_path, package["packagePath"])
-                if package["packagePath"] not in root_path:
-                    name = package["packagePath"]
+                    pack = package["packagePath"].replace("/", "\\")
+                t = os.path.join(root_path, pack)
+                if pack not in root_path:
+                    name = pack
                     if t not in modules:
                         raise Exception(
                             f"{name} package from config file does not exist in project"

@@ -457,13 +457,7 @@ def check_if_module_should_be_in_filtered_graph(module: BTModule, allowed_module
                 return True
         # if we get here, it means that it is a specified object, at which point we must check for depth
         else:
-            path = ""
-            # fixes windows
-            if "\\" in module_curr["packagePath"]:
-                split = module_curr["packagePath"].split("\\")
-                path = "/".join(split)
-            else:
-                path = module_curr["packagePath"]
+            path = module_curr["packagePath"]
             depth = module_curr["depth"]
             if path == module_path:
                 module.depth = depth
