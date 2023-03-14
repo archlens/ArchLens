@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -rf build/ && pip uninstall mt-diagrams && pip install .
+rm -rf build/ && python3 -m pip uninstall mt-diagrams && python3 -m pip install .

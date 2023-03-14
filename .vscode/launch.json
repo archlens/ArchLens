@@ -39,6 +39,21 @@
             }
         },
         {
+            "name": "CLI Init",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "init"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "MT_DEBUG": "true"
+            }
+        },
+        {
             "name": "CLI help",
             "type": "python",
             "request": "launch",
