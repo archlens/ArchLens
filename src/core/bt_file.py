@@ -1,5 +1,4 @@
 import astroid
-from astroid.exceptions import AstroidImportError
 
 from typing import TYPE_CHECKING
 
@@ -65,22 +64,24 @@ def get_imported_modules(ast: astroid.Module, root_location: str):
             if isinstance(sub_node, astroid.node_classes.ImportFrom):
                 sub_node: astroid.node_classes.ImportFrom = sub_node
 
-                try:
-                    module_node = astroid.MANAGER.ast_from_module_name(
-                        sub_node.modname + "." + sub_node.names[0][0],
-                        context_file=root_location,
-                    )
-                except Exception:
-                    module_node = astroid.MANAGER.ast_from_module_name(
-                        sub_node.modname,
-                        context_file=root_location,
-                    )
+                module_node = astroid.MANAGER.ast_from_module_name(
+                    sub_node.modname,
+                    context_file=root_location,
+                )
                 imported_modules.append(module_node)
 
-            if isinstance(sub_node, astroid.node_classes.Import):
-                pass
+            elif isinstance(sub_node, astroid.node_classes.Import):
+                for name, _ in sub_node.names:
+                    try:
+                        module_node = astroid.MANAGER.ast_from_module_name(
+                            name,
+                            context_file=root_location,
+                        )
+                        imported_modules.append(module_node)
+                    except Exception:
+                        continue
 
-        except AstroidImportError:
+        except astroid.AstroidImportError:
             continue
 
     return imported_modules
