@@ -4,6 +4,7 @@ import os
 
 from src.core.bt_file import BTFile, get_imported_modules
 from src.core.bt_module import BTModule
+from astroid.manager import AstroidManager
 
 
 class BTGraph:
@@ -12,10 +13,16 @@ class BTGraph:
     target_project_base_location: str = None
     root_module = None
     base_module = None
+    am: AstroidManager = None
+
+    def __init__(self, am: AstroidManager) -> None:
+        self.am = am
 
     def build_graph(self, config: dict):
         config_path = config.get("_config_path")
-        self.root_module_location = os.path.join(config_path, config.get("rootFolder"))
+        self.root_module_location = os.path.join(
+            config_path, config.get("rootFolder")
+        )
         self.target_project_base_location = config_path
 
         sys.path.insert(0, config_path)
@@ -31,7 +38,7 @@ class BTGraph:
             try:
                 if not file.endswith("__init__.py"):
                     continue
-                bt_module = BTModule(file)
+                bt_module = BTModule(file, self.am)
                 bt_module.add_files()
                 bt_module_list.append(bt_module)
             except Exception as e:
@@ -58,7 +65,7 @@ class BTGraph:
 
         for bt_file in btf_map.values():
             imported_modules = get_imported_modules(
-                bt_file.ast, self.target_project_base_location
+                bt_file.ast, self.target_project_base_location, self.am
             )
             bt_file >> [
                 btf_map[module.file]
@@ -68,9 +75,10 @@ class BTGraph:
 
         sys.path = sys.path[2:]
         astroid.manager.AstroidManager().clear_cache()
+        self.am.clear_cache()
 
     def get_bt_file(self, path: str) -> BTFile:
-        file_path = astroid.MANAGER.ast_from_module_name(path).file
+        file_path = self.am.ast_from_module_name(path).file
         bt_file = self.get_all_bt_files_map()[file_path]
         return bt_file
 
@@ -91,10 +99,15 @@ class BTGraph:
         self.root_module = self.get_bt_module(path)
 
     def get_all_bt_files_map(self) -> dict[str, BTFile]:
-        return {btf.file: btf for btf in self.root_module.get_files_recursive()}
+        return {
+            btf.file: btf for btf in self.root_module.get_files_recursive()
+        }
 
     def get_all_bt_modules_map(self) -> dict[str, BTModule]:
-        return {btm.path: btm for btm in self.root_module.get_submodules_recursive()}
+        return {
+            btm.path: btm
+            for btm in self.root_module.get_submodules_recursive()
+        }
 
     def _get_files_recursive(self, path: str) -> list[str]:
         file_list = []

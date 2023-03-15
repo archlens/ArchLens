@@ -75,6 +75,7 @@
             "id": "config_path",
             "description": "What config would you like to run",
             "options": [
+                "test_projects/jesperTest/mt_config.json",
                 "test_projects/test_project/mt_config.json",
                 "${workspaceFolder}/test_projects/test_project/mt_config.json",
                 "${workspaceFolder}/test_projects/zeeguu/mt_config.json",

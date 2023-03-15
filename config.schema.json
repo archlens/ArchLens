@@ -9,11 +9,13 @@
     "properties": {
         "name": {
             "type": "string",
-            "description": "The name of the project"
+            "description": "The name of the project",
+            "minLength": 1
         },
         "rootFolder": {
             "type": "string",
-            "description": "Point to the root package of the project"
+            "description": "Point to the root package of the project",
+            "minLength": 1
         },
         "github": {
             "type": "object",
@@ -45,8 +47,9 @@
         "packageColor": {
             "type": "string",
             "enum": [
-                "GoldenRod",
-                "Azure"
+                "#GoldenRod",
+                "#Azure",
+                ""
             ]
         },
         "views": {

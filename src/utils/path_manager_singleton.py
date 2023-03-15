@@ -19,9 +19,13 @@ class PathManagerSingleton:
         self._set_path(config, git_config=False)
         self._set_path(git_config, git_config=True)
 
-    def get_relative_path_from_project_root(self, path: str, append_root_folder=False):
+    def get_relative_path_from_project_root(
+        self, path: str, append_root_folder=False
+    ):
         if self._config_path is None:
-            raise Exception("Should call setup method before any other function")
+            raise Exception(
+                "Should call setup method before any other function"
+            )
         try:
             current_config_path = (
                 self._config_root_folder_path
@@ -44,7 +48,7 @@ class PathManagerSingleton:
         config_root_folder_path = config_path.joinpath(config["rootFolder"])
 
         config_path = config_path.as_posix()
-        config_root_folder_path.as_posix()
+        config_root_folder_path = config_root_folder_path.as_posix()
 
         if not git_config:
             self._config_path = config_path

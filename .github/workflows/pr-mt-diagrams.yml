@@ -11,7 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
       - id: mt-diagrams
         continue-on-error: true
         uses: Perlten/mt-gh-action@main
+        env:
+          MT_DEBUG: true

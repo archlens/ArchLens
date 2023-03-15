@@ -11,4 +11,4 @@ class ConfigManagerSingleton:
 
     def setup(self, config: dict):
         self.show_dependency_count = config.get("showDependencyCount", True)
-        self.package_color = config.get("packageColor", "Azure")
+        self.package_color = config.get("packageColor", "#Azure")

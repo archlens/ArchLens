@@ -1,8 +1,10 @@
 {
     "python.formatting.provider": "black",
     "cSpell.words": [
+        "enduml",
         "jsonschema",
         "modname",
+        "startuml",
         "typer",
         "zeeguu"
     ],
@@ -14,7 +16,7 @@
     "json.schemas": [
         {
             "fileMatch": [
-                "/*/bt_config.json",
+                "/*/mt_config.json",
             ],
             "url": "./config.schema.json"
         }
