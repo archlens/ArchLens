@@ -81,7 +81,7 @@ The "views" field in the "mt-config.json" file allows you to define as many view
 {
     "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
     "name": "zeeguu", # Name of project
-    "rootFolder": "zeeguu", # Name of source folder
+    "rootFolder": "zeeguu", # Name of source folder containing the root package (Usually a folder called src)
     "github": {
         "url": "https://github.com/zeeguu/api", # Link to project's Github
         "branch": "master" # Name of main/master branch of project
