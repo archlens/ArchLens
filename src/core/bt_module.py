@@ -21,7 +21,7 @@ class BTModule:
         self.child_module = []
         self.file_list = []
         self.am = am
-        print(f"create {self.path}")
+        print(f"analyzing {self.path}")
 
     @property
     def depth(self):

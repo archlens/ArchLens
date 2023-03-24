@@ -199,11 +199,11 @@ def _filter_packages(
             filter_path = package_view
 
             if isinstance(package_view, str):
-                if package.path.startswith(filter_path):
+                if package.path.startswith(filter_path.replace(".", "/")):
                     filtered_packages_set.add(package)
 
             if isinstance(package_view, dict):
-                filter_path = package_view["packagePath"]
+                filter_path = package_view["packagePath"].replace(".", "/")
                 view_depth = package_view["depth"]
                 if package.path == filter_path:
                     filtered_packages_set.add(package)
