@@ -1,4 +1,4 @@
-# MT-Diagrams (Temporary name)
+# Architectural Lens
 
 MT-Diagrams is a Python software tool that generates customizable visual package views, showcasing the packages in your system and their dependencies. It offers the flexibility to include or exclude specific packages to suit your requirements for comprehensible views.
 
