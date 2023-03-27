@@ -191,7 +191,7 @@ def _find_packages_with_depth(
 def _filter_packages(
     packages_map: dict[str, PuPackage], view: dict
 ) -> dict[str, PuPackage]:
-    packages = packages_map.values()
+    packages = list(packages_map.values())
     filtered_packages_set: set[PuPackage] = set()
     # packages
     for package_view in view["packages"]:
@@ -237,6 +237,6 @@ def _filter_packages(
 
     filtered_packages_set = updated_filtered_packages_set
 
-    for package in packages:
+    for package in filtered_packages_set:
         package.filter_excess_packages_dependencies(filtered_packages_set)
     return {package.path: package for package in filtered_packages_set}
