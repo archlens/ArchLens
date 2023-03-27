@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="MT-diagrams",
-    version="0.2.0",
+    name="Architectural Lens",
+    version="0.0.1",
     description="Thesis project",
     author="Nikolai Perlt",
     author_email="npe@itu.dk",
@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "mt-diagrams=src.cli_interface:main",
+            "archlens=src.cli_interface:main",
         ],
     },
 )
