@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "mt-diagrams",
     "rootFolder": "src",
     "github": {

@@ -7,7 +7,8 @@ import tempfile
 import shutil
 from pathlib import Path
 from src.utils.path_manager_singleton import PathManagerSingleton
-from src.utils.functions import verify_config_options
+
+# from src.utils.functions import verify_config_options
 from src.utils.config_manager_singleton import ConfigManagerSingleton
 
 from src.plantumlv2.pu_manager import render_pu, render_diff_pu
@@ -15,10 +16,6 @@ from src.plantumlv2.pu_manager import render_pu, render_diff_pu
 from src.core.bt_graph import BTGraph
 
 from src.plantuml.fetch_git import fetch_git_repo
-
-from src.plantuml.plantuml_file_creator import (
-    plantuml_diagram_creator_sub_domains,
-)
 
 from astroid.manager import AstroidManager
 

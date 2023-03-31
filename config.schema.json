@@ -66,13 +66,15 @@
                             "items": {
                                 "oneOf": [
                                     {
-                                        "type": "string"
+                                        "type": "string",
+                                        "pattern": "^[A-Za-z0-9._-]+$"
                                     },
                                     {
                                         "type": "object",
                                         "properties": {
                                             "packagePath": {
-                                                "type": "string"
+                                                "type": "string",
+                                                "pattern": "^[A-Za-z0-9._-]+$"
                                             },
                                             "depth": {
                                                 "type": "integer"
