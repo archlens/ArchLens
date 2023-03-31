@@ -41,7 +41,7 @@ Although the project is not large, understanding the system even for this projec
 
 - `archlens init` 
 
-This will create an "mt-config.json" file in your root folder, where you can edit your desired views. This is the initial config:
+This will create an "archlens.json" file in your root folder, where you can edit your desired views. This is the initial config:
 
 ```json
  {
@@ -75,9 +75,9 @@ Hard to grasp? Architectural-Lens agrees with you, which is why this tool exists
 
 ![Zeeguu core view](.github/readme/zeeguu-coreViewxx.png)
 
-Here is an edited version of the "mt-config.json" file for the 'zeeguu-api' project, which represents the first two views we created earlier, along with comments explaining each field briefly:
+Here is an edited version of the "archlens.json" file for the 'zeeguu-api' project, which represents the first two views we created earlier, along with comments explaining each field briefly:
 
-The "views" field in the "mt-config.json" file allows you to define as many views as you need for your project. Simply add a new object with a unique name for each view you want to create. For example, if you wanted to create a view that showed only the "utils" package in the "api" folder, you could add the following to the "views" field:
+The "views" field in the "archlens.json" file allows you to define as many views as you need for your project. Simply add a new object with a unique name for each view you want to create. For example, if you wanted to create a view that showed only the "utils" package in the "api" folder, you could add the following to the "views" field:
 
 ```json
 {
@@ -104,7 +104,7 @@ The "views" field in the "mt-config.json" file allows you to define as many view
 
 ```
 
-### You can render the views specified in your "mt-config.json" file by running the command:
+### You can render the views specified in your "archlens.json" file by running the command:
 - `archlens render`
 
 This will generate the diagrams for all the views defined in your configuration file and save them in the location specified in the "saveLocation" field of your configuration.
@@ -121,7 +121,7 @@ For example, the following configuration file defines a view for the "core" pack
 
 This will create a view that shows only the "core" package and its immediate sub-packages.
 
-Here is an example of the mt-config.json file used to generate the filtered view:
+Here is an example of the archlens.json file used to generate the filtered view:
 
 ```json
 {
@@ -164,7 +164,7 @@ You can combine both strings and objects when defining packages in the packages 
 ```
 
 ## Arrows
-Each arrow in the system diagram represents a dependency between two packages, and the number on the arrow indicates the number of dependencies going in that direction. If you prefer not to see these arrows, you can use the optional "showDependencyCount" setting, which is a boolean. When set to "false", the dependency count will be hidden in all views. Here is an example of how to set this option in your mt-config.json file:
+Each arrow in the system diagram represents a dependency between two packages, and the number on the arrow indicates the number of dependencies going in that direction. If you prefer not to see these arrows, you can use the optional "showDependencyCount" setting, which is a boolean. When set to "false", the dependency count will be hidden in all views. Here is an example of how to set this option in your archlens.json file:
 
 ```json
 {
