@@ -1,20 +1,22 @@
 # Architectural Lens
 
-MT-Diagrams is a Python software tool that generates customizable visual package views, showcasing the packages in your system and their dependencies. It offers the flexibility to include or exclude specific packages to suit your requirements for comprehensible views.
+Architectural-Lens is a Python software tool that generates customizable visual package views, showcasing the packages in your system and their dependencies. It offers the flexibility to include or exclude specific packages to suit your requirements for comprehensible views.
 
-Moreover, MT-Diagrams can highlight the differences between your working branch and a specified remote branch, including added or removed dependencies and created or deleted packages, by using green and red highlighting.
+Moreover, Architectural-Lens can highlight the differences between your working branch and a specified remote branch, including added or removed dependencies and created or deleted packages, by using green and red highlighting.
 
-Lastly, MT-Diagrams can display the highlighted differences in the system views when a pull request is created on GitHub. It automatically generates the views specified in your config, highlights the differences, and displays them in your pull request, simplifying the review process.
+Lastly, Architectural-Lens can display the highlighted differences in the system views when a pull request is created on GitHub. It automatically generates the views specified in your config, highlights the differences, and displays them in your pull request, simplifying the review process.
 
 To help you get started, this readme includes various options in combination with the setup of a config file.
 
+### Runs on Python 3.9, 3.10, 3.11
+
 ## Installation
 
-To install mt-diagrams, simply use the pip package manager by running the following command:
+To install Architectural-Lens, simply use the pip package manager by running the following command:
 
-`pip install mt-diagrams` (You might need administrative right to perform the operation)
+`pip install Architectural-Lens` (You might need administrative right to perform the operation)
 
-This will download and install the necessary files and dependencies needed for mt-diagrams to run properly.
+This will download and install the necessary files and dependencies needed for Architectural-Lens to run properly.
 
 ## Commands
 
@@ -23,27 +25,27 @@ All commands must be run from the project's root folder
 <b>The system has 4 commands:</b> 
 
 
--`mt-diagrams init`- Creates the config template
+-`archlens init`- Creates the config template
 
--`mt-diagrams render` - Renders the views specified in the config
+-`archlens render` - Renders the views specified in the config
 
--`mt-diagrams render-diff` - Renders the differences in the views between your working branch and a specified branch
+-`archlens render-diff` - Renders the differences in the views between your working branch and a specified branch
 
--`mt-diagrams create-action` Creates the github action which will automatically add the difference views to pull requests.
+-`archlens create-action` Creates the github action which will automatically add the difference views to pull requests.
 
 # Using the system
 
-In this section, we will guide you through using the MT-Diagrams system by explaining the commands and output with the example of an API project called 'zeeguu-api' that can be found at https://github.com/zeeguu/api.
+In this section, we will guide you through using the Architectural-Lens system by explaining the commands and output with the example of an API project called 'zeeguu-api' that can be found at https://github.com/zeeguu/api.
 
 Although the project is not large, understanding the system even for this project size of roughly 40 packages can be challenging. To begin generating views, you need to be in the root of your project and run the following command:
 
-- `mt-diagrams init` 
+- `archlens init` 
 
 This will create an "mt-config.json" file in your root folder, where you can edit your desired views. This is the initial config:
 
 ```json
  {
-    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "",
     "rootFolder": "",
     "github": {
@@ -67,7 +69,7 @@ Here are two views of the 'zeeguu-api' project that we will be using as examples
 
 ![Zeeguu view](.github/readme/zeeguu-completeView.png)
 
-Hard to grasp? MT-diagrams agrees with you, which is why this tool exists.
+Hard to grasp? Architectural-Lens agrees with you, which is why this tool exists.
 
 - A view of the system where everything except "core" and its sub-packages has been scraped away:
 
@@ -79,7 +81,7 @@ The "views" field in the "mt-config.json" file allows you to define as many view
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "zeeguu", # Name of project
     "rootFolder": "zeeguu", # Name of source folder containing the root package (Usually a folder called src)
     "github": {
@@ -103,7 +105,7 @@ The "views" field in the "mt-config.json" file allows you to define as many view
 ```
 
 ### You can render the views specified in your "mt-config.json" file by running the command:
-- `mt-diagrams render`
+- `archlens render`
 
 This will generate the diagrams for all the views defined in your configuration file and save them in the location specified in the "saveLocation" field of your configuration.
 
@@ -123,7 +125,7 @@ Here is an example of the mt-config.json file used to generate the filtered view
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "zeeguu", 
     "rootFolder": "zeeguu", 
     "github": {
@@ -166,7 +168,7 @@ Each arrow in the system diagram represents a dependency between two packages, a
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "zeeguu", # Name of project
     "rootFolder": "zeeguu", # Name of source folder
     "github": {
@@ -194,11 +196,11 @@ This can be done in two different ways:
 To clarify, the first method using an asterisk (*) will remove any package containing the specified keyword, while the second method will remove only the specified package and all of its sub-packages. This can be useful for cleaning up clutter in the diagram or for excluding certain packages that are not relevant to the analysis.
 
 ## The difference views
-To generate a difference view using MT-Diagrams, you need to be on a branch other than the one specified in the configuration file. Usually, you would compare your current branch with the main/master branch, but you have the flexibility to choose any branch you desire. For the following example, I have narrowed down the view by filtering out only the "core/model" package.
+To generate a difference view using Architectural-Lens, you need to be on a branch other than the one specified in the configuration file. Usually, you would compare your current branch with the main/master branch, but you have the flexibility to choose any branch you desire. For the following example, I have narrowed down the view by filtering out only the "core/model" package.
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "zeeguu", 
     "rootFolder": "zeeguu", 
     "github": {
@@ -220,7 +222,7 @@ For the next example, the core view is further filtered to show only "core/model
 
 To render this new view displaying the changes, a new command must be run:
 
-- `mt-diagrams render-diff`
+- `archlens render-diff`
 
 ![Zeeguu core view](.github/readme/zeeguu-modelViewdiffView.png)
 
@@ -231,7 +233,7 @@ If there are no diffrences, a diagram without diffrences will still be generated
 
 To display the difference views in your pull requests, run the command:
 
-- `mt-diagrams create-action`
+- `archlens create-action`
 
 This command generates the necessary files in the .github folder, creating it if it doesn't already exist. Once this is done, you can create a pull request, and the difference view will be visible to the reviewer, as shown in the image below. If there are no diffrences, a diagram without diffrences will still be generated.
 
