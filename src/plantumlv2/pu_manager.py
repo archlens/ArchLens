@@ -205,7 +205,13 @@ def _filter_packages(
             if isinstance(package_view, dict):
                 filter_path = package_view["packagePath"].replace(".", "/")
                 view_depth = package_view["depth"]
-                if package.path == filter_path:
+                if filter_path == "" and package.parent_path == ".":
+                    filtered_packages_set.add(package)
+                    depth_filter_packages = _find_packages_with_depth(
+                        package, view_depth - 1, packages_map
+                    )
+                    filtered_packages_set.update(depth_filter_packages)
+                elif package.path == filter_path:
                     filtered_packages_set.add(package)
                     depth_filter_packages = _find_packages_with_depth(
                         package, view_depth, packages_map

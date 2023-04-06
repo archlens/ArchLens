@@ -65,7 +65,7 @@ class BTFile:
 
 def get_imported_modules(
     ast: astroid.Module, root_location: str, am: AstroidManager
-):
+) -> list:
     imported_modules = []
     for sub_node in ast.body:
         try:
@@ -88,6 +88,10 @@ def get_imported_modules(
                         imported_modules.append(module_node)
                     except Exception:
                         continue
+            elif hasattr(sub_node, "body"):
+                imported_modules.extend(
+                    get_imported_modules(sub_node, root_location, am)
+                )
 
         except astroid.AstroidImportError:
             continue

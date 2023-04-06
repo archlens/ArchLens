@@ -74,7 +74,7 @@
                                         "properties": {
                                             "packagePath": {
                                                 "type": "string",
-                                                "pattern": "^[A-Za-z0-9._-]+$"
+                                                "pattern": "^[A-Za-z0-9._\\-]*$"
                                             },
                                             "depth": {
                                                 "type": "integer"
@@ -91,7 +91,8 @@
                         "ignorePackages": {
                             "type": "array",
                             "items": {
-                                "type": "string"
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9._\\-*]+$"
                             },
                             "description": "Defines the packages to ignore"
                         },

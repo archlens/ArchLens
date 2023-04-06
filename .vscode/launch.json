@@ -75,16 +75,16 @@
             "id": "config_path",
             "description": "What config would you like to run",
             "options": [
-                "test_projects/jesperTest/mt_config.json",
-                "test_projects/test_project/mt_config.json",
-                "${workspaceFolder}/test_projects/test_project/mt_config.json",
-                "${workspaceFolder}/test_projects/zeeguu/mt_config.json",
-                "${workspaceFolder}/test_projects/mt-gh-action/test_project/mt_config.json",
-                "${workspaceFolder}/mt_config.json",
-                "${workspaceFolder}/test_projects/api/mt_config.json",
-                "${workspaceFolder}/test_projects/pandas/mt_config.json",
+                "test_projects/jesperTest/archlens.json",
+                "test_projects/test_project/archlens.json",
+                "${workspaceFolder}/test_projects/test_project/archlens.json",
+                "${workspaceFolder}/test_projects/zeeguu/archlens.json",
+                "${workspaceFolder}/test_projects/mt-gh-action/test_project/archlens.json",
+                "${workspaceFolder}/archlens.json",
+                "${workspaceFolder}/test_projects/api/archlens.json",
+                "${workspaceFolder}/test_projects/pandas/archlens.json",
             ],
-            "default": "${workspaceFolder}/test_projects/zeeguu/mt_config.json",
+            "default": "${workspaceFolder}/test_projects/zeeguu/archlens.json",
         }
     ]
 }
