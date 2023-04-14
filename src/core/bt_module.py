@@ -78,11 +78,9 @@ class BTModule:
         return dependencies
 
     def get_dependency_count(self, other: "BTModule"):
-        file_dependencies = other.get_files_recursive()
+        file_dependencies = other.file_list
         files = [
-            edge
-            for element in self.get_files_recursive()
-            for edge in element.edge_to
+            edge for element in self.file_list for edge in element.edge_to
         ]
         count = len(
             [element for element in files if element in file_dependencies]
