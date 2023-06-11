@@ -29,7 +29,7 @@ variable "tenant_id" { type = string }
 
 variable "plantuml_size_limit" {
   type    = string
-  default = "8192"
+  default = "32768"
 }
 
 data "azurerm_service_plan" "main" {
