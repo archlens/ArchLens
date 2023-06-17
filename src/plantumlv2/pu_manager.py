@@ -12,6 +12,16 @@ import os
 def render_pu(graph: BTGraph, config: dict):
     views = _create_pu_graph(graph, config)
     for view_name, pu_package_map in views.items():
+        if os.getenv("MT_DEBUG"):
+            dep_count = sum(
+                len(package.pu_dependency_list)
+                for package in pu_package_map.values()
+            )
+            package_count = len(list(pu_package_map.values()))
+            print("View name:", view_name)
+            print("Package count:", package_count)
+            print("Dependency count:", dep_count)
+
         plant_uml_str = _render_pu_graph(
             list(pu_package_map.values()), view_name, config
         )

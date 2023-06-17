@@ -11,4 +11,4 @@ def fetch_git_repo(tmp_dir, github_url, branch):
     repo.git.checkout(branch)
     repo.remotes.origin.pull()
 
-    repo.git.checkout(original_branch)
+    # repo.git.checkout(original_branch)

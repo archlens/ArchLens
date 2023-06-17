@@ -75,6 +75,8 @@
             "id": "config_path",
             "description": "What config would you like to run",
             "options": [
+                "${workspaceFolder}/test_projects/calibre/archlens.json",
+                "${workspaceFolder}/test_projects/je-test-project/archlens.json",
                 "${workspaceFolder}/test_projects/je-test-project/archlens.json",
                 "${workspaceFolder}/test_projects/test_project/archlens.json",
                 "${workspaceFolder}/test_projects/zeeguu/archlens.json",
@@ -83,7 +85,7 @@
                 "${workspaceFolder}/test_projects/api/archlens.json",
                 "${workspaceFolder}/test_projects/pandas/archlens.json",
             ],
-            "default": "${workspaceFolder}/test_projects/zeeguu/archlens.json",
+            "default": "${workspaceFolder}/test_projects/calibre/archlens.json",
         }
     ]
 }

@@ -64,6 +64,14 @@ class PuPackage:
             except Exception:
                 pass
 
+    def get_parent_list(self):
+        res = []
+        if self.parent is None:
+            return res
+        res.append(self.parent)
+        res.extend(self.parent.get_parent_list())
+        return res
+
     def render_package(self) -> str:
         config_manager = ConfigManagerSingleton()
         state_str = self.state.value
@@ -87,6 +95,19 @@ class PuPackage:
             if sub_module not in used_packages:
                 sub_module.filter_excess_packages_dependencies(used_packages)
                 self.pu_dependency_list.extend(sub_module.pu_dependency_list)
+
+        for dependency in self.pu_dependency_list:
+            l = dependency.to_package.get_parent_list()
+            for p in l:
+                if p in used_packages:
+                    dep = PuDependency(
+                        self,
+                        p,
+                        dependency.from_bt_package,
+                        dependency.to_bt_package,
+                    )
+                    self.pu_dependency_list.append(dep)
+                    break
 
         # change all from package to self
         for dependency in self.pu_dependency_list:

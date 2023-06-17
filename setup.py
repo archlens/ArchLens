@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="Architectural Lens",
-    version="0.0.4",
+    version="0.0.5",
     description="Thesis project",
     author="Nikolai Perlt",
     author_email="npe@itu.dk",
