@@ -52,9 +52,7 @@ def render_diff(config_path: str = "archlens.json"):
         print("Created temporary directory:", tmp_dir)
         config = read_config_file(config_path)
 
-        fetch_git_repo(
-            tmp_dir, config["github"]["url"], config["github"]["branch"]
-        )
+        fetch_git_repo(tmp_dir, config["github"]["url"], config["github"]["branch"])
 
         shutil.copyfile(config_path, os.path.join(tmp_dir, "archlens.json"))
 
@@ -78,9 +76,11 @@ def render_diff(config_path: str = "archlens.json"):
 
 @app.command()
 def init(config_path="./archlens.json"):
-    schema_url = "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.template.json"
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    schema = requests.get(schema_url).json()
+    schema = None
+    with open("config.template.json", "r") as f:
+        schema = json.load(f)
+
     schema["name"] = os.path.basename(os.getcwd())
     with open(config_path, "w") as outfile:
         json.dump(schema, outfile, indent=4)
@@ -99,15 +99,16 @@ def create_action():
 
 
 def read_config_file(config_path):
-    schema_url = "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/config.schema.json"
     config = None
     with open(config_path, "r") as f:
         config = json.load(f)
 
-    schema = requests.get(schema_url).json()
+    config_schema = None
+    with open("config.schema.json") as fp:
+        config_schema = json.load(fp)
 
     if not os.getenv("MT_DEBUG"):
-        jsonschema.validate(instance=config, schema=schema)
+        jsonschema.validate(instance=config, schema=config_schema)
 
     config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
 

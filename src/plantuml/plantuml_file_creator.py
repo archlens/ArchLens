@@ -436,10 +436,10 @@ def check_if_allowed_module_is_root(allowed_module):
             if splits[0] == root_module and splits[1] == root_module:
                 return splits[0]
     else:
-        if "/" in allowed_module["packagePath"]:
-            splits = allowed_module["packagePath"].split("/")
+        if "/" in allowed_module["path"]:
+            splits = allowed_module["path"].split("/")
             if splits[0] == root_module and splits[1] == root_module:
-                allowed_module["packagePath"] = splits[0]
+                allowed_module["path"] = splits[0]
                 return allowed_module
     return allowed_module
 
@@ -457,7 +457,7 @@ def check_if_module_should_be_in_filtered_graph(module: BTModule, allowed_module
                 return True
         # if we get here, it means that it is a specified object, at which point we must check for depth
         else:
-            path = module_curr["packagePath"]
+            path = module_curr["path"]
             depth = module_curr["depth"]
             if path == module_path:
                 module.depth = depth

@@ -113,7 +113,7 @@ This will generate the diagrams for all the views defined in your configuration 
 
 If you find the core view to be too large, you can create a new view that further filters the packages. Instead of giving a path to the package "core", you can limit it further by specifying that you want to see "core" and only its sub-packages that are 1 layer down.
 
-To achieve this, you can create an object instead of a string path for the package, with two fields: "depth" and "packagePath". In the "depth" field, you specify the number of sub-packages you want to include, and in the "packagePath" field, you specify the package to start with.
+To achieve this, you can create an object instead of a string path for the package, with two fields: "depth" and "path". In the "depth" field, you specify the number of sub-packages you want to include, and in the "path" field, you specify the package to start with.
 
 For example, the following configuration file defines a view for the "core" package and its immediate sub-packages:
 
@@ -139,7 +139,7 @@ Here is an example of the archlens.json file used to generate the filtered view:
                 #We create an object instead of a path
                  {
                     "depth": 1, #We only want 1 layer of sub packages from core
-                    "packagePath": "core" #Just like before, we give the path
+                    "path": "core" #Just like before, we give the path
                 } 
             ],
             "ignorePackages": []
@@ -156,7 +156,7 @@ You can combine both strings and objects when defining packages in the packages 
 "packages": [
     "api/utils",
     {
-    "packagePath": "core",
+    "path": "core",
     "depth": 1
     }
  ]
