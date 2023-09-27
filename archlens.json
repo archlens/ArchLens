@@ -1,9 +1,9 @@
 {
     "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
-    "name": "mt-diagrams",
+    "name": "ArchLens",
     "rootFolder": "src",
     "github": {
-        "url": "https://github.com/Perlten/MT-diagrams",
+        "url": "https://github.com/archlens/ArchLens",
         "branch": "master"
     },
     "saveLocation": "./diagrams/",
