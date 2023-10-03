@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "config.schema.json",
     "name": "mt-diagrams",
     "rootFolder": "src",
     "github": {
@@ -9,7 +9,12 @@
     "saveLocation": "./diagrams/",
     "views": {
         "completeView": {
-            "packages": [],
+            "packages": [
+                {
+                    "path": "./core/*",
+                    "depth": 0
+                }
+            ],
             "ignorePackages": []
         }
     }
