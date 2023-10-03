@@ -77,8 +77,9 @@ def render_diff(config_path: str = "archlens.json"):
 @app.command()
 def init(config_path="./archlens.json"):
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    template_path = os.path.join(os.path.dirname(__file__), '../config.template.json')
     schema = None
-    with open("config.template.json", "r") as f:
+    with open(template_path, "r") as f:
         schema = json.load(f)
 
     schema["name"] = os.path.basename(os.getcwd())
@@ -104,7 +105,8 @@ def read_config_file(config_path):
         config = json.load(f)
 
     config_schema = None
-    with open("config.schema.json") as fp:
+    schema_path = os.path.join(os.path.dirname(__file__), '../config.schema.json')
+    with open(schema_path) as fp:
         config_schema = json.load(fp)
 
     if not os.getenv("MT_DEBUG"):
