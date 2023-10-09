@@ -16,7 +16,7 @@ def verify_config_options(config: dict, graph: BTGraph):
         total_packages = total_packages.copy()
 
         for package in total_packages:
-            if type(package) == str:
+            if isinstance(package, str):
                 if os.name == "nt":
                     package = package.replace("/", "\\")
                 t = os.path.join(root_path, package)

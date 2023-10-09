@@ -36,9 +36,7 @@ class PuPackage:
 
     @property
     def parent_path(self):
-        return get_pu_package_path_from_bt_package(
-            self.bt_package.parent_module
-        )
+        return get_pu_package_path_from_bt_package(self.bt_package.parent_module)
 
     def setup_dependencies(self, pu_package_map: dict[str, "PuPackage"]):
         bt_dependencies = self.bt_package.get_module_dependencies()
@@ -46,9 +44,7 @@ class PuPackage:
         if self.parent:
             self.parent.sub_modules.append(self)
         for bt_package_dependency in bt_dependencies:
-            pu_path = get_pu_package_path_from_bt_package(
-                bt_package_dependency
-            )
+            pu_path = get_pu_package_path_from_bt_package(bt_package_dependency)
             if pu_path == self.path:
                 continue
             try:
@@ -82,27 +78,22 @@ class PuPackage:
 
     def render_dependency(self) -> str:
         return "\n".join(
-            [
-                pu_dependency.render()
-                for pu_dependency in self.pu_dependency_list
-            ]
+            [pu_dependency.render() for pu_dependency in self.pu_dependency_list]
         )
 
-    def filter_excess_packages_dependencies(
-        self, used_packages: set["PuPackage"]
-    ):
+    def filter_excess_packages_dependencies(self, used_packages: set["PuPackage"]):
         for sub_module in self.sub_modules:
             if sub_module not in used_packages:
                 sub_module.filter_excess_packages_dependencies(used_packages)
                 self.pu_dependency_list.extend(sub_module.pu_dependency_list)
 
         for dependency in self.pu_dependency_list:
-            l = dependency.to_package.get_parent_list()
-            for p in l:
-                if p in used_packages:
+            parent_list = dependency.to_package.get_parent_list()
+            for parent in parent_list:
+                if parent in used_packages:
                     dep = PuDependency(
                         self,
-                        p,
+                        parent,
                         dependency.from_bt_package,
                         dependency.to_bt_package,
                     )
@@ -117,8 +108,7 @@ class PuPackage:
         self.pu_dependency_list = [
             dependency
             for dependency in self.pu_dependency_list
-            if dependency.to_package != self
-            and dependency.to_package in used_packages
+            if dependency.to_package != self and dependency.to_package in used_packages
         ]
 
         # Makes sure that there is only one dependency per package

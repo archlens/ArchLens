@@ -1,5 +1,5 @@
 {
-    "python.formatting.provider": "black",
+    "python.formatting.provider": "none",
     "cSpell.words": [
         "enduml",
         "jsonschema",
@@ -24,5 +24,8 @@
     "editor.formatOnSave": true,
     "python.linting.flake8Args": [
         "--max-line-length=120"
-    ]
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    }
 }
