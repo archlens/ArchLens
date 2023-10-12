@@ -14,8 +14,7 @@ def render_pu(graph: BTGraph, config: dict):
     for view_name, pu_package_map in views.items():
         if os.getenv("MT_DEBUG"):
             dep_count = sum(
-                len(package.pu_dependency_list)
-                for package in pu_package_map.values()
+                len(package.pu_dependency_list) for package in pu_package_map.values()
             )
             package_count = len(list(pu_package_map.values()))
             print("View name:", view_name)
@@ -32,9 +31,7 @@ def render_pu(graph: BTGraph, config: dict):
         _save_plantuml_str(save_location, plant_uml_str)
 
 
-def render_diff_pu(
-    local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: dict
-):
+def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: dict):
     project_name = config["name"]
     local_graph_views = _create_pu_graph(local_bt_graph, config)
     remote_graph_views = _create_pu_graph(remote_bt_graph, config)
@@ -55,9 +52,7 @@ def render_diff_pu(
         for remote_path, remote_package in remote_graph.items():
             if remote_path not in local_graph:
                 remote_package.state = EntityState.DELETED
-                for (
-                    remote_package_dependencies
-                ) in remote_package.pu_dependency_list:
+                for remote_package_dependencies in remote_package.pu_dependency_list:
                     remote_package_dependencies.state = EntityState.DELETED
                 diff_graph.append(remote_package)
                 local_graph[remote_path] = remote_package
@@ -65,10 +60,7 @@ def render_diff_pu(
 
         # Change dependency state
         for path, package in local_graph.items():
-            if (
-                path not in remote_graph
-                or path in packages_to_skip_dependency_update
-            ):
+            if path not in remote_graph or path in packages_to_skip_dependency_update:
                 continue  # We have already dealt with this case above
             local_dependency_map = package.get_dependency_map()
             remote_dependency_map = remote_graph[path].get_dependency_map()
@@ -110,9 +102,7 @@ def _handle_duplicate_name(pu_graph: list[PuPackage]):
             package_2_name_split = package_2.path.split("/")
             if package_2_name_split[-1] == package_name_split[-1]:
                 if len(package_name_split) >= len(package_2_name_split):
-                    package.name = PACKAGE_NAME_SPLITTER.join(
-                        package_name_split[-2:]
-                    )
+                    package.name = PACKAGE_NAME_SPLITTER.join(package_name_split[-2:])
                 else:
                     package.name = package_name_split[-1]
                 found_duplicate = True
@@ -166,9 +156,7 @@ def _save_plantuml_str(file_name: str, data: str):
         os.remove(file_name)
 
 
-def _create_pu_graph(
-    graph: BTGraph, config: dict
-) -> dict[str, dict[str, PuPackage]]:
+def _create_pu_graph(graph: BTGraph, config: dict) -> dict[str, dict[str, PuPackage]]:
     bt_packages = graph.get_all_bt_modules_map()
     views = {}
 
@@ -213,7 +201,7 @@ def _filter_packages(
                     filtered_packages_set.add(package)
 
             if isinstance(package_view, dict):
-                filter_path = package_view["packagePath"].replace(".", "/")
+                filter_path = package_view["path"].replace(".", "/")
                 view_depth = package_view["depth"]
                 if filter_path == "" and package.parent_path == ".":
                     filtered_packages_set.add(package)
@@ -236,9 +224,7 @@ def _filter_packages(
     for ignore_packages in view["ignorePackages"]:
         for package in filtered_packages_set:
             should_filter = False
-            if ignore_packages.startswith("*") and ignore_packages.endswith(
-                "*"
-            ):
+            if ignore_packages.startswith("*") and ignore_packages.endswith("*"):
                 if ignore_packages[1:-1] in package.path:
                     should_filter = True
             else:

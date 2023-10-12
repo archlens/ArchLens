@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, glob
 
 setup(
     name="Architectural Lens",
@@ -6,9 +6,10 @@ setup(
     description="Thesis project",
     author="Nikolai Perlt",
     author_email="npe@itu.dk",
-    url="https://github.com/Perlten/MT-diagrams",
+    url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
     long_description="This is the long description",
+    data_files=glob.glob('config.**.json'),
     install_requires=[
         "plantuml",
         "typer",
