@@ -38,17 +38,13 @@ class BTModule:
 
     def add_files(self):
         files = [
-            element
-            for element in os.listdir(self.path)
-            if element.endswith(".py")
+            element for element in os.listdir(self.path) if element.endswith(".py")
         ]
 
         for file in files:
             if file == "testing.py":
                 continue
-            bt_file = BTFile(
-                label=file.split("/")[-1], module=self, am=self.am
-            )
+            bt_file = BTFile(label=file.split("/")[-1], module=self, am=self.am)
             bt_file.ast = self.am.ast_from_file(os.path.join(self.path, file))
             self.file_list.append(bt_file)
 
@@ -68,9 +64,7 @@ class BTModule:
         if self.parent_module is None:
             return []
         parent_module_list = [self.parent_module]
-        parent_module_list.extend(
-            self.parent_module.get_parent_module_recursive()
-        )
+        parent_module_list.extend(self.parent_module.get_parent_module_recursive())
         return parent_module_list
 
     def get_module_dependencies(self) -> set["BTModule"]:
@@ -81,10 +75,6 @@ class BTModule:
 
     def get_dependency_count(self, other: "BTModule"):
         file_dependencies = other.file_list
-        files = [
-            edge for element in self.file_list for edge in element.edge_to
-        ]
-        count = len(
-            [element for element in files if element in file_dependencies]
-        )
+        files = [edge for element in self.file_list for edge in element.edge_to]
+        count = len([element for element in files if element in file_dependencies])
         return count

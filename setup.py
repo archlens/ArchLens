@@ -9,7 +9,7 @@ setup(
     url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
     long_description="This is the long description",
-    data_files=glob.glob('config.**.json'),
+    data_files=glob.glob("config.**.json"),
     install_requires=[
         "plantuml",
         "typer",

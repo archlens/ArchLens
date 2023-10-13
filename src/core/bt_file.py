@@ -14,9 +14,7 @@ class BTFile:
     module: "BTModule" = None
     am: AstroidManager
 
-    def __init__(
-        self, label: str, module, am: AstroidManager, code_path: str = None
-    ):
+    def __init__(self, label: str, module, am: AstroidManager, code_path: str = None):
         self.label = label
         self.ast = None
         self.am = am
@@ -51,9 +49,7 @@ class BTFile:
             existing_edges = set(
                 [edge.file for edge in self.edge_to if edge.file != ""]
             )
-            new_node_list = filter(
-                lambda e: e.file not in existing_edges, other
-            )
+            new_node_list = filter(lambda e: e.file not in existing_edges, other)
             self.edge_to.extend([node for node in new_node_list])
         else:
             edges = set([edge.file for edge in self.edge_to])
