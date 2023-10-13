@@ -1,5 +1,5 @@
 {
-    "python.formatting.provider": "none",
+    "python.formatting.provider": "black",
     "cSpell.words": [
         "enduml",
         "jsonschema",
