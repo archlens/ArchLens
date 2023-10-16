@@ -1,10 +1,13 @@
 # Architectural Lens
+### This project was originally forked from [Architectural Lens](https://github.com/Perlten/Architectural-Lens), all credit for the groundwork goes to the original authors
+(Fork was detached after work on the original project was discontinued, development continued by the ArchLens organization)
 
-Architectural-Lens is a Python software tool that generates customizable visual package views, showcasing the packages in your system and their dependencies. It offers the flexibility to include or exclude specific packages to suit your requirements for comprehensible views.
+##
+ArchLens is a Python software tool that generates customizable visual package views, showcasing the packages in your system and their dependencies. It offers the flexibility to include or exclude specific packages to suit your requirements for comprehensible views.
 
-Moreover, Architectural-Lens can highlight the differences between your working branch and a specified remote branch, including added or removed dependencies and created or deleted packages, by using green and red highlighting.
+Moreover, ArchLens can highlight the differences between your working branch and a specified remote branch, including added or removed dependencies and created or deleted packages, by using green and red highlighting.
 
-Lastly, Architectural-Lens can display the highlighted differences in the system views when a pull request is created on GitHub. It automatically generates the views specified in your config, highlights the differences, and displays them in your pull request, simplifying the review process.
+Lastly, ArchLens can display the highlighted differences in the system views when a pull request is created on GitHub. It automatically generates the views specified in your config, highlights the differences, and displays them in your pull request, simplifying the review process.
 
 To help you get started, this readme includes various options in combination with the setup of a config file.
 
@@ -12,11 +15,11 @@ To help you get started, this readme includes various options in combination wit
 
 ## Installation
 
-To install Architectural-Lens, simply use the pip package manager by running the following command:
+To install ArchLens, simply use the pip package manager by running the following command:
 
 `pip install Architectural-Lens` (You might need administrative right to perform the operation)
 
-This will download and install the necessary files and dependencies needed for Architectural-Lens to run properly.
+This will download and install the necessary files and dependencies needed for ArchLens to run properly.
 
 ## Commands
 
@@ -35,7 +38,7 @@ All commands must be run from the project's root folder
 
 # Using the system
 
-In this section, we will guide you through using the Architectural-Lens system by explaining the commands and output with the example of an API project called 'zeeguu-api' that can be found at https://github.com/zeeguu/api.
+In this section, we will guide you through using the ArchLens system by explaining the commands and output with the example of an API project called 'zeeguu-api' that can be found at https://github.com/zeeguu/api.
 
 Although the project is not large, understanding the system even for this project size of roughly 40 packages can be challenging. To begin generating views, you need to be in the root of your project and run the following command:
 
@@ -69,7 +72,7 @@ Here are two views of the 'zeeguu-api' project that we will be using as examples
 
 ![Zeeguu view](.github/readme/zeeguu-completeView.png)
 
-Hard to grasp? Architectural-Lens agrees with you, which is why this tool exists.
+Hard to grasp? ArchLens agrees with you, which is why this tool exists.
 
 - A view of the system where everything except "core" and its sub-packages has been scraped away:
 
@@ -196,11 +199,11 @@ This can be done in two different ways:
 To clarify, the first method using an asterisk (*) will remove any package containing the specified keyword, while the second method will remove only the specified package and all of its sub-packages. This can be useful for cleaning up clutter in the diagram or for excluding certain packages that are not relevant to the analysis.
 
 ## The difference views
-To generate a difference view using Architectural-Lens, you need to be on a branch other than the one specified in the configuration file. Usually, you would compare your current branch with the main/master branch, but you have the flexibility to choose any branch you desire. For the following example, I have narrowed down the view by filtering out only the "core/model" package.
+To generate a difference view using ArchLens, you need to be on a branch other than the one specified in the configuration file. Usually, you would compare your current branch with the main/master branch, but you have the flexibility to choose any branch you desire. For the following example, I have narrowed down the view by filtering out only the "core/model" package.
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/ArchLens/master/config.schema.json",
     "name": "zeeguu", 
     "rootFolder": "zeeguu", 
     "github": {
