@@ -203,7 +203,7 @@ To generate a difference view using ArchLens, you need to be on a branch other t
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/ArchLens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
     "name": "zeeguu", 
     "rootFolder": "zeeguu", 
     "github": {
