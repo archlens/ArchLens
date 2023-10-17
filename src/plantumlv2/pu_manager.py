@@ -28,7 +28,10 @@ def render_pu(graph: BTGraph, config: dict):
         save_location = os.path.join(
             config["saveLocation"], f"{project_name}-{view_name}"
         )
-        _save_plantuml_str(save_location, plant_uml_str)
+        diff_location = os.path.join(
+            config["saveLocation"], "diff_relation.txt"
+        )
+        _save_plantuml_str(save_location, diff_location, plant_uml_str)
 
 
 def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: dict):
@@ -139,7 +142,11 @@ title {title}
     return uml_str
 
 
-def _save_plantuml_str(file_name: str, data: str):
+def _save_plantuml_str(file_name: str, diff_name: str, data: str):
+    os.makedirs(os.path.dirname(diff_name), exist_ok=True)
+    if not os.path.exists(diff_name):
+        open(diff_name, 'w').close()
+
     os.makedirs(os.path.dirname(file_name), exist_ok=True)
     with open(file_name, "w") as f:
         f.write(data)

@@ -3,6 +3,7 @@ class ConfigManagerSingleton:
 
     show_dependency_count = None
     package_color = None
+    diff_location = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -12,3 +13,4 @@ class ConfigManagerSingleton:
     def setup(self, config: dict):
         self.show_dependency_count = config.get("showDependencyCount", True)
         self.package_color = config.get("packageColor", "#Azure")
+        self.diff_location = config.get("saveLocation", "./diagrams/")

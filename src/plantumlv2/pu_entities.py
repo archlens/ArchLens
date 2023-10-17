@@ -1,3 +1,4 @@
+import re
 from src.core.bt_module import BTModule
 from src.plantumlv2.utils import get_pu_package_path_from_bt_package
 from enum import Enum
@@ -160,9 +161,55 @@ class PuDependency:
 
     def render(self) -> str:
         config_manager = ConfigManagerSingleton()
-        dependency_count_str = ""
-        if config_manager.show_dependency_count:
-            dependency_count_str = f": {self.dependency_count}"
+        location = f'{config_manager.diff_location}diff_relation.txt'
         from_name = self.from_package.name
         to_name = self.to_package.name
-        return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+        count = self.dependency_count
+
+        from_to = f'"{from_name}"-->"{to_name}"'
+        dependency_count_str = ""
+
+        if config_manager.show_dependency_count:
+            relation_from_file = self.update_or_append_relation(from_to, count, location)
+            if relation_from_file:
+                # Extract the previous count of dependencies from the relation string
+                match = re.search(r':\s*(\d+)$', relation_from_file)
+                count_from_file = int(match.group(1))
+                diff = count - count_from_file
+                sign = "+" if diff > 0 else ""
+                dependency_count_str = f": {count} ({sign}{diff})" if diff != 0 else f": {count}"
+            else:
+                dependency_count_str = f": {count}"
+
+        return f'{from_to} {self.state.value} {dependency_count_str}'
+
+    def update_or_append_relation(self, search_string, new_number, location):
+        # Read the file into a list of lines
+        with open(location, 'r') as file:
+            lines = file.readlines()
+
+        # To check if we found the matching line
+        found = False
+
+        for index, line in enumerate(lines):
+            if line.startswith(search_string):
+                line_read = line.strip()
+                # Extract the previous count of dependencies from the relation string
+                match = re.search(r':\s*(\d+)$', line_read)
+                if match:
+                    found = True
+                    count_from_line = match.group(1)
+                    # Replace the old line with the new line in our list of lines
+                    lines[index] = line_read.replace(count_from_line, str(new_number)) + '\n'
+                    break
+
+        # If no line starts with the search string, append a new line
+        if not found:
+            new_line = search_string + ': ' + str(new_number) + '\n'
+            lines.append(new_line)
+
+        # Write the updated lines back to the file
+        with open(location, 'w') as file:
+            file.writelines(lines)
+        # Return the original line if found, or None if not
+        return line_read if found else None

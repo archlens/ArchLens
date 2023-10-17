@@ -1,10 +1,10 @@
 {
-    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/config.schema.json",
+    "$schema": "config.schema.json",
     "name": "ArchLens",
     "rootFolder": "src",
     "github": {
-        "url": "https://github.com/archlens/ArchLens",
-        "branch": "master"
+        "url": "",
+        "branch": "main"
     },
     "saveLocation": "./diagrams/",
     "views": {

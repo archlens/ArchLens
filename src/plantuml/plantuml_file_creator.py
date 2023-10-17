@@ -496,6 +496,7 @@ def get_dependency_string(module: BTModule, dependency_module: BTModule):
     config_manager = ConfigManagerSingleton()
     if config_manager.show_dependency_count:
         dependency_count = module.get_dependency_count(dependency_module)
+        print(dependency_count)
         return f": {dependency_count}"
     return ""
 
