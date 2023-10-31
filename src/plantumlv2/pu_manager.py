@@ -202,6 +202,7 @@ def _filter_packages(
 
             if isinstance(package_view, dict):
                 filter_path = package_view["path"].replace(".", "/")
+                filter_path = filter_path.replace("*", "")
                 view_depth = package_view["depth"]
                 if filter_path == "" and package.parent_path == ".":
                     filtered_packages_set.add(package)
