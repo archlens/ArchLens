@@ -25,7 +25,7 @@ This will download and install the necessary files and dependencies needed for A
 
 All commands must be run from the project's root folder
 
-<b>The system has 4 commands:</b> 
+<b>The system has 4 commands:</b>
 
 
 -`archlens init`- Creates the config template
@@ -42,7 +42,7 @@ In this section, we will guide you through using the ArchLens system by explaini
 
 Although the project is not large, understanding the system even for this project size of roughly 40 packages can be challenging. To begin generating views, you need to be in the root of your project and run the following command:
 
-- `archlens init` 
+- `archlens init`
 
 This will create an "archlens.json" file in your root folder, where you can edit your desired views. This is the initial config:
 
@@ -129,21 +129,21 @@ Here is an example of the archlens.json file used to generate the filtered view:
 ```json
 {
     "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
-    "name": "zeeguu", 
-    "rootFolder": "zeeguu", 
+    "name": "zeeguu",
+    "rootFolder": "zeeguu",
     "github": {
-        "url": "https://github.com/zeeguu/api", 
-        "branch": "master" 
+        "url": "https://github.com/zeeguu/api",
+        "branch": "master"
     },
-    "saveLocation": "./diagrams/", 
-    "views": { 
-         "coreView":{ 
+    "saveLocation": "./diagrams/",
+    "views": {
+         "coreView":{
             "packages": [
                 #We create an object instead of a path
                  {
                     "depth": 1, #We only want 1 layer of sub packages from core
                     "path": "core" #Just like before, we give the path
-                } 
+                }
             ],
             "ignorePackages": []
         }
@@ -182,7 +182,7 @@ Each arrow in the system diagram represents a dependency between two packages, a
     "saveLocation": "./diagrams/", # Location to store generated diagrams
 }
 ```
-In this mt-config file, the dependency count would be gone. This setting is applied to all of the views.   
+In this mt-config file, the dependency count would be gone. This setting is applied to all of the views.
 
 ## Ignore packages
 In addition to selecting which packages you want in your diagram, you can also select which packages you want removed from your diagram.
@@ -204,15 +204,15 @@ To generate a difference view using ArchLens, you need to be on a branch other t
 ```json
 {
     "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
-    "name": "zeeguu", 
-    "rootFolder": "zeeguu", 
+    "name": "zeeguu",
+    "rootFolder": "zeeguu",
     "github": {
-        "url": "https://github.com/zeeguu/api", 
-        "branch": "master" 
+        "url": "https://github.com/zeeguu/api",
+        "branch": "master"
     },
-    "saveLocation": "./diagrams/", 
-    "views": { 
-         "coreView":{ 
+    "saveLocation": "./diagrams/",
+    "views": {
+         "coreView":{
             "packages": [
                 "core/model" #Looking at core/model, using the path instead of object, because i want to see the entire sub system
             ],

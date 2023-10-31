@@ -17,3 +17,4 @@ requests
 jsonschema
 gitpython
 six
+pre-commit
