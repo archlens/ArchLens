@@ -3,8 +3,8 @@ from setuptools import setup, find_packages, glob
 setup(
     name="Architectural Lens",
     version="0.0.5",
-    description="Thesis project",
-    author="Nikolai Perlt",
+    description="Designed for visualizing package dependencies and highlighting differences between branches in GitHub pull requests. It offers customization options to tailor package views.",
+    author="The ArchLens Team",
     author_email="npe@itu.dk",
     url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
