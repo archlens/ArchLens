@@ -77,9 +77,14 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                     diff = local_value.dependency_count - remote_value.dependency_count
                     sign = "+" if diff > 0 else ""
                     color = EntityState.CREATED if diff > 0 else EntityState.DELETED
-                    dependency_count = f": {local_value.dependency_count} ({sign}{diff})" if diff != 0 else f": {local_value.dependency_count}"
+                    dependency_count = (
+                        f": {local_value.dependency_count} ({sign}{diff})"
+                        if diff != 0
+                        else f": {local_value.dependency_count}")
 
-                    local_dependency_map[remote_key].render_diff = f'"{local_value.from_package.name}"-->"{local_value.to_package.name}" {color} {dependency_count}'
+                    local_dependency_map[remote_key].render_diff = (
+                        f'"{local_value.from_package.name}"-->"{local_value.to_package.name}" '
+                        f"{color} {dependency_count}")
 
             # Created dependencies
             for dependency_path, dependency in local_dependency_map.items():
