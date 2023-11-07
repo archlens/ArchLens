@@ -170,5 +170,5 @@ class PuDependency:
             from_name = self.from_package.name
             to_name = self.to_package.name
             return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
-        else: 
+        else:
             return self.render_diff
