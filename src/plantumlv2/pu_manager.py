@@ -64,6 +64,22 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                 continue  # We have already dealt with this case above
             local_dependency_map = package.get_dependency_map()
             remote_dependency_map = remote_graph[path].get_dependency_map()
+            
+            for remote_key, remote_value in remote_dependency_map.items():
+                # Check if the same key exists in the local_dependency_map
+                if remote_key not in local_dependency_map:
+                    continue
+
+                local_value = local_dependency_map[remote_key]
+
+                # Check if dependency counts are different
+                if remote_value.dependency_count != local_value.dependency_count:
+                    diff = local_value.dependency_count - remote_value.dependency_count
+                    sign = "+" if diff > 0 else ""
+                    color = EntityState.CREATED if diff > 0 else EntityState.DELETED
+                    dependency_count = f": {local_value.dependency_count} ({sign}{diff})" if diff != 0 else f": {local_value.dependency_count}"
+
+                    local_dependency_map[remote_key].render_diff = f'"{local_value.from_package.name}"-->"{local_value.to_package.name}" {color} {dependency_count}'
 
             # Created dependencies
             for dependency_path, dependency in local_dependency_map.items():
@@ -84,7 +100,7 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                     package.pu_dependency_list.append(remote_dependency)
 
             diff_graph.append(package)
-
+        
         plant_uml_str = _render_pu_graph(diff_graph, view_name, config)
         save_location = os.path.join(
             config["saveLocation"], f"{project_name}-diff-{view_name}"

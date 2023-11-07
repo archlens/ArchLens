@@ -139,6 +139,8 @@ class PuDependency:
 
     dependency_count = 0
 
+    render_diff = ""
+
     def __init__(
         self,
         from_package: PuPackage,
@@ -160,9 +162,13 @@ class PuDependency:
 
     def render(self) -> str:
         config_manager = ConfigManagerSingleton()
-        dependency_count_str = ""
-        if config_manager.show_dependency_count:
-            dependency_count_str = f": {self.dependency_count}"
-        from_name = self.from_package.name
-        to_name = self.to_package.name
-        return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+
+        if not self.render_diff:
+            dependency_count_str = ""
+            if config_manager.show_dependency_count:
+                dependency_count_str = f": {self.dependency_count}"
+            from_name = self.from_package.name
+            to_name = self.to_package.name
+            return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+        else: 
+            return self.render_diff
