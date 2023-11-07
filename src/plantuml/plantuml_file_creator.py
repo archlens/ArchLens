@@ -331,7 +331,7 @@ def create_file(name):
     python_executable = sys.executable
     plantuml_server = os.getenv(
         "PLANTUML_SERVER_URL",
-        "https://mt-plantuml-app-service.azurewebsites.net/img/",
+        "https://www.plantuml.com/plantuml/img/",
     )
     os.system(f"{python_executable} -m plantuml --server {plantuml_server}  {name}")
 
