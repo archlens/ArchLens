@@ -64,7 +64,6 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                 continue  # We have already dealt with this case above
             local_dependency_map = package.get_dependency_map()
             remote_dependency_map = remote_graph[path].get_dependency_map()
-            
             for remote_key, remote_value in remote_dependency_map.items():
                 # Check if the same key exists in the local_dependency_map
                 if remote_key not in local_dependency_map:
@@ -105,7 +104,6 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                     package.pu_dependency_list.append(remote_dependency)
 
             diff_graph.append(package)
-        
         plant_uml_str = _render_pu_graph(diff_graph, view_name, config)
         save_location = os.path.join(
             config["saveLocation"], f"{project_name}-diff-{view_name}"
