@@ -1,4 +1,5 @@
 from src.core.bt_module import BTModule
+from src.core.bt_file import BTFile
 from src.plantumlv2.utils import get_pu_package_path_from_bt_package
 from enum import Enum
 
@@ -12,6 +13,10 @@ class EntityState(str, Enum):
 
 
 PACKAGE_NAME_SPLITTER = "."
+
+
+def foo():
+    return BTFile.__class__
 
 
 class PuPackage:
@@ -169,6 +174,8 @@ class PuDependency:
                 dependency_count_str = f": {self.dependency_count}"
             from_name = self.from_package.name
             to_name = self.to_package.name
-            return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+            return (
+                f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+            )
         else:
             return self.render_diff
