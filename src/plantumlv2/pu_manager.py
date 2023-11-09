@@ -74,7 +74,7 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
 
                     remote_dependency_map[remote_key].render_diff = (
                         f'"{remote_value.from_package.name}"-->"{remote_value.to_package.name}" '
-                        f"{color} : 0 ({dependency_count})"
+                        f"{color.value} : 0 ({dependency_count})"
                     )
                     continue
 
@@ -104,7 +104,7 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                     dependency_count = dependency.dependency_count
                     dependency.render_diff = (
                         f'"{dependency.from_package.name}"-->"{dependency.to_package.name}" '
-                        f"{color} : {dependency_count} (+{dependency_count})"
+                        f"{color.value} : {dependency_count} (+{dependency_count})"
                     )
 
             # Deleted dependencies
