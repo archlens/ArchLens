@@ -11,13 +11,13 @@ Lastly, ArchLens can display the highlighted differences in the system views whe
 
 To help you get started, this readme includes various options in combination with the setup of a config file.
 
-### ArchLens runs is compatible with 3.9 <= Python version < 3.11.0
+### ArchLens runs is compatible with 3.9 <= Python version <= 3.11.0
 
 ## Installation
 
 To install ArchLens, simply use the pip package manager by running the following command:
 
-`pip install Architectural-Lens` (You might need administrative right to perform the operation)
+`pip install archlens-preview` (You need administrative right to perform the operation)
 
 This will download and install the necessary files and dependencies needed for ArchLens to run properly.
 
