@@ -4,12 +4,13 @@ on:
   pull_request:
     branches:
       - '*'
+    paths:
+      - "setup.py"
   push:
     branches:
       - master
     paths:
       - "setup.py"
-  workflow_dispatch:
 
 permissions:
   contents: read
