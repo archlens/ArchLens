@@ -67,6 +67,15 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
             for remote_key, remote_value in remote_dependency_map.items():
                 # Check if the same key exists in the local_dependency_map
                 if remote_key not in local_dependency_map:
+                    # we have a dependency that no longer exists in local, package exists but the dependency removed
+                    color = EntityState.DELETED
+                    dependency_count = 0 - remote_value.dependency_count
+                    remote_value = remote_dependency_map[remote_key]
+
+                    remote_dependency_map[remote_key].render_diff = (
+                        f'"{remote_value.from_package.name}"-->"{remote_value.to_package.name}" '
+                        f"{color.value} : 0 ({dependency_count})"
+                    )
                     continue
 
                 local_value = local_dependency_map[remote_key]
@@ -79,16 +88,24 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                     dependency_count = (
                         f": {local_value.dependency_count} ({sign}{diff})"
                         if diff != 0
-                        else f": {local_value.dependency_count}")
+                        else f": {local_value.dependency_count}"
+                    )
 
                     local_dependency_map[remote_key].render_diff = (
                         f'"{local_value.from_package.name}"-->"{local_value.to_package.name}" '
-                        f"{color.value} {dependency_count}")
+                        f"{color.value} {dependency_count}"
+                    )
 
             # Created dependencies
             for dependency_path, dependency in local_dependency_map.items():
                 if dependency_path not in remote_dependency_map:
-                    dependency.state = EntityState.CREATED
+                    # we treat a new dependency as a diff
+                    color = EntityState.CREATED
+                    dependency_count = dependency.dependency_count
+                    dependency.render_diff = (
+                        f'"{dependency.from_package.name}"-->"{dependency.to_package.name}" '
+                        f"{color.value} : {dependency_count} (+{dependency_count})"
+                    )
 
             # Deleted dependencies
             for (

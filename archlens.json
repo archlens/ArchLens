@@ -1,21 +1,21 @@
 {
-    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/config.schema.json",
-    "name": "ArchLens",
-    "rootFolder": "src",
-    "github": {
-        "url": "https://github.com/archlens/ArchLens",
-        "branch": "master"
-    },
-    "saveLocation": "./diagrams/",
-    "views": {
-        "completeView": {
-            "packages": [
-                {
-                    "path": "./core/*",
-                    "depth": 0
-                }
-            ],
-            "ignorePackages": []
+  "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/config.schema.json",
+  "name": "ArchLens",
+  "rootFolder": "src",
+  "github": {
+    "url": "https://github.com/archlens/ArchLens",
+    "branch": "master"
+  },
+  "saveLocation": "./diagrams/",
+  "views": {
+    "completeView": {
+      "packages": [
+        {
+          "path": "*",
+          "depth": 0
         }
+      ],
+      "ignorePackages": []
     }
+  }
 }
