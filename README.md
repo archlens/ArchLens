@@ -11,13 +11,13 @@ Lastly, ArchLens can display the highlighted differences in the system views whe
 
 To help you get started, this readme includes various options in combination with the setup of a config file.
 
-### Runs on Python 3.9, 3.10, 3.11
+### ArchLens runs is compatible with 3.9 <= Python version <= 3.11.0
 
 ## Installation
 
 To install ArchLens, simply use the pip package manager by running the following command:
 
-`pip install Architectural-Lens` (You might need administrative right to perform the operation)
+`pip install archlens-preview` (You need administrative right to perform the operation)
 
 This will download and install the necessary files and dependencies needed for ArchLens to run properly.
 
@@ -241,3 +241,29 @@ To display the difference views in your pull requests, run the command:
 This command generates the necessary files in the .github folder, creating it if it doesn't already exist. Once this is done, you can create a pull request, and the difference view will be visible to the reviewer, as shown in the image below. If there are no diffrences, a diagram without diffrences will still be generated.
 
 ![Zeeguu core view](.github/readme/zeeguu-modelViewDiffGithub.png)
+
+## Contributing
+
+Further development on ArchLens is welcomed. To contribute to developing further on ArchLens, we welcome you to fork the repository and propose your additions.
+
+Before you start developing, ensure you have a compatible Python version for running ArchLens. ArchLens have been tested for versions after, including, 3.9, up until, and excluding, version 3.11. There are known issues related to running ArchLens with a version after and including version 3.11.
+
+After ensuring that the current Python version is compatible with ArchLens, we recommend installing the required packages from the files _requirements.txt_ and _dev-requirements.txt_. This will ensure that the necessary packages to run and test your contributions to ArchLens are in your development environment and that they uphold the minimum version requirements. The installing process has been tested using _pip_, and can be done using the following commands:
+
+```
+python -m pip install -r requirements.txt
+python -m pip install -r dev-requirements.txt
+```
+(What you use to install pip packages might differ)
+
+Next, to continue setting up your development environment, run the following command:
+```
+python setup.py develop
+```
+
+After following these steps, one can use the commando below to run the commands locally:
+```
+python ./src/cli_interface.py [cli_command]
+```
+
+For an overview of CLI-commands, look [here](https://github.com/archlens/ArchLens/edit/master/README.md#commands).
