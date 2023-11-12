@@ -14,4 +14,4 @@ jobs:
         with:
           config-path: "archlens.json"
           render-diff: "true"
-          BRANCH_NAME: "_archlens_pr-${{github.event.pull_request.number}}"
+          BRANCH_NAME: "_archlens_diff"
