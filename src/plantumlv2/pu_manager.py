@@ -182,7 +182,7 @@ def _save_plantuml_str(file_name: str, data: str):
     python_executable = sys.executable
     plantuml_server = os.getenv(
         "PLANTUML_SERVER_URL",
-        "https://www.plantuml.com/plantuml/img/",
+        "https://archlens-plantuml.azurewebsites.net/img/",
     )
     os.system(
         f"{python_executable} -m plantuml --server {plantuml_server}  {file_name}"
