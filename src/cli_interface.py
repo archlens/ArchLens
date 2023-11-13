@@ -89,8 +89,8 @@ def init(config_path="./archlens.json"):
 
 @app.command()
 def create_action():
-    action_url = "https://raw.githubusercontent.com/Perlten/MT-diagrams/master/.github/workflows/pr-mt-diagrams.yml"
-    action_path = Path(".github/workflows/pr-mt-diagrams.yml")
+    action_url = "https://raw.githubusercontent.com/archlens/ArchLens/master/.github/workflows/render-diff-on-pr.yml"
+    action_path = Path(".github/workflows/render-diff-on-pr.yml")
     typer.secho(f"Creating the action at {action_path}", fg="green")
     action_path.parent.mkdir(parents=True, exist_ok=True)
     action = requests.get(action_url).text
