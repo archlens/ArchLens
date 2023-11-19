@@ -48,7 +48,7 @@ This will create an "archlens.json" file in your root folder, where you can edit
 
 ```json
  {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "",
     "rootFolder": "",
     "github": {
@@ -84,7 +84,7 @@ The "views" field in the "archlens.json" file allows you to define as many views
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "zeeguu", # Name of project
     "rootFolder": "zeeguu", # Name of source folder containing the root package (Usually a folder called src)
     "github": {
@@ -128,7 +128,7 @@ Here is an example of the archlens.json file used to generate the filtered view:
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "zeeguu",
     "rootFolder": "zeeguu",
     "github": {
@@ -171,7 +171,7 @@ Each arrow in the system diagram represents a dependency between two packages, a
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "zeeguu", # Name of project
     "rootFolder": "zeeguu", # Name of source folder
     "github": {
@@ -182,7 +182,7 @@ Each arrow in the system diagram represents a dependency between two packages, a
     "saveLocation": "./diagrams/", # Location to store generated diagrams
 }
 ```
-In this mt-config file, the dependency count would be gone. This setting is applied to all of the views.
+In this ArchLens config file, the dependency count would be gone. This setting is applied to all of the views.
 
 ## Ignore packages
 In addition to selecting which packages you want in your diagram, you can also select which packages you want removed from your diagram.
@@ -190,7 +190,7 @@ In addition to selecting which packages you want in your diagram, you can also s
 This can be done in two different ways:
 
 ```json
-"packages": [
+"ignorePackages": [
 "*test*" #Removes any package which contains the word test
 "api/test" #Removes the package api/test and all of its sub packages
 ]
@@ -203,7 +203,7 @@ To generate a difference view using ArchLens, you need to be on a branch other t
 
 ```json
 {
-    "$schema": "https://raw.githubusercontent.com/Perlten/Architectural-Lens/master/config.schema.json",
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "zeeguu",
     "rootFolder": "zeeguu",
     "github": {
