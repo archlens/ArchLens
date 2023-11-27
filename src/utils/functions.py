@@ -1,5 +1,10 @@
 import os
 from src.core.bt_graph import BTGraph
+from src.plantuml import plantuml_file_creator
+
+
+def foo():
+    plantuml_file_creator.BTModule.__init__
 
 
 def verify_config_options(config: dict, graph: BTGraph):
