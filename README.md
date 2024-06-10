@@ -82,6 +82,9 @@ Here is an edited version of the "archlens.json" file for the 'zeeguu-api' proje
 
 The "views" field in the "archlens.json" file allows you to define as many views as you need for your project. Simply add a new object with a unique name for each view you want to create. For example, if you wanted to create a view that showed only the "utils" package in the "api" folder, you could add the following to the "views" field:
 
+test
+
+
 ```json
 {
     "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
