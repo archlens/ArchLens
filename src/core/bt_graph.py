@@ -1,3 +1,5 @@
+import json
+
 import astroid
 import sys
 import os
@@ -110,3 +112,13 @@ class BTGraph:
                 file_list.append(os.path.join(root, file))
 
         return file_list
+
+    def toJSON(self) -> str:
+        g = {"modules": [], "files": []}
+        for _, m in self.get_all_bt_modules_map().items():
+            g["modules"].append({"name": m.name, "files": [f.label for f in m.file_list]})
+
+        for _, f in self.get_all_bt_files_map().items():
+            g["files"].append({"name": f.label, "edge_to": [ff.label for ff in f.edge_to]})
+
+        return json.dumps(g)
