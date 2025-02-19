@@ -39,6 +39,7 @@ def render(config_path: str = "archlens.json"):
 
     render_pu(g, config)
 
+
 @app.command()
 def jsonfile(config_path: str = "archlens.json"):
     config = read_config_file(config_path)
@@ -55,7 +56,7 @@ def jsonfile(config_path: str = "archlens.json"):
 
     with open(save_location, "w") as f:
         f.write(g.toJSON())
-        
+
 
 def _create_astroid():
     am = AstroidManager()
