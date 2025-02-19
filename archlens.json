@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "ArchLens",
-    "rootFolder": "",
+    "rootFolder": "./src",
     "github": {
         "url": "",
         "branch": "main"
