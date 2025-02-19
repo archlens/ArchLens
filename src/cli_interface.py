@@ -55,6 +55,7 @@ def jsonfile(config_path: str = "archlens.json"):
 
     with open(save_location, "w") as f:
         f.write(g.toJSON())
+        
 
 def _create_astroid():
     am = AstroidManager()
