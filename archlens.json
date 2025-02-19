@@ -11,7 +11,7 @@
         "completeView": {
             "packages": [
                 {
-                    "path": "./core/*",
+                    "path": "*",
                     "depth": 0
                 }
             ],
