@@ -130,7 +130,10 @@ def read_config_file(config_path):
     if not os.getenv("MT_DEBUG"):
         jsonschema.validate(instance=config, schema=config_schema)
 
-    config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
+    if "_alternative_target_root" in config:
+        config["_config_path"] = os.path.abspath(config["_alternative_target_root"])
+    else: 
+        config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
 
     config_manager = ConfigManagerSingleton()
     config_manager.setup(config)

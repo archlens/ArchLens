@@ -68,7 +68,7 @@ class BTGraph:
 
         for bt_file in btf_map.values():
             imported_modules = get_imported_modules(
-                bt_file.ast, self.root_module_location, self.am
+                bt_file.ast, self.target_project_base_location, self.am
             )
             bt_file >> [
                 btf_map[module.file]
