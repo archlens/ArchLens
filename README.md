@@ -11,7 +11,7 @@ Lastly, ArchLens can display the highlighted differences in the system views whe
 
 To help you get started, this readme includes various options in combination with the setup of a config file.
 
-### ArchLens runs is compatible with 3.9 <= Python version <= 3.11.0
+### ArchLens runs is compatible with 3.9 <= Python version <= 3.12.0
 
 ## Installation
 
@@ -246,7 +246,7 @@ This command generates the necessary files in the .github folder, creating it if
 
 Further development on ArchLens is welcomed. To contribute to developing further on ArchLens, we welcome you to fork the repository and propose your additions.
 
-Before you start developing, ensure you have a compatible Python version for running ArchLens. ArchLens have been tested for versions after, including, 3.9, up until, and excluding, version 3.11. There are known issues related to running ArchLens with a version after and including version 3.11.
+Before you start developing, ensure you have a compatible Python version for running ArchLens. ArchLens have been tested for versions after, including, 3.9, up until, and excluding, version 3.12. There are known issues related to running ArchLens with a version after and including version 3.11.
 
 After ensuring that the current Python version is compatible with ArchLens, we recommend installing the required packages from the files _requirements.txt_ and _dev-requirements.txt_. This will ensure that the necessary packages to run and test your contributions to ArchLens are in your development environment and that they uphold the minimum version requirements. The installing process has been tested using _pip_, and can be done using the following commands:
 

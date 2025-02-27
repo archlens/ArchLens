@@ -40,6 +40,24 @@ def render(config_path: str = "archlens.json"):
     render_pu(g, config)
 
 
+@app.command()
+def jsonfile(config_path: str = "archlens.json"):
+    config = read_config_file(config_path)
+
+    mt_path_manager = PathManagerSingleton()
+    mt_path_manager.setup(config)
+
+    am = _create_astroid()
+    g = BTGraph(am)
+    g.build_graph(config)
+
+    save_location = os.path.join(config["saveLocation"], "modules.json")
+    os.makedirs(os.path.dirname(save_location), exist_ok=True)
+
+    with open(save_location, "w") as f:
+        f.write(g.toJSON())
+
+
 def _create_astroid():
     am = AstroidManager()
     am.brain["astroid_cache"] = {}
