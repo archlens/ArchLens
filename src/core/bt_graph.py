@@ -13,12 +13,16 @@ class BTGraph:
     DEFAULT_SETTINGS = {"diagram_name": "", "project": None}
     root_module_location: str = None
     target_project_base_location: str = None
-    root_module = None
+    root_module  = None
     base_module = None
     am: AstroidManager = None
 
     def __init__(self, am: AstroidManager) -> None:
         self.am = am
+
+    def __init__(self, am: AstroidManager, root_module: BTModule) -> None:
+        self.am = am
+        R
 
     def build_graph(self, config: dict):
         config_path = config.get("_config_path")
