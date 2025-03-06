@@ -114,11 +114,29 @@ class BTGraph:
         return file_list
 
     def toJSON(self) -> str:
-        g = {"modules": [], "files": []}
-        for _, m in self.get_all_bt_modules_map().items():
-            g["modules"].append({"name": m.name, "files": [f.label for f in m.file_list]})
+        g = {}
+        g["src_dir"] = self.root_module_location
 
-        for _, f in self.get_all_bt_files_map().items():
-            g["files"].append({"name": f.label, "edge_to": [ff.label for ff in f.edge_to]})
+        g["modules"] = {}
+        for _, m in self.get_all_bt_modules_map().items():
+            module = {}
+            module["name"] = m.name
+            module["full_name"] = m.ast.name
+            module["path"] = m.path
+
+            module["files"] = {}
+            for f in m.file_list:
+                file = {}
+                file["name"] = f.label
+                file["path"] = f.file
+
+                file["edge_to"] = []
+                for edge in f.edge_to:
+                    file["edge_to"].append(edge.file)
+
+                module["files"][f.file] = file
+
+            g["modules"][m.path] = module
 
         return json.dumps(g)
+
