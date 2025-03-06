@@ -131,6 +131,8 @@ def read_config_file(config_path):
         jsonschema.validate(instance=config, schema=config_schema)
 
     config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
+    
+    config["saveLocation"] = os.path.normpath(os.path.join(config["_config_path"], config["saveLocation"]))
 
     config_manager = ConfigManagerSingleton()
     config_manager.setup(config)
