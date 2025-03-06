@@ -3,7 +3,7 @@ from setuptools import setup, find_packages, glob
 
 setup(
     name="ArchLens-Preview",
-    version="0.1.1",
+    version="0.1.2",
     description="Designed for visualizing package dependencies and highlighting differences between"
     " branches in GitHub pull requests. It offers customization options to tailor package views.",
     author="The ArchLens Team",
