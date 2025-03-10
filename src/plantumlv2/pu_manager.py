@@ -1,11 +1,11 @@
 import sys
 from src.core.bt_graph import BTGraph
-from src.plantumlv2.pu_entities import (
+from src.plantumlv2.view_entities import (
     PACKAGE_NAME_SPLITTER,
     EntityState,
-    PuPackage,
+    ViewPackage,
 )
-from src.plantumlv2.utils import get_pu_package_path_from_bt_package
+from src.plantumlv2.utils import get_view_package_path_from_bt_package
 import os
 
 
@@ -14,7 +14,7 @@ def render_pu(graph: BTGraph, config: dict):
     for view_name, pu_package_map in views.items():
         if os.getenv("MT_DEBUG"):
             dep_count = sum(
-                len(package.pu_dependency_list) for package in pu_package_map.values()
+                len(package.view_dependency_list) for package in pu_package_map.values()
             )
             package_count = len(list(pu_package_map.values()))
             print("View name:", view_name)
@@ -38,13 +38,13 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
     packages_to_skip_dependency_update = set()
 
     for view_name, local_graph in local_graph_views.items():
-        diff_graph: list[PuPackage] = []
+        diff_graph: list[ViewPackage] = []
         remote_graph = remote_graph_views[view_name]
         # Created packages
         for path, package in local_graph.items():
             if path not in remote_graph:
                 package.state = EntityState.CREATED
-                for package_dependency in package.pu_dependency_list:
+                for package_dependency in package.view_dependency_list:
                     package_dependency.state = EntityState.CREATED
                 diff_graph.append(package)
 
@@ -52,7 +52,7 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
         for remote_path, remote_package in remote_graph.items():
             if remote_path not in local_graph:
                 remote_package.state = EntityState.DELETED
-                for remote_package_dependencies in remote_package.pu_dependency_list:
+                for remote_package_dependencies in remote_package.view_dependency_list:
                     remote_package_dependencies.state = EntityState.DELETED
                 diff_graph.append(remote_package)
                 local_graph[remote_path] = remote_package
@@ -118,7 +118,7 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
                     remote_dependency.to_package = local_graph[
                         remote_dependency_path
                     ]  # Ensures that the package refs will be in the final graph
-                    package.pu_dependency_list.append(remote_dependency)
+                    package.view_dependency_list.append(remote_dependency)
 
             diff_graph.append(package)
         plant_uml_str = _render_pu_graph(diff_graph, view_name, config)
@@ -128,7 +128,7 @@ def render_diff_pu(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: di
         _save_plantuml_str(save_location, plant_uml_str)
 
 
-def _handle_duplicate_name(pu_graph: list[PuPackage]):
+def _handle_duplicate_name(pu_graph: list[ViewPackage]):
     for package in pu_graph:
         package_name_split = package.path.split("/")
         found_duplicate = False
@@ -147,7 +147,7 @@ def _handle_duplicate_name(pu_graph: list[PuPackage]):
             package.name = package_name_split[-1]
 
 
-def _render_pu_graph(pu_graph: list[PuPackage], view_name, config):
+def _render_pu_graph(pu_graph: list[ViewPackage], view_name, config):
     view_config: dict = config["views"][view_name]
     use_package_path_as_label = view_config.get("usePackagePathAsLabel", True)
     if not use_package_path_as_label:
@@ -192,14 +192,14 @@ def _save_plantuml_str(file_name: str, data: str):
         os.remove(file_name)
 
 
-def _create_pu_graph(graph: BTGraph, config: dict) -> dict[str, dict[str, PuPackage]]:
+def _create_pu_graph(graph: BTGraph, config: dict) -> dict[str, dict[str, ViewPackage]]:
     bt_packages = graph.get_all_bt_modules_map()
     views = {}
 
     for view_name, view in config["views"].items():
-        pu_package_map: dict[str, PuPackage] = {}
+        pu_package_map: dict[str, ViewPackage] = {}
         for bt_package in bt_packages.values():
-            pu_package = PuPackage(bt_package)
+            pu_package = ViewPackage(bt_package)
             pu_package_map[pu_package.path] = pu_package
 
         for pu_package in pu_package_map.values():
@@ -211,11 +211,11 @@ def _create_pu_graph(graph: BTGraph, config: dict) -> dict[str, dict[str, PuPack
 
 
 def _find_packages_with_depth(
-    package: PuPackage, depth: int, pu_package_map: dict[str, PuPackage]
+    package: ViewPackage, depth: int, pu_package_map: dict[str, ViewPackage]
 ):
     bt_sub_packages = package.bt_package.get_submodules_recursive()
     filtered_sub_packages = [
-        get_pu_package_path_from_bt_package(sub_package)
+        get_view_package_path_from_bt_package(sub_package)
         for sub_package in bt_sub_packages
         if (sub_package.depth - package.bt_package.depth) <= depth
     ]
@@ -223,10 +223,10 @@ def _find_packages_with_depth(
 
 
 def _filter_packages(
-    packages_map: dict[str, PuPackage], view: dict
-) -> dict[str, PuPackage]:
+    packages_map: dict[str, ViewPackage], view: dict
+) -> dict[str, ViewPackage]:
     packages = list(packages_map.values())
-    filtered_packages_set: set[PuPackage] = set()
+    filtered_packages_set: set[ViewPackage] = set()
     # packages
     for package_view in view["packages"]:
         for package in packages:
