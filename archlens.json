@@ -1,1 +1,21 @@
-{"$schema":"https://raw.githubusercontent.com/archlens/ArchLens/master/config.schema.json","name":"ArchLens","rootFolder":"/home/casper/Development/data-scraper/data_scraper","github":{"url":"https://github.com/archlens/ArchLens","branch":"master"},"saveLocation":"./diagrams/","views":{"completeView":{"packages":[{"path":"*","depth":0}],"ignorePackages":[]}},"_alternative_target_root":"/home/casper/Development/data-scraper"}
+{
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/config.schema.json",
+    "name": "ArchLens",
+    "rootFolder": "src",
+    "github": {
+        "url": "https://github.com/archlens/ArchLens",
+        "branch": "master"
+    },
+    "saveLocation": "./diagrams/",
+    "views": {
+        "completeView": {
+            "packages": [
+                {
+                    "path": "*",
+                    "depth": 0
+                }
+            ],
+            "ignorePackages": []
+        }
+    }
+}
