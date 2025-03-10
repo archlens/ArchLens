@@ -12,7 +12,7 @@
             "packages": [
                 {
                     "path": "*",
-                    "depth": 0
+                    "depth": 3
                 }
             ],
             "ignorePackages": []

@@ -1,5 +1,5 @@
 from src.core.bt_module import BTModule
-from src.plantumlv2.utils import get_view_package_path_from_bt_package
+from src.views.utils import get_view_package_path_from_bt_package
 from enum import Enum
 
 from src.utils.config_manager_singleton import ConfigManagerSingleton

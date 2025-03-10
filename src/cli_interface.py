@@ -6,12 +6,13 @@ import jsonschema
 import tempfile
 import shutil
 from pathlib import Path
+from src.providers.plantuml.pu_render import pu_render, pu_render_diff
 from src.utils.path_manager_singleton import PathManagerSingleton
 
 # from src.utils.functions import verify_config_options
 from src.utils.config_manager_singleton import ConfigManagerSingleton
 
-from src.plantumlv2.pu_manager import render_pu, render_diff_pu
+from src.views.view_manager import render_views, render_diff_views
 
 from src.core.bt_graph import BTGraph
 
@@ -37,7 +38,7 @@ def render(config_path: str = "archlens.json"):
     g = BTGraph(am)
     g.build_graph(config)
 
-    render_pu(g, config)
+    render_views(g, config, pu_render)
 
 
 @app.command()
@@ -89,7 +90,7 @@ def render_diff(config_path: str = "archlens.json"):
         remote_graph.build_graph(config_git)
         # verify_config_options(config_git, g_git)
 
-        render_diff_pu(local_graph, remote_graph, config)
+        render_diff_views(local_graph, remote_graph, config, pu_render_diff)
 
 
 @app.command()
