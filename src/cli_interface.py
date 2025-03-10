@@ -15,7 +15,7 @@ from src.plantumlv2.pu_manager import render_pu, render_diff_pu
 
 from src.core.bt_graph import BTGraph
 
-from src.plantuml.fetch_git import fetch_git_repo
+from src.git.fetch_git import fetch_git_repo
 
 from astroid.manager import AstroidManager
 
