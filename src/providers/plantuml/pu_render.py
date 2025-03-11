@@ -9,8 +9,6 @@ def pu_render(view_graph, view_name, config):
         save_location = os.path.join(
             config["saveLocation"], f"{project_name}-{view_name}"
         )
-        print("\n\n\nPLANTUML - STRING:")
-        print(plant_uml_str)
         _save_plantuml_str(save_location, plant_uml_str)
 
 def pu_render_diff(diff_graph, view_name, config):
@@ -28,10 +26,10 @@ def pu_render_diff(diff_graph, view_name, config):
 def _render_pu_graph(view_graph, view_name, config):
 
     pu_package_string = "\n".join(
-        [pu_package.render_package() for pu_package in view_graph]
+        [pu_package.render_package_pu() for pu_package in view_graph]
     )
     pu_dependency_string = "\n".join(
-        [pu_package.render_dependency() for pu_package in view_graph]
+        [pu_package.render_dependency_pu() for pu_package in view_graph]
     )
     project_name = config.get("name", "")
     title = f"{project_name}-{view_name}"

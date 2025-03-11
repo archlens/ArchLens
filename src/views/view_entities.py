@@ -1,4 +1,4 @@
-from src.core.bt_module import BTModule
+from src.core.bt_module import BTModule, BTFile
 from src.views.utils import get_view_package_path_from_bt_package
 from enum import Enum
 
@@ -68,7 +68,7 @@ class ViewPackage:
         res.extend(self.parent.get_parent_list())
         return res
 
-    def render_package(self) -> str:
+    def render_package_pu(self) -> str:
         config_manager = ConfigManagerSingleton()
         state_str = self.state.value
         if self.state == EntityState.NEUTRAL:
@@ -76,10 +76,19 @@ class ViewPackage:
 
         return f'package "{self.name}" {state_str}'
 
-    def render_dependency(self) -> str:
+    def render_dependency_pu(self) -> str:
         return "\n".join(
-            [view_dependency.render() for view_dependency in self.view_dependency_list]
+            [view_dependency.render_pu() for view_dependency in self.view_dependency_list]
         )
+    
+    def render_package_json(self):
+        return {
+            "name": self.name,
+            "state" : self.state.name
+        }
+
+    def render_dependency_json(self):
+        return [view_dependency.render_json() for view_dependency in self.view_dependency_list]
 
     def filter_excess_packages_dependencies(self, used_packages: set["ViewPackage"]):
         for sub_module in self.sub_modules:
@@ -137,9 +146,11 @@ class ViewDependancy:
     from_bt_package: BTModule = None
     to_bt_package: BTModule = None
 
+    edge_files: list[tuple[BTFile, BTFile]] = []
+
     dependency_count = 0
 
-    render_diff = ""
+    render_diff = {}
 
     def __init__(
         self,
@@ -155,12 +166,15 @@ class ViewDependancy:
         self.dependency_count = self.from_bt_package.get_dependency_count(
             self.to_bt_package
         )
+        self.edge_files = self.from_bt_package.get_dependency_files(
+            self.to_bt_package
+        )
 
     @property
     def id(self):
         return f"{self.from_package.name}-->{self.to_package.name}"
 
-    def render(self) -> str:
+    def render_pu(self) -> str:
         config_manager = ConfigManagerSingleton()
 
         if not self.render_diff:
@@ -171,4 +185,34 @@ class ViewDependancy:
             to_name = self.to_package.name
             return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
         else:
-            return self.render_diff
+            return f'"{self.render_diff["from_package"].name}"-->"{self.render_diff["to_package"].name}" {self.render_diff["color"].value} : {self.render_diff["label"]}'
+
+    def render_json(self) -> dict:
+        config_manager = ConfigManagerSingleton()
+
+        if not self.render_diff:
+            label = ""
+            if config_manager.show_dependency_count:
+                label = f"{self.dependency_count}"
+            from_package : ViewPackage = self.from_package.name
+            to_package : ViewPackage = self.to_package.name
+            label = str(self.dependency_count)
+            state : EntityState = self.state
+            state_str = state.name
+        else:
+            from_package : ViewPackage = self.render_diff["from_package"].name
+            to_package : ViewPackage = self.render_diff["to_package"].name
+            label = self.render_diff["label"]
+            state : EntityState = self.render_diff["color"]
+            state_str = state.name
+        return {
+            "state" : state_str,
+            "fromPackage" : from_package,
+            "toPackage" : to_package,
+            "label" : label,
+            "relations" :   [
+                                {"from_file": {"name": relation[0].label, "path": relation[0].file}, 
+                                "to_file": {"name": relation[1].label, "path": relation[1].file}}
+                                for relation in self.edge_files
+                            ]
+        }

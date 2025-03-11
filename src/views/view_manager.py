@@ -73,10 +73,12 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                     dependency_count = 0 - remote_value.dependency_count
                     remote_value = remote_dependency_map[remote_key]
 
-                    remote_dependency_map[remote_key].render_diff = (
-                        f'"{remote_value.from_package.name}"-->"{remote_value.to_package.name}" '
-                        f"{color.value} : 0 ({dependency_count})"
-                    )
+                    remote_dependency_map[remote_key].render_diff = {
+                        "from_package" : remote_value.from_package,
+                        "to_package" : remote_value.to_package,
+                        "color" : color,
+                        "label" : f"0 ({dependency_count})"
+                    }
                     continue
 
                 local_value = local_dependency_map[remote_key]
@@ -92,10 +94,12 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                         else f": {local_value.dependency_count}"
                     )
 
-                    local_dependency_map[remote_key].render_diff = (
-                        f'"{local_value.from_package.name}"-->"{local_value.to_package.name}" '
-                        f"{color.value} {dependency_count}"
-                    )
+                    local_dependency_map[remote_key].render_diff = {
+                        "from_package" : local_value.from_package,
+                        "to_package" : local_value.to_package,
+                        "color" : color,
+                        "label" : f"{dependency_count}"
+                    }
 
             # Created dependencies
             for dependency_path, dependency in local_dependency_map.items():
@@ -103,10 +107,12 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                     # we treat a new dependency as a diff
                     color = EntityState.CREATED
                     dependency_count = dependency.dependency_count
-                    dependency.render_diff = (
-                        f'"{dependency.from_package.name}"-->"{dependency.to_package.name}" '
-                        f"{color.value} : {dependency_count} (+{dependency_count})"
-                    )
+                    dependency.render_diff = {
+                        "from_package" : dependency.from_package,
+                        "to_package" : dependency.to_package,
+                        "color" : color,
+                        "label" : f"{dependency_count} (+{dependency_count})"
+                    }
 
             # Deleted dependencies
             for (
@@ -129,7 +135,7 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
             _handle_duplicate_name(diff_graph)
         
         save_to_file(diff_graph, view_name, config)
-        
+
 
 def _handle_duplicate_name(view_graph: list[ViewPackage]):
     for package in view_graph:

@@ -6,6 +6,7 @@ import jsonschema
 import tempfile
 import shutil
 from pathlib import Path
+from src.providers.json.json_render import json_render
 from src.providers.plantuml.pu_render import pu_render, pu_render_diff
 from src.utils.path_manager_singleton import PathManagerSingleton
 
@@ -52,11 +53,8 @@ def jsonfile(config_path: str = "archlens.json"):
     g = BTGraph(am)
     g.build_graph(config)
 
-    save_location = os.path.join(config["saveLocation"], "modules.json")
-    os.makedirs(os.path.dirname(save_location), exist_ok=True)
+    render_views(g, config, json_render)
 
-    with open(save_location, "w") as f:
-        f.write(g.toJSON())
 
 
 def _create_astroid():
