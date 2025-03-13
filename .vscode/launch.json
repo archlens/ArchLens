@@ -1,0 +1,91 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CLI Render",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "render",
+                "--config-path",
+                "${input:config_path}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "MT_DEBUG": "true"
+            }
+        },
+        {
+            "name": "CLI Render diff",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "render-diff",
+                "--config-path",
+                "${input:config_path}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "MT_DEBUG": "true"
+            }
+        },
+        {
+            "name": "CLI Init",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "init"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "MT_DEBUG": "true"
+            }
+        },
+        {
+            "name": "CLI help",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/cli_interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--help"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "MT_DEBUG": "true"
+            }
+        },
+    ],
+    "inputs": [
+        {
+            "type": "pickString",
+            "id": "config_path",
+            "description": "What config would you like to run",
+            "options": [
+                "${workspaceFolder}/test_projects/calibre/archlens.json",
+                "${workspaceFolder}/test_projects/je-test-project/archlens.json",
+                "${workspaceFolder}/test_projects/je-test-project/archlens.json",
+                "${workspaceFolder}/test_projects/test_project/archlens.json",
+                "${workspaceFolder}/test_projects/zeeguu/archlens.json",
+                "${workspaceFolder}/test_projects/mt-gh-action/test_project/archlens.json",
+                "${workspaceFolder}/archlens.json",
+                "${workspaceFolder}/test_projects/api/archlens.json",
+                "${workspaceFolder}/test_projects/pandas/archlens.json",
+            ],
+            "default": "${workspaceFolder}/test_projects/calibre/archlens.json",
+        }
+    ]
+}
