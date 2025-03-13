@@ -10,30 +10,38 @@ import os
 from typing import Callable
 
 
-def render_views(graph: BTGraph, config: dict, save_to_file: Callable[[list[ViewPackage], str, dict], None]):
+def render_views(
+    graph: BTGraph,
+    config: dict,
+    save_to_file: Callable[[list[ViewPackage], str, dict], None],
+):
     views = _create_view_graphs(graph, config)
     for view_name, view_package_map in views.items():
         if os.getenv("MT_DEBUG"):
             dep_count = sum(
-                len(package.view_dependency_list) for package in view_package_map.values()
+                len(package.view_dependency_list)
+                for package in view_package_map.values()
             )
             package_count = len(list(view_package_map.values()))
             print("View name:", view_name)
             print("Package count:", package_count)
             print("Dependency count:", dep_count)
-        
+
         view_graph = list(view_package_map.values())
         view_config: dict = config["views"][view_name]
         use_package_path_as_label = view_config.get("usePackagePathAsLabel", True)
         if not use_package_path_as_label:
             _handle_duplicate_name(view_graph)
-        
+
         save_to_file(view_graph, view_name, config)
 
 
-
-
-def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config: dict, save_to_file: Callable[[list[ViewPackage], str, dict], None]):
+def render_diff_views(
+    local_bt_graph: BTGraph,
+    remote_bt_graph: BTGraph,
+    config: dict,
+    save_to_file: Callable[[list[ViewPackage], str, dict], None],
+):
     local_graph_views = _create_view_graphs(local_bt_graph, config)
     remote_graph_views = _create_view_graphs(remote_bt_graph, config)
     packages_to_skip_dependency_update = set()
@@ -74,10 +82,10 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                     remote_value = remote_dependency_map[remote_key]
 
                     remote_dependency_map[remote_key].render_diff = {
-                        "from_package" : remote_value.from_package,
-                        "to_package" : remote_value.to_package,
-                        "color" : color,
-                        "label" : f"0 ({dependency_count})"
+                        "from_package": remote_value.from_package,
+                        "to_package": remote_value.to_package,
+                        "color": color,
+                        "label": f"0 ({dependency_count})",
                     }
                     continue
 
@@ -95,10 +103,10 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                     )
 
                     local_dependency_map[remote_key].render_diff = {
-                        "from_package" : local_value.from_package,
-                        "to_package" : local_value.to_package,
-                        "color" : color,
-                        "label" : f"{dependency_count}"
+                        "from_package": local_value.from_package,
+                        "to_package": local_value.to_package,
+                        "color": color,
+                        "label": f"{dependency_count}",
                     }
 
             # Created dependencies
@@ -108,10 +116,10 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                     color = EntityState.CREATED
                     dependency_count = dependency.dependency_count
                     dependency.render_diff = {
-                        "from_package" : dependency.from_package,
-                        "to_package" : dependency.to_package,
-                        "color" : color,
-                        "label" : f"{dependency_count} (+{dependency_count})"
+                        "from_package": dependency.from_package,
+                        "to_package": dependency.to_package,
+                        "color": color,
+                        "label": f"{dependency_count} (+{dependency_count})",
                     }
 
             # Deleted dependencies
@@ -128,12 +136,12 @@ def render_diff_views(local_bt_graph: BTGraph, remote_bt_graph: BTGraph, config:
                     package.view_dependency_list.append(remote_dependency)
 
             diff_graph.append(package)
-            
+
         view_config: dict = config["views"][view_name]
         use_package_path_as_label = view_config.get("usePackagePathAsLabel", True)
         if not use_package_path_as_label:
             _handle_duplicate_name(diff_graph)
-        
+
         save_to_file(diff_graph, view_name, config)
 
 
@@ -156,7 +164,9 @@ def _handle_duplicate_name(view_graph: list[ViewPackage]):
             package.name = package_name_split[-1]
 
 
-def _create_view_graphs(graph: BTGraph, config: dict) -> dict[str, dict[str, ViewPackage]]:
+def _create_view_graphs(
+    graph: BTGraph, config: dict
+) -> dict[str, dict[str, ViewPackage]]:
     bt_packages = graph.get_all_bt_modules_map()
     views = {}
 
