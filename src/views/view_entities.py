@@ -78,17 +78,20 @@ class ViewPackage:
 
     def render_dependency_pu(self) -> str:
         return "\n".join(
-            [view_dependency.render_pu() for view_dependency in self.view_dependency_list]
+            [
+                view_dependency.render_pu()
+                for view_dependency in self.view_dependency_list
+            ]
         )
-    
+
     def render_package_json(self):
-        return {
-            "name": self.name,
-            "state" : self.state.name
-        }
+        return {"name": self.name, "state": self.state.name}
 
     def render_dependency_json(self):
-        return [view_dependency.render_json() for view_dependency in self.view_dependency_list]
+        return [
+            view_dependency.render_json()
+            for view_dependency in self.view_dependency_list
+        ]
 
     def filter_excess_packages_dependencies(self, used_packages: set["ViewPackage"]):
         for sub_module in self.sub_modules:
@@ -166,7 +169,7 @@ class ViewDependancy:
         self.dependency_count = self.from_bt_package.get_dependency_count(
             self.to_bt_package
         )
-        self.edge_files = self.from_bt_package.get_dependency_files(
+        self.edge_files = self.from_bt_package.get_file_level_relations(
             self.to_bt_package
         )
 
@@ -183,7 +186,9 @@ class ViewDependancy:
                 dependency_count_str = f": {self.dependency_count}"
             from_name = self.from_package.name
             to_name = self.to_package.name
-            return f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+            return (
+                f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
+            )
         else:
             return f'"{self.render_diff["from_package"].name}"-->"{self.render_diff["to_package"].name}" {self.render_diff["color"].value} : {self.render_diff["label"]}'
 
@@ -194,25 +199,27 @@ class ViewDependancy:
             label = ""
             if config_manager.show_dependency_count:
                 label = f"{self.dependency_count}"
-            from_package : ViewPackage = self.from_package.name
-            to_package : ViewPackage = self.to_package.name
+            from_package: ViewPackage = self.from_package.name
+            to_package: ViewPackage = self.to_package.name
             label = str(self.dependency_count)
-            state : EntityState = self.state
+            state: EntityState = self.state
             state_str = state.name
         else:
-            from_package : ViewPackage = self.render_diff["from_package"].name
-            to_package : ViewPackage = self.render_diff["to_package"].name
+            from_package: ViewPackage = self.render_diff["from_package"].name
+            to_package: ViewPackage = self.render_diff["to_package"].name
             label = self.render_diff["label"]
-            state : EntityState = self.render_diff["color"]
+            state: EntityState = self.render_diff["color"]
             state_str = state.name
         return {
-            "state" : state_str,
-            "fromPackage" : from_package,
-            "toPackage" : to_package,
-            "label" : label,
-            "relations" :   [
-                                {"from_file": {"name": relation[0].label, "path": relation[0].file}, 
-                                "to_file": {"name": relation[1].label, "path": relation[1].file}}
-                                for relation in self.edge_files
-                            ]
+            "state": state_str,
+            "fromPackage": from_package,
+            "toPackage": to_package,
+            "label": label,
+            "relations": [
+                {
+                    "from_file": {"name": relation[0].label, "path": relation[0].file},
+                    "to_file": {"name": relation[1].label, "path": relation[1].file},
+                }
+                for relation in self.edge_files
+            ],
         }
