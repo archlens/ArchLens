@@ -1,4 +1,6 @@
 import os
+
+from src.views.view_entities import ViewPackage
 import sys
 
 def pu_render(view_graph, view_name, config):
@@ -23,7 +25,7 @@ def pu_render_diff(diff_graph, view_name, config):
 
 
 
-def _render_pu_graph(view_graph, view_name, config):
+def _render_pu_graph(view_graph : list[ViewPackage], view_name, config):
 
     pu_package_string = "\n".join(
         [pu_package.render_package_pu() for pu_package in view_graph]
