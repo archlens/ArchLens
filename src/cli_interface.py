@@ -6,8 +6,8 @@ import jsonschema
 import tempfile
 import shutil
 from pathlib import Path
-from src.providers.json.json_render import json_render, json_render_diff
-from src.providers.plantuml.pu_render import pu_render, pu_render_diff
+from src.providers.json.json_render import save_json, save_json_diff
+from src.providers.plantuml.pu_render import save_plant_uml, save_plant_uml_diff
 from src.utils.path_manager_singleton import PathManagerSingleton
 
 # from src.utils.functions import verify_config_options
@@ -39,7 +39,7 @@ def render(config_path: str = "archlens.json"):
     g = BTGraph(am)
     g.build_graph(config)
 
-    render_views(g, config, pu_render)
+    render_views(g, config, save_plant_uml)
 
 
 @app.command()
@@ -53,8 +53,7 @@ def render_json(config_path: str = "archlens.json"):
     g = BTGraph(am)
     g.build_graph(config)
 
-    render_views(g, config, json_render)
-
+    render_views(g, config, save_json)
 
 
 def _create_astroid():
@@ -88,7 +87,7 @@ def render_diff(config_path: str = "archlens.json"):
         remote_graph.build_graph(config_git)
         # verify_config_options(config_git, g_git)
 
-        render_diff_views(local_graph, remote_graph, config, pu_render_diff)
+        render_diff_views(local_graph, remote_graph, config, save_plant_uml_diff)
 
 
 @app.command()
@@ -116,7 +115,7 @@ def render_diff_json(config_path: str = "archlens.json"):
         remote_graph.build_graph(config_git)
         # verify_config_options(config_git, g_git)
 
-        render_diff_views(local_graph, remote_graph, config, json_render_diff)
+        render_diff_views(local_graph, remote_graph, config, save_json_diff)
 
 
 @app.command()
@@ -158,8 +157,10 @@ def read_config_file(config_path):
         jsonschema.validate(instance=config, schema=config_schema)
 
     config["_config_path"] = os.path.dirname(os.path.abspath(config_path))
-    
-    config["saveLocation"] = os.path.normpath(os.path.join(config["_config_path"], config["saveLocation"]))
+
+    config["saveLocation"] = os.path.normpath(
+        os.path.join(config["_config_path"], config["saveLocation"])
+    )
 
     config_manager = ConfigManagerSingleton()
     config_manager.setup(config)

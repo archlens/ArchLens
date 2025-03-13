@@ -3,29 +3,24 @@ import os
 from src.views.view_entities import ViewPackage
 import sys
 
-def pu_render(view_graph, view_name, config):
-        plant_uml_str = _render_pu_graph(
-            view_graph, view_name, config
-        )
-        project_name = config["name"]
-        save_location = os.path.join(
-            config["saveLocation"], f"{project_name}-{view_name}"
-        )
-        _save_plantuml_str(save_location, plant_uml_str)
 
-def pu_render_diff(diff_graph, view_name, config):
-        plant_uml_str = _render_pu_graph(
-                diff_graph, view_name, config
-        )
-        project_name = config["name"]
-        save_location = os.path.join(
-            config["saveLocation"], f"{project_name}-diff-{view_name}"
-        )
-        _save_plantuml_str(save_location, plant_uml_str)
+def save_plant_uml(view_graph, view_name, config):
+    plant_uml_str = _render_pu_graph(view_graph, view_name, config)
+    project_name = config["name"]
+    save_location = os.path.join(config["saveLocation"], f"{project_name}-{view_name}")
+    _save_plantuml_str(save_location, plant_uml_str)
 
 
+def save_plant_uml_diff(diff_graph, view_name, config):
+    plant_uml_str = _render_pu_graph(diff_graph, view_name, config)
+    project_name = config["name"]
+    save_location = os.path.join(
+        config["saveLocation"], f"{project_name}-diff-{view_name}"
+    )
+    _save_plantuml_str(save_location, plant_uml_str)
 
-def _render_pu_graph(view_graph : list[ViewPackage], view_name, config):
+
+def _render_pu_graph(view_graph: list[ViewPackage], view_name, config):
 
     pu_package_string = "\n".join(
         [pu_package.render_package_pu() for pu_package in view_graph]
@@ -48,6 +43,7 @@ title {title}
         print(uml_str)
         print("Program Complete")
     return uml_str
+
 
 def _save_plantuml_str(file_name: str, data: str):
     os.makedirs(os.path.dirname(file_name), exist_ok=True)
