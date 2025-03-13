@@ -78,3 +78,9 @@ class BTModule:
         files = [edge for element in self.file_list for edge in element.edge_to]
         count = len([element for element in files if element in file_dependencies])
         return count
+
+    def get_dependency_files(self, other: "BTModule"):
+        file_dependencies = other.file_list
+        file_relations = [(file, edge) for file in self.file_list for edge in file.edge_to]
+        module_dependencies = [relation for relation in file_relations if relation[1] in file_dependencies]
+        return module_dependencies
