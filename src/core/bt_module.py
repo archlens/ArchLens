@@ -79,8 +79,19 @@ class BTModule:
         count = len([element for element in files if element in file_dependencies])
         return count
 
-    def get_dependency_files(self, other: "BTModule"):
-        file_dependencies = other.file_list
-        file_relations = [(file, edge) for file in self.file_list for edge in file.edge_to]
-        module_dependencies = [relation for relation in file_relations if relation[1] in file_dependencies]
+    def get_dependency_files(self, target_module: "BTModule"):
+        """
+        files contained in this object that depend on :param other:
+        :return:
+        """
+        all_file_relations = [
+            (origin_file, target_file)
+            for origin_file in self.file_list
+            for target_file in origin_file.edge_to
+        ]
+        module_dependencies = [
+            relation
+            for relation in all_file_relations
+            if relation[1] in target_module.file_list
+        ]
         return module_dependencies
