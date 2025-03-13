@@ -14,7 +14,15 @@ def json_render(view_graph, view_name, config):
         )
         _save_json_file(save_location+".json", json)
 
-
+def json_render_diff(view_graph, view_name, config):
+        json = _render_json_graph(
+            view_graph, view_name, config
+        )
+        project_name = config["name"]
+        save_location = os.path.join(
+            config["saveLocation"], f"{project_name}-diff-{view_name}"
+        )
+        _save_json_file(save_location+".json", json)
 
 def _render_json_graph(view_graph : list[ViewPackage], view_name, config):
     json_packages = [json_package.render_package_json() for json_package in view_graph]

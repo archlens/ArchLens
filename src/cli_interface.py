@@ -6,7 +6,7 @@ import jsonschema
 import tempfile
 import shutil
 from pathlib import Path
-from src.providers.json.json_render import json_render
+from src.providers.json.json_render import json_render, json_render_diff
 from src.providers.plantuml.pu_render import pu_render, pu_render_diff
 from src.utils.path_manager_singleton import PathManagerSingleton
 
@@ -43,7 +43,7 @@ def render(config_path: str = "archlens.json"):
 
 
 @app.command()
-def jsonfile(config_path: str = "archlens.json"):
+def render_json(config_path: str = "archlens.json"):
     config = read_config_file(config_path)
 
     mt_path_manager = PathManagerSingleton()
@@ -89,6 +89,34 @@ def render_diff(config_path: str = "archlens.json"):
         # verify_config_options(config_git, g_git)
 
         render_diff_views(local_graph, remote_graph, config, pu_render_diff)
+
+
+@app.command()
+def render_diff_json(config_path: str = "archlens.json"):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        print("Created temporary directory:", tmp_dir)
+        config = read_config_file(config_path)
+
+        fetch_git_repo(tmp_dir, config["github"]["url"], config["github"]["branch"])
+
+        shutil.copyfile(config_path, os.path.join(tmp_dir, "archlens.json"))
+
+        config_git = read_config_file(os.path.join(tmp_dir, "archlens.json"))
+
+        path_manager = PathManagerSingleton()
+        path_manager.setup(config, config_git)
+
+        local_am = _create_astroid()
+        local_graph = BTGraph(local_am)
+        local_graph.build_graph(config)
+        # verify_config_options(config, g)
+
+        remote_am = _create_astroid()
+        remote_graph = BTGraph(remote_am)
+        remote_graph.build_graph(config_git)
+        # verify_config_options(config_git, g_git)
+
+        render_diff_views(local_graph, remote_graph, config, json_render_diff)
 
 
 @app.command()
