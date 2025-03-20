@@ -17,7 +17,7 @@ from src.views.view_manager import render_views, render_diff_views
 
 from src.core.bt_graph import BTGraph
 
-from src.git.fetch_git import fetch_git_repo
+from src.git_integration.fetch_git import fetch_git_repo
 
 from astroid.manager import AstroidManager
 
