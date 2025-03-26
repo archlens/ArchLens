@@ -2,12 +2,12 @@ from setuptools import setup, find_packages, glob
 
 
 setup(
-    name="ArchLens-Preview",
-    version="0.1.2",
+    name="ArchLens",
+    version="0.2",
     description="Designed for visualizing package dependencies and highlighting differences between"
     " branches in GitHub pull requests. It offers customization options to tailor package views.",
     author="The ArchLens Team",
-    author_email="sboj@itu.dk",
+    author_email="mlun@itu.dk",
     url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
     long_description="This is the long description",
