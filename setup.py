@@ -10,7 +10,6 @@ setup(
     author_email="mircea.lungu@gmail.com",
     maintainer="Mircea Lungu",
     maintainer_email="mircea.lungu@gmail.com",
-    author_email="mlun@itu.dk",
     url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
     long_description="This is the long description",
