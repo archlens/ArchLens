@@ -7,7 +7,7 @@ setup(
     description="Designed for visualizing package dependencies and highlighting differences between"
     " branches in GitHub pull requests. It offers customization options to tailor package views.",
     author="The ArchLens Team",
-    author_email="mircea.lungu@gmail.com",
+    author_email="mlun@itu.dk",
     url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
     long_description="This is the long description",
