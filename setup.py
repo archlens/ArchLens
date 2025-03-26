@@ -8,8 +8,6 @@ setup(
     " branches in GitHub pull requests. It offers customization options to tailor package views.",
     author="The ArchLens Team",
     author_email="mircea.lungu@gmail.com",
-    maintainer="Mircea Lungu",
-    maintainer_email="mircea.lungu@gmail.com",
     url="https://github.com/archlens/ArchLens",
     packages=find_packages(),
     long_description="This is the long description",
