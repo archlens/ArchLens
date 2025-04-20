@@ -1,7 +1,9 @@
 import astroid
 from astroid.manager import AstroidManager
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
+
+from src.core.ast_cache import AstCache
 
 if TYPE_CHECKING:
     from src.core.bt_module import BTModule
@@ -60,7 +62,7 @@ class BTFile:
 
 
 def get_imported_modules(
-    ast: astroid.Module, root_location: str, am: AstroidManager
+    ast: astroid.Module, root_location: str, am: AstroidManager, ast_cache: AstCache
 ) -> list:
     imported_modules = []
     for sub_node in ast.body:
@@ -68,25 +70,20 @@ def get_imported_modules(
             if isinstance(sub_node, astroid.node_classes.ImportFrom):
                 sub_node: astroid.node_classes.ImportFrom = sub_node
 
-                module_node = am.ast_from_module_name(
-                    sub_node.modname,
-                    context_file=root_location,
-                )
-                imported_modules.append(module_node)
+                module = ast_cache.get_module(sub_node.modname, root_location)
+
+                imported_modules.append(module)
 
             elif isinstance(sub_node, astroid.node_classes.Import):
                 for name, _ in sub_node.names:
                     try:
-                        module_node = am.ast_from_module_name(
-                            name,
-                            context_file=root_location,
-                        )
-                        imported_modules.append(module_node)
+                        module = ast_cache.get_module(name, root_location)
+                        imported_modules.append(module)
                     except Exception:
                         continue
             elif hasattr(sub_node, "body"):
                 imported_modules.extend(
-                    get_imported_modules(sub_node, root_location, am)
+                    get_imported_modules(sub_node, root_location, am, ast_cache)
                 )
 
         except astroid.AstroidImportError:
