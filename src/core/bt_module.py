@@ -37,16 +37,21 @@ class BTModule:
         return os.path.dirname(self.ast.file)
 
     def add_files(self):
-        files = [
-            element for element in os.listdir(self.path) if element.endswith(".py")
+        py_files = [
+            element for element in os.listdir(self.path)
+            if element.endswith(".py") and element != "testing.py"
         ]
 
-        for file in files:
-            if file == "testing.py":
-                continue
+        self.file_list = [None] * len(py_files)
+        i = 0
+
+        for file in py_files:
+            file_path = os.path.join(self.path, file)
+
             bt_file = BTFile(label=file.split("/")[-1], module=self, am=self.am)
-            bt_file.ast = self.am.ast_from_file(os.path.join(self.path, file))
-            self.file_list.append(bt_file)
+            bt_file.ast = self.am.ast_from_file(file_path)
+            self.file_list[i] = bt_file
+            i += 1
 
     def get_files_recursive(self) -> list[BTFile]:
         temp_file_list = self.file_list.copy()
