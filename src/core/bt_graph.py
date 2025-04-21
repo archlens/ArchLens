@@ -4,7 +4,6 @@ import astroid
 import sys
 import os
 
-from src.core.ast_cache import AstCache
 from src.core.bt_file import BTFile, get_imported_modules
 from src.core.bt_module import BTModule
 from astroid.manager import AstroidManager
@@ -16,7 +15,6 @@ class BTGraph:
     target_project_base_location: str = None
     root_module = None
     base_module = None
-    ast_cache: AstCache
     am: AstroidManager = None
 
     def __init__(self, am: AstroidManager) -> None:
@@ -26,7 +24,6 @@ class BTGraph:
         config_path = config.get("_config_path")
         self.root_module_location = os.path.join(config_path, config.get("rootFolder"))
         self.target_project_base_location = config_path
-        self.ast_cache = AstCache(self.am)
 
         sys.path.insert(0, config_path)
         sys.path.insert(1, self.root_module_location)
@@ -68,10 +65,7 @@ class BTGraph:
 
         for bt_file in btf_map.values():
             imported_modules = get_imported_modules(
-                bt_file.ast,
-                self.target_project_base_location,
-                self.am,
-                self.ast_cache
+                bt_file.ast, self.target_project_base_location, self.am
             )
             bt_file >> [
                 btf_map[module.file]
