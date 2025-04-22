@@ -97,9 +97,9 @@ def render_diff_views(
                     sign = "+" if diff > 0 else ""
                     color = EntityState.CREATED if diff > 0 else EntityState.DELETED
                     dependency_count = (
-                        f": {local_value.dependency_count} ({sign}{diff})"
+                        f"{local_value.dependency_count} ({sign}{diff})"
                         if diff != 0
-                        else f": {local_value.dependency_count}"
+                        else f"{local_value.dependency_count}"
                     )
 
                     local_dependency_map[remote_key].render_diff = {
