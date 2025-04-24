@@ -131,6 +131,8 @@ class ViewPackage:
             else:
                 dep = aggregate_dependency_map[dependency.id]
                 dep.dependency_count += dependency.dependency_count
+                dep.edge_files.extend(dependency.edge_files)
+
         self.view_dependency_list = list(aggregate_dependency_map.values())
 
     def get_dependency_map(self) -> dict[str, "ViewDependancy"]:
