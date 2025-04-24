@@ -38,8 +38,8 @@ class BTModule:
 
     def add_files(self):
         py_files = [
-            element for element in os.listdir(self.path)
-            if element.endswith(".py") and element != "testing.py"
+            element for element in os.scandir(self.path)
+            if element.name.endswith(".py") and element.name != "testing.py"
         ]
 
         self.file_list = [None] * len(py_files)
@@ -48,7 +48,7 @@ class BTModule:
         for file in py_files:
             file_path = os.path.join(self.path, file)
 
-            bt_file = BTFile(label=file.split("/")[-1], module=self, am=self.am)
+            bt_file = BTFile(label=file.name, module=self, am=self.am)
             bt_file.ast = self.am.ast_from_file(file_path)
             self.file_list[i] = bt_file
             i += 1

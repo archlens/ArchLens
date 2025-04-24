@@ -63,6 +63,7 @@ def get_imported_modules(
     ast: astroid.Module, root_location: str, am: AstroidManager
 ) -> list:
     imported_modules = []
+
     for sub_node in ast.body:
         try:
             if isinstance(sub_node, astroid.node_classes.ImportFrom):
