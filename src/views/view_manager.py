@@ -231,6 +231,10 @@ def _filter_packages(
         filtered_packages_set = set(packages_map.values())
 
     # ignorePackages
+
+    if not "ignorePackages" in view:
+        view["ignorePackages"] = []
+
     updated_filtered_packages_set: set = set()
     for ignore_packages in view["ignorePackages"]:
         for package in filtered_packages_set:
