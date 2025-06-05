@@ -233,12 +233,14 @@ def _filter_packages(
     # ignorePackages
 
     if not "ignorePackages" in view:
-        view["ignorePackages"] = []
+        view["ignorePackages"] = []        
 
     updated_filtered_packages_set: set = set()
-    for ignore_packages in view["ignorePackages"]:
-        for package in filtered_packages_set:
-            should_filter = False
+    for package in filtered_packages_set:
+        should_filter = False
+
+        for ignore_packages in view["ignorePackages"]:
+            ignore_packages = ignore_packages.replace(".", "/")
             if ignore_packages.startswith("*") and ignore_packages.endswith("*"):
                 if ignore_packages[1:-1] in package.path:
                     should_filter = True
@@ -246,8 +248,8 @@ def _filter_packages(
                 if package.path.startswith(ignore_packages):
                     should_filter = True
 
-            if not should_filter:
-                updated_filtered_packages_set.add(package)
+        if not should_filter:
+            updated_filtered_packages_set.add(package)
 
     if len(view["ignorePackages"]) == 0:
         updated_filtered_packages_set = filtered_packages_set
