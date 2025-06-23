@@ -8,12 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.6] - 2025-06-23
 ### Added Manifest.in
-- Added Manifest.in -- which includes that the CHANGELOG is in the distribution in the first place
-
-## [0.2.5] - 2025-06-23
-### Added CHANGELOG.in 
-- Added CHANGELOG.in
-
-## [0.2.4] - 2025-06-23
-### BugFix
 - Fixed package depth functionality that was not working properly (with Sebastian Cloos Hylander)
+- Added CHANGELOG.in
+- Added Manifest.in -- which includes that the CHANGELOG is in the distribution in the first place
