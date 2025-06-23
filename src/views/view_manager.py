@@ -167,31 +167,38 @@ def _handle_duplicate_name(view_graph: list[ViewPackage]):
 def _create_view_graphs(
     graph: BTGraph, config: dict
 ) -> dict[str, dict[str, ViewPackage]]:
+
+    # all the nodes at all kinds of lelves
     bt_packages = graph.get_all_bt_modules_map()
     views = {}
 
     for view_name, view in config["views"].items():
-        view_package_map: dict[str, ViewPackage] = {}
+
+        viewpackages_by_name: dict[str, ViewPackage] = {}
+
         for bt_package in bt_packages.values():
+
+            # create a view package node for each of the nodes in the AST
             view_package = ViewPackage(bt_package)
-            view_package_map[view_package.path] = view_package
+            viewpackages_by_name[view_package.path] = view_package
 
-        for view_package in view_package_map.values():
-            view_package.setup_dependencies(view_package_map)
+        for view_package in viewpackages_by_name.values():
+            view_package.setup_dependencies(viewpackages_by_name)
 
-        view_package_map = _filter_packages(view_package_map, view)
-        views[view_name] = view_package_map
+        viewpackages_by_name = _filter_packages(viewpackages_by_name, view)
+        views[view_name] = viewpackages_by_name
     return views
 
 
 def _find_packages_with_depth(
     package: ViewPackage, depth: int, view_package_map: dict[str, ViewPackage]
 ):
+
     bt_sub_packages = package.bt_package.get_submodules_recursive()
     filtered_sub_packages = [
         get_view_package_path_from_bt_package(sub_package)
         for sub_package in bt_sub_packages
-        if (sub_package.depth - package.bt_package.depth) <= depth
+        if (sub_package.depth - package.bt_package.depth) == depth
     ]
     return [view_package_map[p] for p in filtered_sub_packages]
 
@@ -199,31 +206,52 @@ def _find_packages_with_depth(
 def _filter_packages(
     packages_map: dict[str, ViewPackage], view: dict
 ) -> dict[str, ViewPackage]:
-    packages = list(packages_map.values())
+    all_viewpackages = list(packages_map.values())
     filtered_packages_set: set[ViewPackage] = set()
+
     # packages
-    for package_view in view["packages"]:
-        for package in packages:
-            filter_path = package_view
+    for package_definition_from_config in view["packages"]:
+        for view_package in all_viewpackages:
+            filter_path = package_definition_from_config
 
-            if isinstance(package_view, str):
-                if package.path.startswith(filter_path.replace(".", "/")):
-                    filtered_packages_set.add(package)
+            # e.g.
+            # "packages": [
+            #      "api",
+            # ],
+            if isinstance(package_definition_from_config, str):
+                if view_package.path.startswith(filter_path.replace(".", "/")):
+                    filtered_packages_set.add(view_package)
 
-            if isinstance(package_view, dict):
-                filter_path = package_view["path"].replace(".", "/")
+            # e.g.
+            # "packages": [
+            #     {
+            #         "path": "api",
+            #         "depth": 1
+            #     }
+            # ],
+            if isinstance(package_definition_from_config, dict):
+                filter_path = package_definition_from_config["path"].replace(".", "/")
+
+                # TODO: why are we ignoring the star - it's a regex?
                 filter_path = filter_path.replace("*", "")
-                view_depth = package_view["depth"]
-                if filter_path == "" and package.parent_path == ".":
-                    filtered_packages_set.add(package)
+                view_depth = package_definition_from_config["depth"]
+
+                if filter_path == "" and view_package.parent_path == ".":
+                    # TODO: when could this happen?
+                    filtered_packages_set.add(view_package)
                     depth_filter_packages = _find_packages_with_depth(
-                        package, view_depth - 1, packages_map
+                        view_package, view_depth - 1, packages_map
                     )
                     filtered_packages_set.update(depth_filter_packages)
-                elif package.path == filter_path:
-                    filtered_packages_set.add(package)
+                elif view_package.path == filter_path:
+
+                    if view_depth == 0:
+                        # if view depth is greater, that means we want to expand this path
+                        # and this path should not be part of the view
+                        filtered_packages_set.add(view_package)
+
                     depth_filter_packages = _find_packages_with_depth(
-                        package, view_depth, packages_map
+                        view_package, view_depth, packages_map
                     )
                     filtered_packages_set.update(depth_filter_packages)
 
@@ -233,29 +261,29 @@ def _filter_packages(
     # ignorePackages
 
     if not "ignorePackages" in view:
-        view["ignorePackages"] = []        
+        view["ignorePackages"] = []
 
     updated_filtered_packages_set: set = set()
-    for package in filtered_packages_set:
+    for view_package in filtered_packages_set:
         should_filter = False
 
         for ignore_packages in view["ignorePackages"]:
             ignore_packages = ignore_packages.replace(".", "/")
             if ignore_packages.startswith("*") and ignore_packages.endswith("*"):
-                if ignore_packages[1:-1] in package.path:
+                if ignore_packages[1:-1] in view_package.path:
                     should_filter = True
             else:
-                if package.path.startswith(ignore_packages):
+                if view_package.path.startswith(ignore_packages):
                     should_filter = True
 
         if not should_filter:
-            updated_filtered_packages_set.add(package)
+            updated_filtered_packages_set.add(view_package)
 
     if len(view["ignorePackages"]) == 0:
         updated_filtered_packages_set = filtered_packages_set
 
     filtered_packages_set = updated_filtered_packages_set
 
-    for package in filtered_packages_set:
-        package.filter_excess_packages_dependencies(filtered_packages_set)
+    for view_package in filtered_packages_set:
+        view_package.filter_excess_packages_dependencies(filtered_packages_set)
     return {package.path: package for package in filtered_packages_set}
