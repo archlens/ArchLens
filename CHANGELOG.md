@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.2.6] - 2025-06-23
+## [0.2.7] - 2025-06-23
 ### Added Manifest.in
 - Fixed package depth functionality that was not working properly (with Sebastian Cloos Hylander)
 - Added CHANGELOG.in

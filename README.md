@@ -1,5 +1,4 @@
-# Architectural Lens
-### This project was originally forked from [Architectural Lens](https://github.com/Perlten/Architectural-Lens), all credit for the groundwork goes to the original authors
+# ArchLens
 (Fork was detached after work on the original project was discontinued, development continued by the ArchLens organization)
 
 ##
