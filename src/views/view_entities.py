@@ -37,6 +37,10 @@ class ViewPackage:
     @property
     def parent_path(self):
         return get_view_package_path_from_bt_package(self.bt_package.parent_module)
+    
+    def is_root_package(self) -> bool:
+        """Check if this package is a root package (has no parent)"""
+        return self.parent_path == "."
 
     def setup_dependencies(self, view_package_map: dict[str, "ViewPackage"]):
         bt_dependencies = self.bt_package.get_module_dependencies()
