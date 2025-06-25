@@ -9,7 +9,9 @@ Lastly, ArchLens can display the highlighted differences in the system views whe
 
 To help you get started, this readme includes various options in combination with the setup of a config file.
 
-### ArchLens runs is compatible with 3.9 <= Python version <= 3.12.0
+## Compatibility
+
+ArchLens is compatible with projects written in **Python versions greater than 3.9** 
 
 ## Installation
 
@@ -64,105 +66,78 @@ This will create an "archlens.json" file in your root folder, where you can edit
 
 ```
 
-Here are two views of the 'zeeguu-api' project that we will be using as examples:
-
-- A complete view of the system
-
-![Zeeguu view](.github/readme/zeeguu-completeView.png)
-
-Hard to grasp? ArchLens agrees with you, which is why this tool exists.
-
-- A view of the system where everything except "core" and its sub-packages has been scraped away:
-
-![Zeeguu core view](.github/readme/zeeguu-coreViewxx.png)
-
-Here is an edited version of the "archlens.json" file for the 'zeeguu-api' project, which represents the first two views we created earlier, along with comments explaining each field briefly:
-
-The "views" field in the "archlens.json" file allows you to define as many views as you need for your project. Simply add a new object with a unique name for each view you want to create. For example, if you wanted to create a view that showed only the "utils" package in the "api" folder, you could add the following to the "views" field:
-
-```json
-{
-    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
-    "name": "zeeguu", # Name of project
-    "rootFolder": "zeeguu", # Name of source folder containing the root package (Usually a folder called src)
-    "github": {
-        "url": "https://github.com/zeeguu/api", # Link to project's Github
-        "branch": "master" # Name of main/master branch of project
-    },
-    "saveLocation": "./diagrams/", # Location to store generated diagrams
-    "views": { # Define each view
-        "completeView": { # Name of first view, you may add more
-            "packages": [], # Select packages to see in view, if left empty, see entire system view
-            "ignorePackages": [] # Specify packages not to include in diagram
-        }, "coreView":{ # Create view containing specific packages
-            "packages": [
-                "core" # In this case, we only allow packages starting with the name 'core'
-            ],
-            "ignorePackages": []
-        }
-    }
-}
-
-```
 
 ### You can render the views specified in your "archlens.json" file by running the command:
 - `archlens render`
 
 This will generate the diagrams for all the views defined in your configuration file and save them in the location specified in the "saveLocation" field of your configuration.
+Since currently you only have one view you will only see the following: 
 
-## Further Filtering of packages
+![Zeeguu view](https://raw.githubusercontent.com/archlens/ArchLens/master/.github/readme/zeeguu-api-completeView.png)
 
-If you find the core view to be too large, you can create a new view that further filters the packages. Instead of giving a path to the package "core", you can limit it further by specifying that you want to see "core" and only its sub-packages that are 1 layer down.
+## Expanding Packages
 
-To achieve this, you can create an object instead of a string path for the package, with two fields: "depth" and "path". In the "depth" field, you specify the number of sub-packages you want to include, and in the "path" field, you specify the package to start with.
-
-For example, the following configuration file defines a view for the "core" package and its immediate sub-packages:
-
-![Zeeguu core view](.github/readme/zeeguu-coreViewDepthFiltered.png)
-
-This will create a view that shows only the "core" package and its immediate sub-packages.
-
-Here is an example of the archlens.json file used to generate the filtered view:
+If you want to generate another view, in which you want to show the contents of the `core` package for example, you can do it by adding a new view to your definition. E.g. 
 
 ```json
-{
+ {
     "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
-    "name": "zeeguu",
-    "rootFolder": "zeeguu",
+    "name": "",
+    "rootFolder": "",
     "github": {
-        "url": "https://github.com/zeeguu/api",
-        "branch": "master"
+        "url": "",
+        "branch": "main"
     },
     "saveLocation": "./diagrams/",
     "views": {
-         "coreView":{
-            "packages": [
-                #We create an object instead of a path
-                 {
-                    "depth": 1, #We only want 1 layer of sub packages from core
-                    "path": "core" #Just like before, we give the path
-                }
-            ],
+        "completeView": {
+            "packages": [],
             "ignorePackages": []
+        },
+        
+ "inside-core": {
+      "packages": [
+        {
+          "path": "core",
+          "depth": 1
         }
+      ]
     }
 }
 
 ```
 
-You can combine both strings and objects when defining packages in the packages array in the configuration file. For example, you can include all packages starting with "api/utils" along with packages in the "core" directory up to a depth of 1 using the following syntax:
+This will generate another view that shows all the dependencies inside the `core` package
+
+
+![Zeeguu view](https://raw.githubusercontent.com/archlens/ArchLens/master/.github/readme/zeeguu-api-inside-core.png)
+
+
+## Filtering of packages
+
+The last view we generated above is 	quite dense. One way to solve this problem is to observe that almost all the packages depend on the `core.model` package. When every node depends on it, drawing all the dependencies has little value. We can filter nodes that are shown in the diagram if we use the `ignorePackages` key in a view definition. 
+
+We redefine the view to filter out the `core.mode` package from the view: 
 
 ```json
 
-"packages": [
-    "api/utils",
-    {
-    "path": "core",
-    "depth": 1
-    }
- ]
-
+    "inside-core": {
+      "packages": [
+        {
+          "path": "core",
+          "depth": 1
+        }
+      ],
+      "ignorePackages": [
+        "core.model",
+      ]
+    },
 ```
+
+The resulting view is much more relevant for understanding the architecture of this sytem. 
+
+![Zeeguu view](https://raw.githubusercontent.com/archlens/ArchLens/master/.github/readme/zeeguu-api-inside-core-no-model.png)
+
 
 ## Arrows
 Each arrow in the system diagram represents a dependency between two packages, and the number on the arrow indicates the number of dependencies going in that direction. If you prefer not to see these arrows, you can use the optional "showDependencyCount" setting, which is a boolean. When set to "false", the dependency count will be hidden in all views. Here is an example of how to set this option in your archlens.json file:
@@ -225,7 +200,7 @@ To render this new view displaying the changes, a new command must be run:
 
 - `archlens render-diff`
 
-![Zeeguu core view](.github/readme/zeeguu-modelViewdiffView.png)
+![Zeeguu core view](https://raw.githubusercontent.com/archlens/ArchLens/master/.github/readme/zeeguu-modelViewdiffView.png)
 
 If there are no diffrences, a diagram without diffrences will still be generated.
 
@@ -238,7 +213,7 @@ To display the difference views in your pull requests, run the command:
 
 This command generates the necessary files in the .github folder, creating it if it doesn't already exist. Once this is done, you can create a pull request, and the difference view will be visible to the reviewer, as shown in the image below. If there are no diffrences, a diagram without diffrences will still be generated.
 
-![Zeeguu core view](.github/readme/zeeguu-modelViewDiffGithub.png)
+![Zeeguu core view](https://raw.githubusercontent.com/archlens/ArchLens/master/.github/readme/zeeguu-modelViewDiffGithub.png)
 
 ## Contributing
 

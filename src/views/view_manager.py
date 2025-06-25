@@ -236,9 +236,11 @@ def _filter_packages(
                 filter_path = filter_path.replace("*", "")
                 view_depth = package_definition_from_config["depth"]
 
-                if filter_path == "" and view_package.parent_path == ".":
-                    # TODO: when could this happen?
+                if filter_path == "" and view_package.is_root_package():
+                    # This happens when config specifies {"path": "", "depth": N}
+                    # to include all root packages up to depth N
                     filtered_packages_set.add(view_package)
+
                     depth_filter_packages = _find_packages_with_depth(
                         view_package, view_depth - 1, packages_map
                     )
@@ -256,7 +258,11 @@ def _filter_packages(
                     filtered_packages_set.update(depth_filter_packages)
 
     if len(view["packages"]) == 0:
-        filtered_packages_set = set(packages_map.values())
+        # If no packages specified, only include root packages (those without a parent)
+        filtered_packages_set = set(
+            package for package in packages_map.values() 
+            if package.is_root_package()
+        )
 
     # ignorePackages
 
