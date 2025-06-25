@@ -11,7 +11,7 @@ To help you get started, this readme includes various options in combination wit
 
 ## Compatibility
 
-ArchLens runs is compatible with projects written in **Python versions greater than 3.9** 
+ArchLens is compatible with projects written in **Python versions greater than 3.9** 
 
 ## Installation
 
