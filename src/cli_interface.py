@@ -27,33 +27,25 @@ astroid.MANAGER = None
 
 app = typer.Typer(add_completion=True)
 
+def _render_common(config_path: str, save_func):
+    config = read_config_file(config_path)
+
+    mt_path_manager = PathManagerSingleton()
+    mt_path_manager.setup(config)
+
+    am = _create_astroid()
+    g = BTGraph(am)
+    g.build_graph(config)
+
+    render_views(g, config, save_func)
 
 @app.command()
 def render(config_path: str = "archlens.json"):
-    config = read_config_file(config_path)
-
-    mt_path_manager = PathManagerSingleton()
-    mt_path_manager.setup(config)
-
-    am = _create_astroid()
-    g = BTGraph(am)
-    g.build_graph(config)
-
-    render_views(g, config, save_plant_uml)
-
+    _render_common(config_path, save_plant_uml)
 
 @app.command()
 def render_json(config_path: str = "archlens.json"):
-    config = read_config_file(config_path)
-
-    mt_path_manager = PathManagerSingleton()
-    mt_path_manager.setup(config)
-
-    am = _create_astroid()
-    g = BTGraph(am)
-    g.build_graph(config)
-
-    render_views(g, config, save_json)
+    _render_common(config_path, save_json)
 
 
 def _create_astroid():
@@ -62,8 +54,7 @@ def _create_astroid():
     return am
 
 
-@app.command()
-def render_diff(config_path: str = "archlens.json"):
+def _render_diff_common(config_path: str, save_func):
     with tempfile.TemporaryDirectory() as tmp_dir:
         print("Created temporary directory:", tmp_dir)
         config = read_config_file(config_path)
@@ -87,35 +78,16 @@ def render_diff(config_path: str = "archlens.json"):
         remote_graph.build_graph(config_git)
         # verify_config_options(config_git, g_git)
 
-        render_diff_views(local_graph, remote_graph, config, save_plant_uml_diff)
+        render_diff_views(local_graph, remote_graph, config, save_func)
+
+@app.command()
+def render_diff(config_path: str = "archlens.json"):
+    _render_diff_common(config_path, save_plant_uml_diff)
 
 
 @app.command()
 def render_diff_json(config_path: str = "archlens.json"):
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        print("Created temporary directory:", tmp_dir)
-        config = read_config_file(config_path)
-
-        fetch_git_repo(tmp_dir, config["github"]["url"], config["github"]["branch"])
-
-        shutil.copyfile(config_path, os.path.join(tmp_dir, "archlens.json"))
-
-        config_git = read_config_file(os.path.join(tmp_dir, "archlens.json"))
-
-        path_manager = PathManagerSingleton()
-        path_manager.setup(config, config_git)
-
-        local_am = _create_astroid()
-        local_graph = BTGraph(local_am)
-        local_graph.build_graph(config)
-        # verify_config_options(config, g)
-
-        remote_am = _create_astroid()
-        remote_graph = BTGraph(remote_am)
-        remote_graph.build_graph(config_git)
-        # verify_config_options(config_git, g_git)
-
-        render_diff_views(local_graph, remote_graph, config, save_json_diff)
+    _render_diff_common(config_path, save_json_diff)
 
 
 @app.command()
