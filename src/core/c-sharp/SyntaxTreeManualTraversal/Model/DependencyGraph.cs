@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SyntaxTreeManualTraversal.DependencyGraph
+namespace SyntaxTreeManualTraversal.Model
 {
     class DependencyGraph
     {

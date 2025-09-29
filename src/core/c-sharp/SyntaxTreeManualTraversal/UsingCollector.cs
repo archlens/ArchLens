@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 namespace SyntaxTreeManualTraversal
 {
+
+    // For a single file, scan dependencies from this project
     class UsingCollector : CSharpSyntaxWalker
     {
         public ICollection<UsingDirectiveSyntax> Usings { get; } = new List<UsingDirectiveSyntax>();
