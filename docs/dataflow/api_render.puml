@@ -1,0 +1,76 @@
+@startuml
+title ArchLens: Render (Simplified Activity)
+
+skinparam activity {
+  StartColor #7dafff
+  EndColor #7dafff
+  BackgroundColor #dce7f5ff
+  DiamondBackgroundColor #e0e0f5ff
+  BorderColor #b8c4ff
+}
+skinparam shadowing false
+skinparam defaultTextAlignment center
+
+start
+
+partition #f5f5f0  "API" {
+  :POST /render_graph;
+}
+
+:Validate input;
+
+partition #f5f5f0  "Load Config" {
+  :Load path configured to be rendered;
+  :Select language to parse\n(Python | C#);
+}
+
+if (baseline == local) then (local)
+  :Load .archlens/snapshot.json;
+else (git)
+  :git merge-base(main, HEAD);
+endif
+
+if (Does there exist a last saved state/snapshot?) then (yes)
+  :Set timestamp for edited files\nto be right after this state;
+else (no)
+  :Set timestamp year 0000;
+endif
+
+
+partition #f5f5f0 "(Async) Compute Changed files"{
+
+  while(Unexamined module in path?)
+    if (Module signature changed?) then (yes)
+      while(Unexamined file in module?)
+        if (File signature changed?) then (yes)
+          :Update per file dependencies;
+        else (no)
+          :skip file;
+        endif
+      endwhile
+    else (no)
+      :Skip module;
+    endif
+  endwhile
+
+}
+
+if (Any change has occurred since last saved state/snapshot?) then (yes)
+  partition #f5f5f0  "Renderer" {
+    :Init graph (description-)string;
+    while(Module in POST configured path)
+      :Count total edges in and from who;
+      :Concat PlantUML | json module dependencies to graph string;
+    endwhile
+  }
+  
+  :Write updated .archlens/snapshot.json;
+
+  :Return graph;
+else (no)
+  :Return no new graph;
+endif
+
+stop
+@enduml
+
