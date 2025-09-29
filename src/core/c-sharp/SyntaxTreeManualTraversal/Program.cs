@@ -1,46 +1,22 @@
 ﻿using System;
-using System.IO;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace SyntaxTreeManualTraversal
 {
     internal class Program
     {
+        //Config stuff
         static int depth = 2;
-        static UsingMapper mapper = new UsingMapper();
+        static string projectName = "MilanoProject";
+        static string root = "C://Users//lotte//Skrivebord//Repos//hygge-projekter//MilanoProject";
+        static List<string> excludes = [".", "bin", "node_modules", "ClientApp", "obj", "Pages"];
 
         static void Main(string[] args)
         {
-            string root = "C://Users//lotte//Skrivebord//Repos//hygge-projekter//MilanoProject";
+            var gm = new GraphMaker(depth, projectName, root, excludes);
 
-            string[] dir = Directory.GetDirectories(root);
-
-            MapFiles(dir, depth);
-
-            foreach (var item in mapper.GetMapping())
-            {
-                Console.WriteLine(item.Key);
-                foreach (var val in item.Value)
-                {
-                    Console.WriteLine("--" + item.Key + " " + val);
-                }
-            }
-        }
-
-        static void MapFiles(string[] dir, int depth)
-        {
-            foreach (var item in dir)
-            {
-                if (item.Contains(".") || item.Contains("bin") || item.Contains("node_modules") || item.Contains("ClientApp")) continue;
-
-                string[] files = Directory.GetFiles(item).Where(f => f.EndsWith(".cs")).ToArray();
-                mapper.MapFiles(files);
-
-                if (depth > 0)
-                {
-                    MapFiles(Directory.GetDirectories(item), depth--);
-                }
-            }
+            Console.WriteLine(gm.GetGraph().ToString());
         }
     }
+
 }

@@ -5,38 +5,41 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using SyntaxTreeManualTraversal.DependencyGraph;
 
 
 namespace SyntaxTreeManualTraversal
 {
     class UsingMapper
     {
-        Dictionary<string, List<string>> mapping;
+        private string _programName;
+        public Dictionary<string, List<string>> mapping { get; }
 
-        public UsingMapper()
+        public UsingMapper(string programName)
         {
+            _programName = programName;
             mapping = new Dictionary<string, List<string>>();
         }
 
-        public Dictionary<string, List<string>> GetMapping()
+        public List<Leaf> MapFiles(string[] filenames)
         {
-            return mapping;
-        }
+            List<Leaf> children = [];
 
-        public void MapFiles(string[] filenames)
-        {
             foreach (string file in filenames)
             {
-                MapFile(file);
+                if (file.EndsWith(".cs"))
+                    children.Add(MapFile(file));
             }
+
+            return children;
         }
 
 
-        private void MapFile(string filename)
+        private Leaf MapFile(string filename)
         {
             string lines = "";
-            string namesp = filename.Split('\\').Last();
-            List<string> usings = new List<string>();
+            string namesp = filename.Split('\\').Last(); //Use filename as namespace, if none is included
+            List<string> usings = [];
 
             try
             {
@@ -65,7 +68,7 @@ namespace SyntaxTreeManualTraversal
             SyntaxTree tree = CSharpSyntaxTree.ParseText(lines);
             CompilationUnitSyntax root = tree.GetCompilationUnitRoot();
 
-            var collector = new UsingCollector();
+            var collector = new UsingCollector(_programName);
             collector.Visit(root);
 
             foreach (var directive in collector.Usings)
@@ -77,6 +80,10 @@ namespace SyntaxTreeManualTraversal
                 mapping[namesp].AddRange(usings);
             else
                 mapping.Add(namesp, usings);
+
+            Leaf leaf = new() { dependencies = usings, name = filename.Split("\\").Last() };
+
+            return leaf;
         }
     }
 }
