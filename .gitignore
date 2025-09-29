@@ -3,6 +3,7 @@ test_projects/
 diagrams/
 
 .idea
+.vs
 
 obj/
 
