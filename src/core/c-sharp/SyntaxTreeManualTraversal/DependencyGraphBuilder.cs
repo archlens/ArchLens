@@ -10,7 +10,7 @@ using SyntaxTreeManualTraversal.Model;
 namespace SyntaxTreeManualTraversal
 {
     // Builds a dependency graph
-    class GraphBuilder(string projectName, string root, List<string> excludes)
+    class DependencyGraphBuilder(string projectName, string root, List<string> excludes)
     {
         private string _root = root;
         private List<string> _excludes = excludes;
@@ -20,7 +20,7 @@ namespace SyntaxTreeManualTraversal
         {
             string[] dir = Directory.GetDirectories(_root);
 
-            Node graph = new() { name = "root", children = [] };
+            Node graph = new() { name = "root", children = [], dependencies = [] };
 
             BuildGraph(dir, graph);
 
@@ -29,29 +29,32 @@ namespace SyntaxTreeManualTraversal
 
 
         // Recursively build graph
-        public void BuildGraph(string[] dir, Node graph)
+        public void BuildGraph(string[] directories, Node graph)
         {
             List<Node> children = [];
 
-            foreach (var item in dir)
+            foreach (var directory in directories)
             {
-                if (_excludes.Exists(item.Contains)) continue;
+                if (_excludes.Exists(directory.Contains)) continue;
 
-                Node node = new() { name = item.Split("\\").Last(), children = [] };
+                Node node = new() { name = directory.Split("\\").Last(), children = [], dependencies = [] };
 
-                string[] files = Directory.GetFiles(item);
-
-                List<Leaf> dirChildren = [];
+                string[] files = Directory.GetFiles(directory);
 
                 foreach (string file in files)
                 {
                     if (file.EndsWith(".cs"))
-                        dirChildren.Add(CreateLeaf(file));
+                    {
+                        Leaf child = CreateLeaf(file);
+                        node.AddChild(child);
+                        foreach (var dep in child.dependencies)
+                        {
+                            node.AddDependency(dep, 1);
+                        }
+                    }
                 }
 
-                node.AddChildren(dirChildren);
-
-                BuildGraph(Directory.GetDirectories(item), node);
+                BuildGraph(Directory.GetDirectories(directory), node);
 
                 children.Add(node);
             }

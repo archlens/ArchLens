@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SyntaxTreeManualTraversal.Model
 {
@@ -22,9 +23,27 @@ namespace SyntaxTreeManualTraversal.Model
             children.AddRange(childr);
         }
 
+        public void AddChild(DependencyGraph child)
+        {
+            children.Add(child);
+        }
+
+        public void AddDependency(string dep, int count)
+        {
+            if (dependencies.ContainsKey(dep))
+                dependencies[dep] += count;
+            else
+                dependencies.Add(dep, count);
+        }
+
         override public string ToString()
         {
             string res = name;
+            if (dependencies.Keys.Count > 0)
+                res += " (" + dependencies.Values.Aggregate((i, j) => i + j) + ")";
+            else
+                res += " (0)";
+
             foreach (var c in children)
             {
                 res += "\n \t";

@@ -12,7 +12,7 @@ namespace SyntaxTreeManualTraversal
 
         static void Main(string[] args)
         {
-            var gm = new GraphBuilder(projectName, root, excludes);
+            var gm = new DependencyGraphBuilder(projectName, root, excludes);
 
             Console.WriteLine(gm.GetGraph().ToString());
         }
