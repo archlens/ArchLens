@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace SyntaxTreeManualTraversal
 {
@@ -14,7 +15,7 @@ namespace SyntaxTreeManualTraversal
         {
             var gm = new DependencyGraphBuilder(projectName, root, excludes);
 
-            Console.WriteLine(gm.GetGraph().ToString());
+            File.WriteAllText(@"C:\Users\lotte\Skrivebord\ITU\CS3\Research-project\ArchLens\src\core\c-sharp\SyntaxTreeManualTraversal\graph-json.json", GraphToJsonConverter.ConvertToJson(gm.GetGraph(), projectName));
         }
     }
 

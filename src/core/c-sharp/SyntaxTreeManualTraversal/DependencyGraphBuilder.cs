@@ -49,7 +49,7 @@ namespace SyntaxTreeManualTraversal
                         node.AddChild(child);
                         foreach (var dep in child.dependencies)
                         {
-                            node.AddDependency(dep, 1);
+                            node.AddDependency(dep, child);
                         }
                     }
                 }
