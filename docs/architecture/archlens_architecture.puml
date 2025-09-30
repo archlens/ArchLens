@@ -1,0 +1,119 @@
+@startuml
+title ArchLens v2 — Minimal Layered Architecture (Strategy for Parsing)
+
+top to bottom direction
+
+skinparam linetype ortho
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 200
+skinparam nodesep 40
+skinparam ranksep 75
+
+
+package "ArchLens" {
+
+  package "Presentation (CLI)" as Presentation {
+    [--render_graph] as RenderAPI
+  }
+
+  package "Application Layer" as Application {
+    [RenderService] as Orchestrator
+
+    [ChangeFinder] as Change
+
+    [LanguageParserSelector\n(Strategy chooser)] as ParserSel
+    [DependencyGraphBuilder] as Builder
+
+    [ConfigLoader] as Config
+    [BaselineResolver] as Baseline
+  }
+
+    Change -[hidden]l-> ParserSel
+    ParserSel -[hidden]l-> Builder
+    Builder -[hidden]l-> Config
+    Config -[hidden]l-> Baseline
+
+
+  package "Domain Layer" as Domain{
+    [DependencyGraph] as Graph
+
+    [ChangeDetector] as ChangeDetector
+
+    [ILanguageParser\n(Strategy)] as IParser
+    [CSharpParser\n(Strategy Impl)] as CsParser
+
+    [IRenderer] as Rendere
+
+    [IGitAdapter\n(Interface)] as IGit
+    [SnapshotRepository\n(Interface)] as SnapRepo
+  }
+
+  IGit -[hidden]l-> SnapRepo
+  SnapRepo -[hidden]r-> IGit
+
+
+
+  package "Infrastructure Layer" as Infra{
+    [JSONRenderer] as JSONR
+
+    [FileSystem] as FS
+    [SnapshotStore\n(.archlens/snapshot.json)] as SnapStore
+    [GitAdapter] as Git
+  }
+}
+
+' --- Layout hints to stack layers (hidden edges) ---
+Application -[hidden]down-> Domain
+Domain      -[hidden]down-> Infra
+Infra       -[hidden]up-> Domain
+
+Infra -[hidden]up-> CsParser
+Infra -[hidden]up-> CsParser
+
+'== External integrations ==
+cloud "Git Provider" as GitRemote
+
+'== API -> Application ==
+RenderAPI --> Orchestrator : render_graph(options)
+
+'== Orchestration ==
+Orchestrator --> Config : load(path)
+Orchestrator --> Baseline : resolve(baseline)
+
+'== Baseline resolution uses infrastructure ==
+Baseline -l-> SnapRepo : load snapshot
+Baseline -l-> IGit : load git
+
+'== Change discovery ==
+Orchestrator --> Change : compute_changed_files()
+Change --> ChangeDetector : compute/compare signatures
+ChangeDetector --> Git : diff paths (git baseline)
+ChangeDetector --> FS : scan paths (local baseline)
+
+'== Parsing & graph building ==
+Builder -l-> ParserSel : select(lang)
+ParserSel ..> IParser
+IParser <|.. CsParser
+
+' Process each changed file (parallelized inside coordinator)
+Orchestrator --> Builder : update_edges(module, Imports)
+Builder --> Graph : mutate graph
+
+'== Render ==
+Orchestrator --> Rendere : render(graph)
+Rendere <|.d. JSONR
+
+'== Persist ==
+Orchestrator --> SnapRepo : save(graph)
+IGit -l-> Git
+
+'== Outputs ==
+Orchestrator --> RenderAPI : {artifact, diffs, stats}
+
+'== Implementations / bindings ==
+SnapRepo <|.. SnapStore
+GitRemote -[dashed]u- Git : fetch/ls-remote
+
+@enduml
