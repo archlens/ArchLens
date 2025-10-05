@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
+  "name": "",
+  "rootFolder": "",
+  "github": {
+    "url": "",
+    "branch": "main"
+  },
+  "saveLocation": "./diagrams/",
+  "views": {
+    "completeView": {
+      "packages": [],
+      "ignorePackages": []
+    }
+  }
+}

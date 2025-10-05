@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "type": "object",
+  "required": ["name", "rootFolder", "views"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the project",
+      "minLength": 1
+    },
+    "rootFolder": {
+      "type": "string",
+      "description": "Point to the root package of the project",
+      "minLength": 1
+    },
+    "github": {
+      "type": "object",
+      "description": "Information about the GitHub repository for the project",
+      "required": ["url", "branch"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "The URL of the GitHub repository for the project"
+        },
+        "branch": {
+          "type": "string",
+          "description": "The name of the branch to use for the GitHub repository"
+        }
+      }
+    },
+    "SaveLocation": {
+      "type": "string",
+      "description": "The folder to which the diagrams should be saved in. If the folder does not exists it will be created",
+      "default": "./diagrams/"
+    },
+    "showDependencyCount": {
+      "type": "boolean",
+      "description": "If to showcase the number of dependencies between packages"
+    },
+    "packageColor": {
+      "type": "string",
+      "enum": ["#GoldenRod", "#Azure", ""]
+    },
+    "views": {
+      "type": "object",
+      "description": "Defines the views available",
+      "patternProperties": {
+        ".*": {
+          "description": "The name of the view",
+          "type": "object",
+          "properties": {
+            "packages": {
+              "description": "The packages to include in the view. Leave empty to include all packages",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._-]+$"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9._\\-]+|[*]$"
+                      },
+                      "depth": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": ["path", "depth"]
+                  }
+                ]
+              }
+            },
+            "ignorePackages": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9._\\-\\/*]+$"
+              },
+              "description": "Defines the packages to ignore"
+            },
+            "usePackagePathAsLabel": {
+              "type": "boolean",
+              "description": "If true, paths of each package will be displayed, if false only package name will be displayed"
+            }
+          }
+        }
+      }
+    }
+  }
+}
