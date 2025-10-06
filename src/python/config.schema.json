@@ -1,7 +1,11 @@
 {
   "$schema": "http://json-schema.org/schema",
   "type": "object",
-  "required": ["name", "rootFolder", "views"],
+  "required": [
+    "name",
+    "rootFolder",
+    "views"
+  ],
   "properties": {
     "name": {
       "type": "string",
@@ -13,10 +17,18 @@
       "description": "Point to the root package of the project",
       "minLength": 1
     },
+    "language": {
+      "type": "string",
+      "description": "The programming language of the project (C# or Python)",
+      "minLength": 1
+    },
     "github": {
       "type": "object",
       "description": "Information about the GitHub repository for the project",
-      "required": ["url", "branch"],
+      "required": [
+        "url",
+        "branch"
+      ],
       "properties": {
         "url": {
           "type": "string",
@@ -39,7 +51,11 @@
     },
     "packageColor": {
       "type": "string",
-      "enum": ["#GoldenRod", "#Azure", ""]
+      "enum": [
+        "#GoldenRod",
+        "#Azure",
+        ""
+      ]
     },
     "views": {
       "type": "object",
@@ -69,7 +85,10 @@
                         "type": "integer"
                       }
                     },
-                    "required": ["path", "depth"]
+                    "required": [
+                      "path",
+                      "depth"
+                    ]
                   }
                 ]
               }
