@@ -1,5 +1,4 @@
 using System.Threading;
-using System.Threading.Tasks;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
@@ -8,7 +7,7 @@ namespace Archlens.Infra;
 
 public sealed class JsonRenderer : IRenderer
 {
-    public string RenderGraphAsync(DependencyGraph graph, Options options, CancellationToken ct = default)
+    public string RenderGraph(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         var packagestr = "";
         for (int i = 0; i < graph.packages().Count; i++)
