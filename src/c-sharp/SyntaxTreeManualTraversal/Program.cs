@@ -1,4 +1,7 @@
-﻿using SyntaxTreeManualTraversal.Infra;
+﻿using System.Collections.Generic;
+using System.IO;
+using SyntaxTreeManualTraversal.Application;
+using SyntaxTreeManualTraversal.Infra;
 
 namespace SyntaxTreeManualTraversal;
 internal class Program
