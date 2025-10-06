@@ -1,4 +1,8 @@
-﻿namespace SyntaxTreeManualTraversal.Domain;
+﻿using System.Collections.Generic;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+namespace SyntaxTreeManualTraversal.Domain;
 
 // For a single file, scan dependencies from this project
 class UsingCollector(string programName) : CSharpSyntaxWalker
