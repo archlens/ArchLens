@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Archlens", "Archlens.csproj", "{461DA489-94B8-41E6-8BCB-A3572CBDA98B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchlensTests", "..\ArchlensTests\ArchlensTests.csproj", "{5CAF0726-2344-4D8F-82D0-01F44BF67488}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{461DA489-94B8-41E6-8BCB-A3572CBDA98B}.Release|x64.Build.0 = Release|Any CPU
 		{461DA489-94B8-41E6-8BCB-A3572CBDA98B}.Release|x86.ActiveCfg = Release|Any CPU
 		{461DA489-94B8-41E6-8BCB-A3572CBDA98B}.Release|x86.Build.0 = Release|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Debug|x64.Build.0 = Debug|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Debug|x86.Build.0 = Debug|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Release|x64.ActiveCfg = Release|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Release|x64.Build.0 = Release|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Release|x86.ActiveCfg = Release|Any CPU
+		{5CAF0726-2344-4D8F-82D0-01F44BF67488}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
