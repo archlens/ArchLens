@@ -21,13 +21,13 @@ public sealed class RendererService(ConfigManager _config,
         var baselineManager = _baselineFactory(options.Baseline);
         var baselineGraph = await baselineManager.GetLastSavedDependencyGraphAsync(options, ct);
 
-        var changedFiles = await _changes.GetChangedProjectFilesAsync(options, baselineGraph, ct);
+        var changedModules = await _changes.GetChangedProjectFilesAsync(options, baselineGraph, ct);
 
         var parser = _parserFactory(options.Language);
-        var graph = await new DependencyGraphBuilder(parser).BuildGraphAsync(changedFiles, ct);
+        var graph = await new DependencyGraphBuilder(parser).GetGraphAsync(options.ProjectRoot,changedModules, ct);
 
         var renderer = _rendererFactory(options.Format);
-        var artifactPath = await renderer.RenderGraphAsync(graph, options, ct);
+        var artifactPath = renderer.RenderGraph(graph, options, ct); // currently not being written to any file
 
         await baselineManager.SaveGraphAsync(graph, options, ct); // Maybe not necessary
 
