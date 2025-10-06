@@ -1,8 +1,5 @@
 @startuml
-title ArchLens v2 — Minimal Layered Architecture (Strategy for Parsing)
-
-top to bottom direction
-
+title ArchLens C# Project Architecture
 skinparam linetype ortho
 skinparam componentStyle rectangle
 skinparam shadowing false
@@ -19,48 +16,36 @@ package "ArchLens" {
   }
 
   package "Application Layer" as Application {
-    [RenderService] as Orchestrator
-
-    [ChangeFinder] as Change
-
-    [LanguageParserSelector\n(Strategy chooser)] as ParserSel
+    [RenderService] as RenderService
     [DependencyGraphBuilder] as Builder
-
-    [ConfigLoader] as Config
-    [BaselineResolver] as Baseline
   }
-
-    Change -[hidden]l-> ParserSel
-    ParserSel -[hidden]l-> Builder
-    Builder -[hidden]l-> Config
-    Config -[hidden]l-> Baseline
-
 
   package "Domain Layer" as Domain{
-    [DependencyGraph] as Graph
+
+    package "Factories" as Factories {
+      [BaselineFactory] as BaselineFact
+      [DependencyParserFactory] as DependencyParserFact
+      [RendererFactory] as RendererFact
+    }
+
+    package "Interfaces" as Interfaces {
+      [IBaselineManager] as IBaselineManager
+      [IDependencyParser] as IDependencyParser
+      [IRenderer] as IRenderer      
+    }
 
     [ChangeDetector] as ChangeDetector
+    [ConfigManager] as Config
 
-    [ILanguageParser\n(Strategy)] as IParser
-    [CSharpParser\n(Strategy Impl)] as CsParser
-
-    [IRenderer] as Rendere
-
-    [IGitAdapter\n(Interface)] as IGit
-    [SnapshotRepository\n(Interface)] as SnapRepo
+    package "Models" as Models {
+    }
   }
 
-  IGit -[hidden]l-> SnapRepo
-  SnapRepo -[hidden]r-> IGit
-
-
-
   package "Infrastructure Layer" as Infra{
-    [JSONRenderer] as JSONR
-
-    [FileSystem] as FS
-    [SnapshotStore\n(.archlens/snapshot.json)] as SnapStore
-    [GitAdapter] as Git
+    [CsharpDependencyParser] as CsharpDependencyParser
+    [GitBaselineManager] as GitBase
+    [JSONRenderer] as JSONRenderer
+    [LocalBaselineManager] as LocalBase
   }
 }
 
@@ -69,51 +54,38 @@ Application -[hidden]down-> Domain
 Domain      -[hidden]down-> Infra
 Infra       -[hidden]up-> Domain
 
-Infra -[hidden]up-> CsParser
-Infra -[hidden]up-> CsParser
 
 '== External integrations ==
 cloud "Git Provider" as GitRemote
+GitRemote -[dashed]u- GitBase
 
 '== API -> Application ==
-RenderAPI --> Orchestrator : render_graph(options)
+RenderAPI --> RenderService : render_graph(options)
 
-'== Orchestration ==
-Orchestrator --> Config : load(path)
-Orchestrator --> Baseline : resolve(baseline)
+'== Application to Application ==
+RenderService -r-> Builder
+RenderService --> Config : load(path)
+RenderService --> Factories : resolve{baseline,depParser,renderer}
 
-'== Baseline resolution uses infrastructure ==
-Baseline -l-> SnapRepo : load snapshot
-Baseline -l-> IGit : load git
+'== Application to Domain ==
+RenderService --> ChangeDetector
+Builder --> IDependencyParser
 
-'== Change discovery ==
-Orchestrator --> Change : compute_changed_files()
-Change --> ChangeDetector : compute/compare signatures
-ChangeDetector --> Git : diff paths (git baseline)
-ChangeDetector --> FS : scan paths (local baseline)
+'== Domain to Domain ==
+BaselineFact --> IBaselineManager
+DependencyParserFact --> IDependencyParser
+RendererFact --> IRenderer
 
-'== Parsing & graph building ==
-Builder -l-> ParserSel : select(lang)
-ParserSel ..> IParser
-IParser <|.. CsParser
+Interfaces -l-> Models
+ChangeDetector --> Models
+Config --> Models
 
-' Process each changed file (parallelized inside coordinator)
-Orchestrator --> Builder : update_edges(module, Imports)
-Builder --> Graph : mutate graph
+'== Domain to Infra ==
+IDependencyParser <|-- CsharpDependencyParser
 
-'== Render ==
-Orchestrator --> Rendere : render(graph)
-Rendere <|.d. JSONR
+IRenderer <|-- JSONRenderer 
 
-'== Persist ==
-Orchestrator --> SnapRepo : save(graph)
-IGit -l-> Git
-
-'== Outputs ==
-Orchestrator --> RenderAPI : {artifact, diffs, stats}
-
-'== Implementations / bindings ==
-SnapRepo <|.. SnapStore
-GitRemote -[dashed]u- Git : fetch/ls-remote
+IBaselineManager <|-- GitBase
+IBaselineManager <|-- LocalBase
 
 @enduml
