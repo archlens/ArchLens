@@ -1,4 +1,7 @@
-﻿using SyntaxTreeManualTraversal.Infra;
+﻿using System.Collections.Generic;
+using System.IO;
+using SyntaxTreeManualTraversal.Application;
+using SyntaxTreeManualTraversal.Infra;
 
 namespace SyntaxTreeManualTraversal;
 internal class Program
@@ -10,7 +13,7 @@ internal class Program
 
     static void Main(string[] args)
     {
-        var gm = new DependencyGraphBuilder(projectName, root, excludes);
+        var gm = new DependencyGraphBuilderOld(projectName, root, excludes);
 
         File.WriteAllText(@"C:\Users\lotte\Skrivebord\ITU\CS3\Research-project\ArchLens\src\core\c-sharp\SyntaxTreeManualTraversal\graph-json.json", GraphToJsonConverter.ConvertToJson(gm.GetGraph(), projectName));
     }

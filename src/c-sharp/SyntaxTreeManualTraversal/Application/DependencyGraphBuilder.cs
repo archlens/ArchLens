@@ -1,8 +1,32 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using SyntaxTreeManualTraversal.Domain;
+using SyntaxTreeManualTraversal.Domain.Interfaces;
 using SyntaxTreeManualTraversal.Domain.Models;
 
 namespace SyntaxTreeManualTraversal.Application;
 // Builds a dependency graph
-class DependencyGraphBuilder(string projectName, string root, List<string> excludes)
+
+public class DependencyGraphBuilder(IDependencyParser _dependencyParser)
+{
+    public async Task<DependencyGraph> BuildGraphAsync(IReadOnlyList<string> files, CancellationToken ct = default)
+    {
+        // Parse files (parallel if you like), construct a graph object
+        throw new NotImplementedException();
+    }
+}
+
+class DependencyGraphBuilderOld(
+    string projectName,
+    string root,
+    List<string> excludes)
 {
     private string _root = root;
     private List<string> _excludes = excludes;
