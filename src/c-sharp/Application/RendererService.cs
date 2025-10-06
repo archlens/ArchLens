@@ -24,7 +24,7 @@ public sealed class RendererService(ConfigManager _config,
         var changedModules = await _changes.GetChangedProjectFilesAsync(options, baselineGraph, ct);
 
         var parser = _parserFactory(options.Language);
-        var graph = await new DependencyGraphBuilder(parser).GetGraphAsync(options.ProjectRoot,changedModules, ct);
+        var graph = await new DependencyGraphBuilder(parser, options).GetGraphAsync(options.ProjectRoot, changedModules, ct);
 
         var renderer = _rendererFactory(options.Format);
         var artifactPath = renderer.RenderGraph(graph, options, ct); // currently not being written to any file

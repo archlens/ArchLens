@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Archlens.Domain.Interfaces;
+using Archlens.Domain.Models.Records;
 
 namespace Archlens.Infra;
 
-class CsharpDependencyParser(string _projectName) :  IDependencyParser
+class CsharpDependencyParser(Options _options) : IDependencyParser
 {
     public async Task<IReadOnlyList<string>> ParseFileDependencies(string path, CancellationToken ct = default)
     {
@@ -27,8 +29,13 @@ class CsharpDependencyParser(string _projectName) :  IDependencyParser
 
             while (line != null)
             {
+                string regex = $$"""using\s+{{_options.ProjectName}}\.(.+);""";
+                var match = Regex.Match(line, regex);
+                if (match.Success)
+                {
+                    usings.Add(match.Groups[1].Value);
+                }
                 line = await sr.ReadLineAsync(ct);
-                // match regex + add to usings
             }
 
             sr.Close();

@@ -1,5 +1,5 @@
 {
-    "title": "MilanoProject",
+    "title": "root",
     "packages": [
             
     {
@@ -38,7 +38,7 @@
         {
         "state": "NEUTRAL",
         "fromPackage": "Controllers",
-        "toPackage": "MilanoProject.Models",
+        "toPackage": "Models",
         "label": "1",
         "relations": [
             {
@@ -47,8 +47,8 @@
                 "path": "WeatherForecastController.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Models",
-                "path": "MilanoProject.Models"
+                "name": "Models",
+                "path": "Models"
             }
         }
         ]
@@ -56,7 +56,7 @@
     {
         "state": "NEUTRAL",
         "fromPackage": "Wine",
-        "toPackage": "MilanoProject.Data",
+        "toPackage": "Data",
         "label": "1",
         "relations": [
             {
@@ -65,8 +65,8 @@
                 "path": "WineController.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Data",
-                "path": "MilanoProject.Data"
+                "name": "Data",
+                "path": "Data"
             }
         }
         ]
@@ -74,7 +74,7 @@
     {
         "state": "NEUTRAL",
         "fromPackage": "Wine",
-        "toPackage": "MilanoProject.Models",
+        "toPackage": "Models",
         "label": "1",
         "relations": [
             {
@@ -83,8 +83,8 @@
                 "path": "WineController.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Models",
-                "path": "MilanoProject.Models"
+                "name": "Models",
+                "path": "Models"
             }
         }
         ]
@@ -92,7 +92,7 @@
 ,    {
         "state": "NEUTRAL",
         "fromPackage": "Data",
-        "toPackage": "MilanoProject.Models",
+        "toPackage": "Models",
         "label": "1",
         "relations": [
             {
@@ -101,8 +101,8 @@
                 "path": "WineContext.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Models",
-                "path": "MilanoProject.Models"
+                "name": "Models",
+                "path": "Models"
             }
         }
         ]
@@ -110,7 +110,7 @@
     {
         "state": "NEUTRAL",
         "fromPackage": "Data",
-        "toPackage": "MilanoProject.Models.Wine",
+        "toPackage": "Models.Wine",
         "label": "1",
         "relations": [
             {
@@ -119,8 +119,8 @@
                 "path": "WineContext.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Models.Wine",
-                "path": "MilanoProject.Models.Wine"
+                "name": "Models.Wine",
+                "path": "Models.Wine"
             }
         }
         ]
@@ -128,7 +128,7 @@
 ,    {
         "state": "NEUTRAL",
         "fromPackage": "Repositories",
-        "toPackage": "MilanoProject.Data",
+        "toPackage": "Data",
         "label": "2",
         "relations": [
             {
@@ -137,8 +137,8 @@
                 "path": "RegionRepository.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Data",
-                "path": "MilanoProject.Data"
+                "name": "Data",
+                "path": "Data"
             }
         },{
             "from_file": {
@@ -146,8 +146,8 @@
                 "path": "WineRepository.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Data",
-                "path": "MilanoProject.Data"
+                "name": "Data",
+                "path": "Data"
             }
         }
         ]
@@ -155,7 +155,7 @@
     {
         "state": "NEUTRAL",
         "fromPackage": "Repositories",
-        "toPackage": "MilanoProject.Models",
+        "toPackage": "Models",
         "label": "1",
         "relations": [
             {
@@ -164,8 +164,8 @@
                 "path": "RegionRepository.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Models",
-                "path": "MilanoProject.Models"
+                "name": "Models",
+                "path": "Models"
             }
         }
         ]
@@ -173,7 +173,7 @@
     {
         "state": "NEUTRAL",
         "fromPackage": "Repositories",
-        "toPackage": "MilanoProject.Models.Wine",
+        "toPackage": "Models.Wine",
         "label": "1",
         "relations": [
             {
@@ -182,8 +182,8 @@
                 "path": "WineRepository.cs"
             },
             "to_file": {
-                "name": "MilanoProject.Models.Wine",
-                "path": "MilanoProject.Models.Wine"
+                "name": "Models.Wine",
+                "path": "Models.Wine"
             }
         }
         ]

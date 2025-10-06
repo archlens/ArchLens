@@ -5,15 +5,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
+using Archlens.Domain.Models.Records;
 
 namespace Archlens.Application;
 
-public class DependencyGraphBuilder(IDependencyParser _dependencyParser)
+public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options _options)
 {
     public async Task<DependencyGraph> GetGraphAsync(string root, IReadOnlyList<string> changedModules, CancellationToken ct = default)
     {
-        string[] dir = Directory.GetDirectories(root);
-
         Node graph = new() { Name = "root", Children = [], Dependencies = [] };
 
         await BuildGraphAsync(graph, changedModules, ct);
@@ -27,6 +26,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser)
 
         foreach (var module in changedModules)
         {
+            if (_options.Exclusions.ToList().Exists(module.Contains)) continue;
 
             Node node = new() { Name = module.Split("\\").Last(), Children = [], Dependencies = [] };
 
