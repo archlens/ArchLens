@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace SyntaxTreeManualTraversal.Domain.Models;
 class DependencyGraph
 {
