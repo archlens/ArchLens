@@ -1,3 +1,4 @@
+import subprocess
 import typer
 import json
 import os
@@ -29,17 +30,23 @@ app = typer.Typer(add_completion=True)
 
 
 @app.command()
-def render(config_path: str = "archlens.json"):
+def render(config_path: str = "../../archlens.json"):
     config = read_config_file(config_path)
 
-    mt_path_manager = PathManagerSingleton()
-    mt_path_manager.setup(config)
+    if (config["language"] == "C#"):
+        path = os.path.dirname(os.path.abspath(os.path.curdir))
+        command = "dotnet run --project {p}\c-sharp\Archlens.csproj {a}".format(p=path, a="args-here")
+        subprocess.run(["powershell", command], shell=True)
 
-    am = _create_astroid()
-    g = BTGraph(am)
-    g.build_graph(config)
+    else:
+        mt_path_manager = PathManagerSingleton()
+        mt_path_manager.setup(config)
 
-    render_views(g, config, save_plant_uml)
+        am = _create_astroid()
+        g = BTGraph(am)
+        g.build_graph(config)
+
+        render_views(g, config, save_plant_uml)
 
 
 @app.command()
@@ -149,7 +156,7 @@ def read_config_file(config_path):
         config = json.load(f)
 
     config_schema = None
-    schema_path = os.path.join(os.path.dirname(__file__), "config.schema.json")
+    schema_path = os.path.join(os.path.dirname(__file__), "../config.schema.json")
     with open(schema_path) as fp:
         config_schema = json.load(fp)
 
