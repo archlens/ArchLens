@@ -12,7 +12,6 @@ namespace Archlens.Domain;
 
 public class ConfigManager(string _path)
 {
-
     public async Task<Options> LoadAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_path))
@@ -38,7 +37,6 @@ public class ConfigManager(string _path)
 
     private static Options MapOptions(ConfigDto dto, string baseDir)
     {
-
         var projectRoot = dto.ProjectRoot ?? baseDir;
         var projectName = dto.ProjectName ?? baseDir.Split("\\").Last();
         var language = MapLanguage(dto.Language ?? "c#");
@@ -55,7 +53,7 @@ public class ConfigManager(string _path)
 
         if (fileExts.Length == 0)
             throw new InvalidOperationException("fileExtensions resolved to an empty list.");
-        
+
         return new Options(
             ProjectRoot: projectRoot,
             ProjectName: projectName,
@@ -84,7 +82,7 @@ public class ConfigManager(string _path)
         var s = raw.Trim().ToLowerInvariant();
         return s switch
         {
-            "c#" or "csharp" or "cs" or "c-sharp" or "c sharp"=> Language.CSharp,
+            "c#" or "csharp" or "cs" or "c-sharp" or "c sharp" => Language.CSharp,
             _ => throw new NotSupportedException($"Unsupported language: '{raw}'.")
         };
     }
@@ -94,8 +92,8 @@ public class ConfigManager(string _path)
         var s = raw.Trim().ToLowerInvariant();
         return s switch
         {
-            "git"    => Baseline.Git,
-            "local"  => Baseline.Local,
+            "git" => Baseline.Git,
+            "local" => Baseline.Local,
             _ => throw new NotSupportedException($"Unsupported baseline: '{raw}'.")
         };
     }
@@ -112,7 +110,7 @@ public class ConfigManager(string _path)
 
     private sealed class ConfigDto
     {
-    #pragma warning disable CS8632
+#pragma warning disable CS8632
         public string? ProjectRoot { get; set; }
         public string? ProjectName { get; set; }
         public string? Language { get; set; }
@@ -120,6 +118,6 @@ public class ConfigManager(string _path)
         public string? Format { get; set; }
         public string[]? Exclusions { get; set; }
         public string[]? FileExtensions { get; set; }
-    #pragma warning restore CS8632
+#pragma warning restore CS8632
     }
 }
