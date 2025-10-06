@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Archlens.Application;
+using Archlens.Domain;
 using Archlens.Domain.Models.Enums;
 using Archlens.Domain.Models.Records;
 using Archlens.Infra;
@@ -18,6 +19,10 @@ internal class Program
 
     static async Task Main(string[] args)
     {
+        var configPath = args[0].Trim();
+
+        var configManager = new ConfigManager(configPath);
+
         var options = new Options(root, projectName, Language.CSharp, Baseline.Local, RenderFormat.Json, excludes, [".cs"]);
 
         var gm = new DependencyGraphBuilder(new CsharpDependencyParser(options), options);
