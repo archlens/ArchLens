@@ -140,7 +140,7 @@ class Node : DependencyGraph
 
 class Leaf : DependencyGraph
 {
-    public List<string> Dependencies { get; init; }
+    public IReadOnlyList<string> Dependencies { get; init; }
 
     override public string ToString()
     {
