@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace SyntaxTreeManualTraversal.Domain.Models;
-class DependencyGraph
+public class DependencyGraph
 {
     public string Name { get; init; }
 
@@ -82,8 +82,8 @@ class Node : DependencyGraph
                     $$"""
                     {
                                 "from_file": {
-                                    "name": "{{rel.name}}",
-                                    "path": "{{rel.name}}"
+                                    "name": "{{rel.Name}}",
+                                    "path": "{{rel.Name}}"
                                 },
                                 "to_file": {
                                     "name": "{{dep}}",
