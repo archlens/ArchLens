@@ -146,7 +146,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
 class Leaf : DependencyGraph
 {
-    public IReadOnlyList<string> Dependencies { get; init; }
+    public IReadOnlyList<string> Dependencies { get; init; } = [];
 
     public override string ToString()
     {
@@ -158,13 +158,6 @@ class Leaf : DependencyGraph
         return res;
     }
 
-    override public string ToJson()
-    {
-        return "";
-    }
-
-    override public List<string> packages()
-    {
-        return [];
-    }
+    public override string ToJson() => "";
+    public override List<string> Packages() => [];
 }
