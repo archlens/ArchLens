@@ -17,6 +17,8 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     public virtual string ToJson() => "{}";
 
+    public virtual List<string> Packages() => [];
+
     public IEnumerator<DependencyGraph> GetEnumerator()
     {
         return Traverse(this).GetEnumerator();
