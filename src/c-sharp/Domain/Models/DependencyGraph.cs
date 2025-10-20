@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -5,6 +6,7 @@ namespace Archlens.Domain.Models;
 public class DependencyGraph
 {
     public string Name { get; init; }
+    public DateTime LastWriteTime { get; init; }
 
     override public string ToString()
     {
