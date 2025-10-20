@@ -26,15 +26,4 @@ public sealed class PlantUMLRenderer : IRenderer
 
         return uml_str;
     }
-
-    /*     private static int ComparePlantUML(string x, string y)
-        {
-            if (x.Contains("package"))
-            {
-                if (y.Contains("package"))
-                {
-
-                }
-            }
-        } */
 }
