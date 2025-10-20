@@ -128,7 +128,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
         foreach (var package in Children)
         {
             res.Add(Name);
-            res.AddRange(package.packages());
+            res.AddRange(package.Packages());
         }
 
         return res;
