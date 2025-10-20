@@ -30,4 +30,8 @@
     <Folder Include="Infra\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\c-sharp\Archlens.csproj" />
+  </ItemGroup>
+
 </Project>
