@@ -45,8 +45,8 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     public void AddDependency(string dep, DependencyGraph child)
     {
-        if (Dependencies.ContainsKey(dep))
-            Dependencies[dep].Add(child);
+        if (Dependencies.TryGetValue(dep, out List<DependencyGraph> value))
+            value.Add(child);
         else
             Dependencies.Add(dep, [child]);
     }
