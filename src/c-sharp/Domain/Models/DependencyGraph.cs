@@ -51,7 +51,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
             Dependencies.Add(dep, [child]);
     }
 
-    override public string ToString()
+    public override string ToString()
     {
         string res = Name;
         if (Dependencies.Keys.Count > 0)
@@ -68,7 +68,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
         return res;
     }
 
-    override public string ToJson()
+    public override string ToJson()
     {
         var str = "";
         if (Dependencies.Keys.Count > 0)
@@ -131,7 +131,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     }
 
-    override public List<string> packages()
+    public override List<string> Packages()
     {
         List<string> res = [];
         foreach (var package in Children)
@@ -148,7 +148,7 @@ class Leaf : DependencyGraph
 {
     public IReadOnlyList<string> Dependencies { get; init; }
 
-    override public string ToString()
+    public override string ToString()
     {
         string res = "\t" + Name;
         foreach (var d in Dependencies)
