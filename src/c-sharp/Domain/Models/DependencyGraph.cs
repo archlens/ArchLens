@@ -13,6 +13,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     {
         return Name;
     }
+    public override string ToString() => Name;
 
     public virtual string ToJson()
     {
