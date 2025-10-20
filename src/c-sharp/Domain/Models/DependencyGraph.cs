@@ -53,18 +53,9 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     public override string ToString()
     {
-        string res = Name;
-        if (Dependencies.Keys.Count > 0)
-            res += " (" + Dependencies.Values.Count + ")";
-        else
-            res += " (0)";
-
+        string res = Name + $" ({Dependencies.Values.Sum(l => l.Count)})";
         foreach (var c in Children)
-        {
-            res += "\n \t";
-            res += c.ToString();
-        }
-
+            res += "\n \t" + c;
         return res;
     }
 
