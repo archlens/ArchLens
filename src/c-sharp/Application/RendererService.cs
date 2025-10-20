@@ -8,7 +8,6 @@ using Archlens.Domain.Models.Enums;
 namespace Archlens.Application;
 
 public sealed class RendererService(ConfigManager _config,
-        ChangeDetector _changes,
         Func<Baseline, IBaselineManager> _baselineFactory,
         Func<Language, IDependencyParser> _parserFactory,
         Func<RenderFormat, IRenderer> _rendererFactory)
@@ -21,7 +20,7 @@ public sealed class RendererService(ConfigManager _config,
         var baselineManager = _baselineFactory(options.Baseline);
         var baselineGraph = await baselineManager.GetLastSavedDependencyGraphAsync(options, ct);
 
-        var changedModules = await _changes.GetChangedProjectFilesAsync(options, baselineGraph, ct);
+        var changedModules = await ChangeDetector.GetChangedProjectFilesAsync(options, baselineGraph, ct);
 
         var parser = _parserFactory(options.Language);
         var graph = await new DependencyGraphBuilder(parser, options).GetGraphAsync(options.ProjectRoot, changedModules, ct);

@@ -8,12 +8,12 @@ namespace Archlens.Infra;
 
 public sealed class LocalBaselineManager : IBaselineManager
 {
-    public Task<string> GetLastSavedDependencyGraphAsync(Options options, CancellationToken ct = default)
+    public Task SaveGraphAsync(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         throw new System.NotImplementedException();
     }
 
-    public Task SaveGraphAsync(DependencyGraph graph, Options options, CancellationToken ct = default)
+    public Task<DependencyGraph> GetLastSavedDependencyGraphAsync(Options options, CancellationToken ct)
     {
         throw new System.NotImplementedException();
     }

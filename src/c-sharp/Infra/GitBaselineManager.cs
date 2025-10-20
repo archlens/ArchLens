@@ -9,12 +9,13 @@ namespace Archlens.Infra;
 
 public sealed class GitBaselineManager : IBaselineManager
 {
-    public Task<string> GetLastSavedDependencyGraphAsync(Options options, CancellationToken ct = default)
+
+    public Task SaveGraphAsync(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task SaveGraphAsync(DependencyGraph graph, Options options, CancellationToken ct = default)
+    public Task<DependencyGraph> GetLastSavedDependencyGraphAsync(Options options, CancellationToken ct)
     {
         throw new NotImplementedException();
     }

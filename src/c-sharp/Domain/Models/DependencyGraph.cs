@@ -1,75 +1,74 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Archlens.Domain.Models;
-
-public class DependencyGraph
+public class DependencyGraph : IEnumerable<DependencyGraph>
 {
     public string Name { get; init; }
+    public DateTime LastWriteTime { get; init; }
 
-    override public string ToString()
+    public virtual DependencyGraph GetChild(string name)
     {
-        return Name;
+        return GetChildren().Where(child => child.Name == name).FirstOrDefault();
     }
+    public override string ToString() => Name;
 
-    public virtual string ToJson()
-    {
-        return "{}";
-    }
+    public virtual string ToJson() => "{}";
 
-    public virtual List<string> ToPlantUML(bool diff)
-    {
-        return [];
-    }
+    public virtual List<string> ToPlantUML(bool diff) => [];
 
-    public virtual List<string> packages()
+    public virtual List<string> Packages() => [];
+
+    public IEnumerator<DependencyGraph> GetEnumerator()
     {
-        return [];
+        return Traverse(this).GetEnumerator();
+
+        static IEnumerable<DependencyGraph> Traverse(DependencyGraph node)
+        {
+            yield return node;
+            foreach (var child in node.GetChildren())
+            {
+                foreach (var desc in Traverse(child))
+                    yield return desc;
     }
 }
-
-class Node : DependencyGraph
-{
-    public List<DependencyGraph> Children { get; init; }
-    public Dictionary<string, List<DependencyGraph>> Dependencies { get; init; }
-
-    public void AddChildren(IEnumerable<DependencyGraph> childr)
-    {
-        Children.AddRange(childr);
     }
 
-    public void AddChild(DependencyGraph child)
-    {
-        Children.Add(child);
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    protected virtual IReadOnlyList<DependencyGraph> GetChildren() =>
+        [];
     }
+
+public class Node : DependencyGraph
+    {
+    public List<DependencyGraph> Children { get; init; } = [];
+    public Dictionary<string, List<DependencyGraph>> Dependencies { get; init; } = [];
+
+    protected override IReadOnlyList<DependencyGraph> GetChildren() => Children;
+
+    public void AddChildren(IEnumerable<DependencyGraph> childr) => Children.AddRange(childr);
+    public void AddChild(DependencyGraph child) => Children.Add(child);
 
     public void AddDependency(string dep, DependencyGraph child)
     {
-        if (Dependencies.ContainsKey(dep))
-            Dependencies[dep].Add(child);
+        if (Dependencies.TryGetValue(dep, out List<DependencyGraph> value))
+            value.Add(child);
         else
             Dependencies.Add(dep, [child]);
     }
 
-    override public string ToString()
+    public override string ToString()
     {
-        string res = Name;
-        if (Dependencies.Keys.Count > 0)
-            res += " (" + Dependencies.Values.Count + ")";
-        else
-            res += " (0)";
-
+        string res = Name + $" ({Dependencies.Values.Sum(l => l.Count)})";
         foreach (var c in Children)
-        {
-            res += "\n \t";
-            res += c.ToString();
-        }
-
+            res += "\n \t" + c;
         return res;
     }
 
-    override public string ToJson()
+    public override string ToJson()
     {
         var str = "";
         if (Dependencies.Keys.Count > 0)
@@ -132,7 +131,7 @@ class Node : DependencyGraph
 
     }
 
-    override public List<string> ToPlantUML(bool diff)
+    public override List<string> ToPlantUML(bool diff)
     { //TODO: Add color depending on diff
         string package = $"package \"{Name}\" as {Name} {{ \n";
 
@@ -162,39 +161,32 @@ class Node : DependencyGraph
         return puml;
     }
 
-    override public List<string> packages()
+    public override List<string> Packages()
     {
         List<string> res = [];
         foreach (var package in Children)
         {
             res.Add(Name);
-            res.AddRange(package.packages());
+            res.AddRange(package.Packages());
         }
 
         return res;
     }
 }
 
-class Leaf : DependencyGraph
+public class Leaf : DependencyGraph
 {
-    public IReadOnlyList<string> Dependencies { get; init; }
+    public IReadOnlyList<string> Dependencies { get; init; } = [];
 
-    override public string ToString()
+    public override string ToString()
     {
-        string res = "\t" + Name;
+        var res = "\t" + Name;
         foreach (var d in Dependencies)
-        {
             res += "\n \t \t --> " + d;
-        }
         return res;
     }
 
-    override public string ToJson()
-    {
-        return "";
-    }
-
-    override public List<string> ToPlantUML(bool diff)
+    public override List<string> ToPlantUML(bool diff)
     { //TODO: diff
         List<string> puml = [];
 
@@ -207,8 +199,6 @@ class Leaf : DependencyGraph
         return puml;
     }
 
-    override public List<string> packages()
-    {
-        return [];
-    }
+    public override string ToJson() => "";
+    public override List<string> Packages() => [];
 }

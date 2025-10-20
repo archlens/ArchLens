@@ -9,5 +9,5 @@ public interface IBaselineManager
     Task SaveGraphAsync(DependencyGraph graph,
                    Options options,
                    CancellationToken ct = default);
-    Task<string> GetLastSavedDependencyGraphAsync(Options options, CancellationToken ct = default);
+    Task<DependencyGraph> GetLastSavedDependencyGraphAsync(Options options, CancellationToken ct = default);
 }

@@ -10,14 +10,14 @@ public sealed class JsonRenderer : IRenderer
     public string RenderGraph(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         var packagestr = "";
-        for (int i = 0; i < graph.packages().Count; i++)
+        for (int i = 0; i < graph.Packages().Count; i++)
         {
-            var package = graph.packages()[i];
+            var package = graph.Packages()[i];
 
             if (packagestr.Contains(package)) continue;
 
             var comma = "";
-            if (i < graph.packages().Count - 2) comma = ",";
+            if (i < graph.Packages().Count - 2) comma = ",";
 
             packagestr +=
                 $$"""
