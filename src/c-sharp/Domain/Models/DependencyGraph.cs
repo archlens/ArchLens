@@ -144,7 +144,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     }
 }
 
-class Leaf : DependencyGraph
+public class Leaf : DependencyGraph
 {
     public IReadOnlyList<string> Dependencies { get; init; } = [];
 
