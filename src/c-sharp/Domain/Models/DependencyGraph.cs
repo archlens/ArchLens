@@ -9,9 +9,9 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     public string Name { get; init; }
     public DateTime LastWriteTime { get; init; }
 
-    override public string ToString()
+    public virtual DependencyGraph GetChild(string name)
     {
-        return Name;
+        return GetChildren().Where(child => child.Name == name).FirstOrDefault();
     }
     public override string ToString() => Name;
 
