@@ -1,0 +1,71 @@
+@startuml
+skinparam linetype ortho
+skinparam backgroundColor GhostWhite
+title MilanoProject
+package "root" as root { 
+
+package "Controllers" as Controllers { 
+
+ [WeatherForecastController.cs]
+package "Controllers.Wine" as Controllers.Wine { 
+
+ [WineController.cs]
+}
+
+
+}
+
+
+package "Data" as Data { 
+
+ [WineContext.cs]
+}
+
+
+package "diagrams" as diagrams { 
+
+ [Microsoft-VS-Code-completeView.json]
+}
+
+
+package "Models" as Models { 
+
+ [Region.cs]
+ [WeatherForecast.cs]
+package "Models.Wine" as Models.Wine { 
+
+ [Wine.cs]
+}
+
+
+}
+
+
+package "Repositories" as Repositories { 
+
+ [RegionRepository.cs]
+ [WineRepository.cs]
+}
+
+
+}
+
+
+"WeatherForecastController.cs"-->Models
+
+"WineController.cs"-->Data
+
+"WineController.cs"-->Models
+
+"WineContext.cs"-->Models
+
+"WineContext.cs"-->Models.Wine
+
+"RegionRepository.cs"-->Data
+
+"RegionRepository.cs"-->Models
+
+"WineRepository.cs"-->Data
+
+"WineRepository.cs"-->Models.Wine
+@enduml

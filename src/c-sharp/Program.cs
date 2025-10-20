@@ -30,7 +30,6 @@ internal class Program
         var graph = await gm.GetGraphAsync(root, Directory.GetDirectories(root));
 
         File.WriteAllText(@"C:\Users\lotte\Skrivebord\ITU\CS3\Research-project\ArchLens\src\c-sharp\graph-json.json", new JsonRenderer().RenderGraph(graph, options));
-
-        Console.WriteLine(graph.ToString());
+        File.WriteAllText(@"C:\Users\lotte\Skrivebord\ITU\CS3\Research-project\ArchLens\src\c-sharp\graph-puml.txt", new PlantUMLRenderer().RenderGraph(graph, options));
     }
 }

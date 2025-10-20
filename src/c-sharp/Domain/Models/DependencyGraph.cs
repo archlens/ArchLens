@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Archlens.Domain.Models;
+
 public class DependencyGraph
 {
     public string Name { get; init; }
@@ -14,6 +16,11 @@ public class DependencyGraph
     public virtual string ToJson()
     {
         return "{}";
+    }
+
+    public virtual List<string> ToPlantUML(bool diff)
+    {
+        return [];
     }
 
     public virtual List<string> packages()
@@ -125,6 +132,36 @@ class Node : DependencyGraph
 
     }
 
+    override public List<string> ToPlantUML(bool diff)
+    { //TODO: Add color depending on diff
+        string package = $"package \"{Name}\" as {Name} {{ \n";
+
+        List<string> puml = [];
+
+        foreach (var child in Children)
+        {
+            string childName = child.Name.Replace(" ", "-");
+
+            if (child is Leaf)
+            {
+                package += $"\n [{childName}]";
+                var childList = child.ToPlantUML(diff);
+                puml.AddRange(childList);
+            }
+            else
+            {
+                var childList = child.ToPlantUML(diff);
+                var c = childList.Last(); //last is the package declaration, which we want to be added here
+                package += $"\n{c}\n";
+                childList.Remove(c);
+                puml.AddRange(childList);
+            }
+        }
+        package += "\n}\n";
+        puml.Add(package);
+        return puml;
+    }
+
     override public List<string> packages()
     {
         List<string> res = [];
@@ -155,6 +192,19 @@ class Leaf : DependencyGraph
     override public string ToJson()
     {
         return "";
+    }
+
+    override public List<string> ToPlantUML(bool diff)
+    { //TODO: diff
+        List<string> puml = [];
+
+        foreach (var dep in Dependencies)
+        {
+            //if (dep.Contains(".cs")) puml.Add($"\n\"{Name}\"-->{dep}");
+            puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
+
+        }
+        return puml;
     }
 
     override public List<string> packages()

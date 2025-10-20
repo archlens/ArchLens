@@ -13,7 +13,7 @@
     },
     
     {
-        "name": "Wine",
+        "name": "Controllers.Wine",
         "state": "NEUTRAL"
     },
     
@@ -23,7 +23,17 @@
     },
     
     {
+        "name": "diagrams",
+        "state": "NEUTRAL"
+    },
+    
+    {
         "name": "Models",
+        "state": "NEUTRAL"
+    },
+    
+    {
+        "name": "Models.Wine",
         "state": "NEUTRAL"
     },
     
@@ -55,7 +65,7 @@
     },
     {
         "state": "NEUTRAL",
-        "fromPackage": "Wine",
+        "fromPackage": "Controllers.Wine",
         "toPackage": "Data",
         "label": "1",
         "relations": [
@@ -73,7 +83,7 @@
     },
     {
         "state": "NEUTRAL",
-        "fromPackage": "Wine",
+        "fromPackage": "Controllers.Wine",
         "toPackage": "Models",
         "label": "1",
         "relations": [
