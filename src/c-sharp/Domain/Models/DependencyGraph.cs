@@ -16,9 +16,6 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     public override string ToString() => Name;
 
     public virtual string ToJson() => "{}";
-    {
-        return "{}";
-    }
 
     public IEnumerator<DependencyGraph> GetEnumerator()
     {
