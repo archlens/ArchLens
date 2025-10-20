@@ -34,9 +34,8 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    public void AddChildren(IEnumerable<DependencyGraph> childr)
-    {
-        Children.AddRange(childr);
+    protected virtual IReadOnlyList<DependencyGraph> GetChildren() =>
+        [];
     }
 
     public void AddChild(DependencyGraph child)
