@@ -23,7 +23,7 @@ class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependen
         }
     }
 
-    public Task<IReadOnlyList<string>> ParseFileDependencies(string path, CancellationToken ct = default)
+    public async Task<IReadOnlyList<string>> ParseFileDependencies(string path, CancellationToken ct = default)
     {
 
         string lines = "";
@@ -33,12 +33,12 @@ class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependen
         {
             StreamReader sr = new(path);
 
-            string line = sr.ReadLine();
+            string line = await sr.ReadLineAsync();
 
             while (line != null)
             {
                 lines += "\n" + line;
-                line = sr.ReadLine();
+                line = await sr.ReadLineAsync();
             }
 
             sr.Close();
@@ -58,7 +58,7 @@ class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependen
             usings.Add(directive.Name.ToString());
         }
 
-        return new Task<IReadOnlyList<string>>(() => usings); //TODO: Is there a better solution for returning a task when nothing is async?
+        return usings;
     }
 
     public Task<IReadOnlyList<string>> ParseModuleDependencies(string path, CancellationToken ct = default)
