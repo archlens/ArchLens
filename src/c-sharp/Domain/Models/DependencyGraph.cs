@@ -1,9 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Archlens.Domain.Models;
-public class DependencyGraph
+public class DependencyGraph : IEnumerable<DependencyGraph>
 {
     public string Name { get; init; }
     public DateTime LastWriteTime { get; init; }
@@ -18,16 +19,22 @@ public class DependencyGraph
         return "{}";
     }
 
-    public virtual List<string> packages()
+    public IEnumerator<DependencyGraph> GetEnumerator()
     {
-        return [];
+        return Traverse(this).GetEnumerator();
+
+        static IEnumerable<DependencyGraph> Traverse(DependencyGraph node)
+        {
+            yield return node;
+            foreach (var child in node.GetChildren())
+            {
+                foreach (var desc in Traverse(child))
+                    yield return desc;
     }
 }
+    }
 
-class Node : DependencyGraph
-{
-    public List<DependencyGraph> Children { get; init; }
-    public Dictionary<string, List<DependencyGraph>> Dependencies { get; init; }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public void AddChildren(IEnumerable<DependencyGraph> childr)
     {
