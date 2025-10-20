@@ -38,10 +38,15 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
         [];
     }
 
-    public void AddChild(DependencyGraph child)
+public class Node : DependencyGraph
     {
-        Children.Add(child);
-    }
+    public List<DependencyGraph> Children { get; init; } = [];
+    public Dictionary<string, List<DependencyGraph>> Dependencies { get; init; } = [];
+
+    protected override IReadOnlyList<DependencyGraph> GetChildren() => Children;
+
+    public void AddChildren(IEnumerable<DependencyGraph> childr) => Children.AddRange(childr);
+    public void AddChild(DependencyGraph child) => Children.Add(child);
 
     public void AddDependency(string dep, DependencyGraph child)
     {
