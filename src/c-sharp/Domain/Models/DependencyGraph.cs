@@ -150,11 +150,9 @@ public class Leaf : DependencyGraph
 
     public override string ToString()
     {
-        string res = "\t" + Name;
+        var res = "\t" + Name;
         foreach (var d in Dependencies)
-        {
             res += "\n \t \t --> " + d;
-        }
         return res;
     }
 
