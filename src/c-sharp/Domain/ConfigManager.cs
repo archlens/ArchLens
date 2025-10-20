@@ -12,6 +12,19 @@ namespace Archlens.Domain;
 
 public class ConfigManager(string _path)
 {
+    private sealed class ConfigDto
+    {
+#pragma warning disable CS8632
+        public string? ProjectRoot { get; set; }
+        public string? ProjectName { get; set; }
+        public string? Language { get; set; }
+        public string? Baseline { get; set; }
+        public string? Format { get; set; }
+        public string[]? Exclusions { get; set; }
+        public string[]? FileExtensions { get; set; }
+#pragma warning restore CS8632
+    }
+
     public async Task<Options> LoadAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_path))
@@ -106,18 +119,5 @@ public class ConfigManager(string _path)
             "json" or "application/json" => RenderFormat.Json,
             _ => throw new NotSupportedException($"Unsupported format: '{raw}'.")
         };
-    }
-
-    private sealed class ConfigDto
-    {
-#pragma warning disable CS8632
-        public string? ProjectRoot { get; set; }
-        public string? ProjectName { get; set; }
-        public string? Language { get; set; }
-        public string? Baseline { get; set; }
-        public string? Format { get; set; }
-        public string[]? Exclusions { get; set; }
-        public string[]? FileExtensions { get; set; }
-#pragma warning restore CS8632
     }
 }
