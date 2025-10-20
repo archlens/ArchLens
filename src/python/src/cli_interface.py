@@ -6,6 +6,7 @@ import requests
 import jsonschema
 import tempfile
 import shutil
+import sys
 from pathlib import Path
 from src.providers.json.json_render import save_json, save_json_diff
 from src.providers.plantuml.pu_render import save_plant_uml, save_plant_uml_diff
@@ -35,8 +36,12 @@ def render(config_path: str = "../../archlens.json"):
 
     if (config["language"] == "C#"):
         path = os.path.dirname(os.path.abspath(os.path.curdir))
-        command = "dotnet run --project {p}\c-sharp\Archlens.csproj {a}".format(p=path, a="args-here")
+        command = "dotnet run --project {p}\c-sharp\Archlens.csproj {a}".format(p=path, a=config_path)
         subprocess.run(["powershell", command], shell=True)
+
+        file_name = os.path.dirname(path) + "\diagrams\graph-puml.puml"
+        puml_command = f"{sys.executable} -m plantuml --server https://www.plantuml.com/plantuml/img/  {file_name}"
+        subprocess.run(["powershell", puml_command], shell=True)
 
     else:
         mt_path_manager = PathManagerSingleton()

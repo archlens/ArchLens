@@ -13,8 +13,10 @@ namespace Archlens;
 internal class Program
 {
     //Config stuff
-    static string projectName = "MilanoProject";
-    static string root = "C://Users//lotte//Skrivebord//Repos//hygge-projekter//MilanoProject";
+    //TODO: Use actual config instead
+    static string projectName = "Archlens";
+    static string root = Directory.GetCurrentDirectory();
+    static string diagrams = Directory.GetParent(root).Parent.FullName + "/diagrams";
     static List<string> excludes = [".", "bin", "node_modules", "ClientApp", "obj", "Pages", "Properties", "wwwroot"];
 
     static async Task Main(string[] args)
@@ -23,14 +25,15 @@ internal class Program
 
         var configManager = new ConfigManager(configPath);
 
-        var options = new Options(root, projectName, Language.CSharp, Baseline.Local, RenderFormat.Json, excludes, [".cs"]);
+        var options = new Options(root, projectName, Language.CSharp, Baseline.Local, RenderFormat.PlantUML, excludes, [".cs"]);
 
         var gm = new DependencyGraphBuilder(new CsharpDependencyParser(options), options);
 
         var graph = await gm.GetGraphAsync(root, Directory.GetDirectories(root));
 
-        File.WriteAllText(@"C:\Users\lotte\Skrivebord\ITU\CS3\Research-project\ArchLens\src\c-sharp\graph-json.json", new JsonRenderer().RenderGraph(graph, options));
-
-        Console.WriteLine(graph.ToString());
+        if (options.Format == RenderFormat.Json)
+            File.WriteAllText($@"{diagrams}\graph-json.json", new JsonRenderer().RenderGraph(graph, options));
+        if (options.Format == RenderFormat.PlantUML)
+            File.WriteAllText($@"{diagrams}\graph-puml.puml", new PlantUMLRenderer().RenderGraph(graph, options));
     }
 }

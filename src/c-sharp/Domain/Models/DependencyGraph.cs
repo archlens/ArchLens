@@ -17,6 +17,8 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     public virtual string ToJson() => "{}";
 
+    public virtual List<string> ToPlantUML(bool diff) => [];
+
     public virtual List<string> Packages() => [];
 
     public IEnumerator<DependencyGraph> GetEnumerator()
@@ -129,6 +131,36 @@ public class Node : DependencyGraph
 
     }
 
+    public override List<string> ToPlantUML(bool diff)
+    { //TODO: Add color depending on diff
+        string package = $"package \"{Name}\" as {Name} {{ \n";
+
+        List<string> puml = [];
+
+        foreach (var child in Children)
+        {
+            string childName = child.Name.Replace(" ", "-");
+
+            if (child is Leaf)
+            {
+                package += $"\n [{childName}]";
+                var childList = child.ToPlantUML(diff);
+                puml.AddRange(childList);
+            }
+            else
+            {
+                var childList = child.ToPlantUML(diff);
+                var c = childList.Last(); //last is the package declaration, which we want to be added here
+                package += $"\n{c}\n";
+                childList.Remove(c);
+                puml.AddRange(childList);
+            }
+        }
+        package += "\n}\n";
+        puml.Add(package);
+        return puml;
+    }
+
     public override List<string> Packages()
     {
         List<string> res = [];
@@ -152,6 +184,19 @@ public class Leaf : DependencyGraph
         foreach (var d in Dependencies)
             res += "\n \t \t --> " + d;
         return res;
+    }
+
+    public override List<string> ToPlantUML(bool diff)
+    { //TODO: diff
+        List<string> puml = [];
+
+        foreach (var dep in Dependencies)
+        {
+            //if (dep.Contains(".cs")) puml.Add($"\n\"{Name}\"-->{dep}");
+            puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
+
+        }
+        return puml;
     }
 
     public override string ToJson() => "";

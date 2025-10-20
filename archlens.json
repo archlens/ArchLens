@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
     "name": "ArchLens",
-    "rootFolder": "src/python/src/",
+    "rootFolder": "src/c-sharp/",
     "language": "C#",
     "github": {
         "url": "",

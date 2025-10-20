@@ -1,6 +1,7 @@
 namespace Archlens.Domain.Models.Enums;
 
-public enum RenderFormat 
+public enum RenderFormat
 {
-    Json
+    Json,
+    PlantUML
 }

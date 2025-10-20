@@ -28,7 +28,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         {
             if (_options.Exclusions.ToList().Exists(module.Contains)) continue;
 
-            Node node = new() { Name = module.Split("\\").Last(), Children = [], Dependencies = [] };
+            Node node = new() { Name = module.Replace(_options.ProjectRoot, "").Remove(0, 1).Replace("\\", "."), Children = [], Dependencies = [] };
 
             string[] files = Directory.GetFiles(module);
 
