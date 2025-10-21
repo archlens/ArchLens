@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
@@ -16,8 +17,7 @@ public sealed class JsonRenderer : IRenderer
 
             if (packagestr.Contains(package)) continue;
 
-            var comma = "";
-            if (i < graph.Packages().Count - 2) comma = ",";
+            if (i > 0) packagestr += ",\n";
 
             packagestr +=
                 $$"""
@@ -25,8 +25,7 @@ public sealed class JsonRenderer : IRenderer
                 {
                     "name": "{{package}}",
                     "state": "NEUTRAL"
-                }{{comma}}
-
+                }
             """;
         }
 

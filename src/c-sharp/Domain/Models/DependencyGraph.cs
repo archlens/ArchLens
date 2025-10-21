@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Archlens.Domain.Models;
+
 public class DependencyGraph : IEnumerable<DependencyGraph>
 {
     public string Name { get; init; }
@@ -32,22 +33,23 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
             {
                 foreach (var desc in Traverse(child))
                     yield return desc;
-    }
-}
+            }
+        }
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     protected virtual IReadOnlyList<DependencyGraph> GetChildren() =>
         [];
-    }
+}
 
 public class Node : DependencyGraph
-    {
+{
     public List<DependencyGraph> Children { get; init; } = [];
     public Dictionary<string, List<DependencyGraph>> Dependencies { get; init; } = [];
 
     protected override IReadOnlyList<DependencyGraph> GetChildren() => Children;
+    private List<string> _packages;
 
     public void AddChildren(IEnumerable<DependencyGraph> childr) => Children.AddRange(childr);
     public void AddChild(DependencyGraph child) => Children.Add(child);
@@ -77,12 +79,10 @@ public class Node : DependencyGraph
             {
                 var dep = Dependencies.Keys.ElementAt(i);
                 var relations = "";
-                string comma;
                 for (int j = 0; j < Dependencies[dep].Count; j++)
                 {
                     var rel = Dependencies[dep][j];
-                    if (j < Dependencies[dep].Count - 1) comma = ",";
-                    else comma = "";
+                    if (j > 0) relations += ",\n";
 
                     relations +=
                     $$"""
@@ -95,12 +95,11 @@ public class Node : DependencyGraph
                                     "name": "{{dep}}",
                                     "path": "{{dep}}"
                                 }
-                            }{{comma}}
+                            }
                     """;
                 }
 
-                if (i < Dependencies.Keys.Count - 1 || i == 0) comma = ",";
-                else comma = "";
+                if (i > 0) str += ",\n";
 
                 str +=
                 $$"""
@@ -112,8 +111,7 @@ public class Node : DependencyGraph
                         "relations": [
                             {{relations}}
                         ]
-                    }{{comma}}
-
+                    }
                 """;
             }
 
@@ -123,8 +121,8 @@ public class Node : DependencyGraph
         {
             var child = Children[c];
             var childJson = child.ToJson();
+            if (c > 0 && childJson != "") str += ",\n";
             str += childJson;
-            if ((c < Children.Count - 1 || c == 0) && childJson != "") str += ",";
         }
 
         return str;
@@ -163,6 +161,8 @@ public class Node : DependencyGraph
 
     public override List<string> Packages()
     {
+        if (_packages != null) return _packages;
+
         List<string> res = [];
         foreach (var package in Children)
         {
@@ -170,6 +170,7 @@ public class Node : DependencyGraph
             res.AddRange(package.Packages());
         }
 
+        _packages = res;
         return res;
     }
 }
@@ -192,9 +193,7 @@ public class Leaf : DependencyGraph
 
         foreach (var dep in Dependencies)
         {
-            //if (dep.Contains(".cs")) puml.Add($"\n\"{Name}\"-->{dep}");
             puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
-
         }
         return puml;
     }
