@@ -86,7 +86,7 @@ public class Node : DependencyGraph
 
                     relations +=
                     $$"""
-                    {
+                            {
                                 "from_file": {
                                     "name": "{{rel.Name}}",
                                     "path": "{{rel.Name}}"
@@ -121,7 +121,9 @@ public class Node : DependencyGraph
         {
             var child = Children[c];
             var childJson = child.ToJson();
-            if (c > 0 && childJson != "") str += ",\n";
+            if (c > 0 && childJson != "" && !childJson.StartsWith(","))
+                str += ",\n";
+
             str += childJson;
         }
 
