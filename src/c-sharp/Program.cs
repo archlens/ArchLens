@@ -21,19 +21,12 @@ internal class Program
 
     static async Task Main(string[] args)
     {
-        var configPath = args[0].Trim();
+        var configPath = args.Length > 0 ? args[0].Trim() : "../../../archfig.json" ;
 
         var configManager = new ConfigManager(configPath);
 
-        var options = new Options(root, projectName, Language.CSharp, Baseline.Local, RenderFormat.PlantUML, excludes, [".cs"]);
+        var rendererService = new RendererService(configManager);
 
-        var gm = new DependencyGraphBuilder(new CsharpDependencyParser(options), options);
-
-        var graph = await gm.GetGraphAsync(root, Directory.GetDirectories(root));
-
-        if (options.Format == RenderFormat.Json)
-            File.WriteAllText($@"{diagrams}\graph-json.json", new JsonRenderer().RenderGraph(graph, options));
-        if (options.Format == RenderFormat.PlantUML)
-            File.WriteAllText($@"{diagrams}\graph-puml.puml", new PlantUMLRenderer().RenderGraph(graph, options));
+        Console.WriteLine(await rendererService.RenderDependencyGraphAsync());
     }
 }

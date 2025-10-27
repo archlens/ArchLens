@@ -11,48 +11,39 @@ namespace Archlens.Application;
 
 public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options _options)
 {
-    public async Task<DependencyGraph> GetGraphAsync(string root, IReadOnlyList<string> changedModules, CancellationToken ct = default)
+    public async Task<DependencyGraph> GetGraphAsync(string root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
-        Node graph = new() { Name = "root", Children = [], Dependencies = [] };
+        DependencyGraphNode graph = new() { Name = $"{root}" };
 
         await BuildGraphAsync(graph, changedModules, ct);
 
         return graph;
     }
 
-    private async Task BuildGraphAsync(Node root, IReadOnlyList<string> changedModules, CancellationToken ct = default)
+    private async Task BuildGraphAsync(DependencyGraphNode root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
-        List<Node> children = [];
+        List<DependencyGraphNode> children = [];
 
-        foreach (var module in changedModules)
+        foreach (var module in changedModules.Keys)
         {
-            if (_options.Exclusions.ToList().Exists(module.Contains)) continue;
+            DependencyGraphNode node = new() { Name = module };
 
-            Node node = new() { Name = module.Replace(_options.ProjectRoot, "").Remove(0, 1).Replace("\\", "."), Children = [], Dependencies = [] };
-
-            string[] files = Directory.GetFiles(module);
-
-            foreach (string file in files)
+            foreach (string content in changedModules[module])
             {
-                var usings = await _dependencyParser.ParseFileDependencies(file, ct);
-
-                Leaf child = new() { Dependencies = usings, Name = file.Split("\\").Last() };
-
-                node.AddChild(child);
-
-                foreach (var dep in child.Dependencies)
+                DependencyGraph child;
+                var attr = File.GetAttributes(content);
+                if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+                    child = new DependencyGraphNode { Name = content };
+                else
                 {
-                    node.AddDependency(dep, child);
+                    var deps = await _dependencyParser.ParseFileDependencies(content, ct);
+                    child = new() { Name = content.Split("\\").Last() };
+                    child.AddDependencyRange(deps);
                 }
+                node.AddChild(child);
             }
-
-            string[] submodules = Directory.GetDirectories(module);
-
-            await BuildGraphAsync(node, submodules, ct);
-
             children.Add(node);
         }
-
         root.AddChildren(children);
     }
 }

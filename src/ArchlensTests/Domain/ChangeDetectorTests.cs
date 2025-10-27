@@ -20,10 +20,14 @@ public sealed class ChangeDetectorTests : IDisposable
 
     private static void WriteFile(string path, string contents, DateTime? utcWriteTime = null)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var dir = Path.GetDirectoryName(path);
+        Directory.CreateDirectory(dir!);
         File.WriteAllText(path, contents);
         if (utcWriteTime is { } t)
+        {
+            Directory.SetLastWriteTimeUtc(dir!, t);
             File.SetLastWriteTimeUtc(path, t);
+        }
     }
 
     private static Options MakeOptions(
@@ -36,7 +40,7 @@ public sealed class ChangeDetectorTests : IDisposable
             ProjectRoot: projectRoot,
             ProjectName: "TestProject",
             Language: default,
-            Baseline: default,
+            SnapshotManager: default,
             Format: default,
             Exclusions: exclusions ?? [],
             FileExtensions: extensions ?? [".cs"]
@@ -55,7 +59,8 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src/A.cs", changed);
+        Assert.Contains("src", changed);
+        Assert.Contains("A.cs", changed["src"]);
         Assert.Single(changed);
     }
 
@@ -90,7 +95,8 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src/C.cs", changed);
+        Assert.Contains("src", changed);
+        Assert.Contains("C.cs", changed["src"]);
         Assert.Single(changed);
     }
 
@@ -107,8 +113,9 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src/B.cs", changed);
-        Assert.DoesNotContain("src/A.txt", changed);
+        Assert.Contains("src", changed);
+        Assert.Contains("B.cs", changed["src"]);
+        Assert.DoesNotContain("A.txt", changed["src"]);
         Assert.Single(changed);
     }
 
@@ -120,13 +127,13 @@ public sealed class ChangeDetectorTests : IDisposable
         WriteFile(t1, "class X {}");
         WriteFile(t2, "class Y {}");
 
-        var opts = MakeOptions(_root, exclusions: ["Tests/"], extensions: [".cs"]);
+        var opts = MakeOptions(_root, exclusions: ["**/Tests/"], extensions: [".cs"]);
         var depGraph = new TestDependencyGraph();
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src/Y.cs", changed);
-        Assert.DoesNotContain("Tests/X.cs", changed);
+        Assert.Contains("src", changed);
+        Assert.DoesNotContain("Tests", changed);
         Assert.Single(changed);
     }
 
@@ -143,9 +150,10 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src/good/Ok.cs", changed);
-        Assert.DoesNotContain("src/bin/Gen.cs", changed);
-        Assert.Single(changed);
+        Assert.Contains("src", changed);
+        Assert.Contains("src/good", changed);
+        Assert.DoesNotContain("bin", changed);
+        Assert.DoesNotContain("bin", changed["src"]);
     }
 
     [Fact]
@@ -162,8 +170,8 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src/A.cs", changed);
-        Assert.DoesNotContain("src/A.dev.cs", changed);
+        Assert.Contains("src", changed);
+        Assert.DoesNotContain("A.dev.cs", changed["src"]);
         Assert.Single(changed);
     }
 }

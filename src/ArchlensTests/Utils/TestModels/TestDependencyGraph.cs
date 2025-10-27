@@ -9,7 +9,9 @@ public sealed class TestDependencyGraph : DependencyGraph
 
     public void SetFile(string relativePath, DateTime lastWriteUtc)
     {
-        var key = Normalize(relativePath);
+        var pair = Normalize(relativePath);
+        var nameIndx = pair.LastIndexOf('/');
+        var key = pair[..nameIndx];
         _nodes[key] = new TestNode
         {
             Name = key,

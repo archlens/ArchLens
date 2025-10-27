@@ -18,7 +18,7 @@ public class ConfigManager(string _path)
         public string? ProjectRoot { get; set; }
         public string? ProjectName { get; set; }
         public string? Language { get; set; }
-        public string? Baseline { get; set; }
+        public string? SnapshotManager { get; set; }
         public string? Format { get; set; }
         public string[]? Exclusions { get; set; }
         public string[]? FileExtensions { get; set; }
@@ -53,7 +53,7 @@ public class ConfigManager(string _path)
         var projectRoot = dto.ProjectRoot ?? baseDir;
         var projectName = dto.ProjectName ?? baseDir.Split("\\").Last();
         var language = MapLanguage(dto.Language ?? "c#");
-        var baseline = MapBaseline(dto.Baseline ?? "git");
+        var snapshotManager = MapSnapshotManager(dto.SnapshotManager ?? "git");
         var format = MapFormat(dto.Format ?? "json");
         var exclusions = (dto.Exclusions ?? []).Select(s => s.Trim())
             .Where(s => !string.IsNullOrWhiteSpace(s))
@@ -64,6 +64,8 @@ public class ConfigManager(string _path)
         if (!Directory.Exists(projectRoot))
             throw new DirectoryNotFoundException($"projectRoot does not exist: {projectRoot}");
 
+        var fullRootPath = GetFullRootPath(projectRoot);
+
         if (fileExts.Length == 0)
             throw new InvalidOperationException("fileExtensions resolved to an empty list.");
 
@@ -71,11 +73,20 @@ public class ConfigManager(string _path)
             ProjectRoot: projectRoot,
             ProjectName: projectName,
             Language: language,
-            Baseline: baseline,
+            SnapshotManager: snapshotManager,
             Format: format,
             Exclusions: fileExts.Length == 0 ? [] : exclusions,
-            FileExtensions: fileExts
+            FileExtensions: fileExts,
+            FullRootPath: fullRootPath
         );
+    }
+
+    private static string GetFullRootPath(string root)
+    {
+#if DEBUG
+        root = String.Concat("../../../", root);
+#endif
+        return Path.GetFullPath(root);
     }
 
     private static string NormalizeExtension(string ext)
@@ -100,13 +111,13 @@ public class ConfigManager(string _path)
         };
     }
 
-    private static Baseline MapBaseline(string raw)
+    private static SnapshotManager MapSnapshotManager(string raw)
     {
         var s = raw.Trim().ToLowerInvariant();
         return s switch
         {
-            "git" => Baseline.Git,
-            "local" => Baseline.Local,
+            "git" => SnapshotManager.Git,
+            "local" => SnapshotManager.Local,
             _ => throw new NotSupportedException($"Unsupported baseline: '{raw}'.")
         };
     }

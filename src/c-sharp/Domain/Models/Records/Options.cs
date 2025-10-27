@@ -6,8 +6,12 @@ public sealed record Options(
     string ProjectRoot,
     string ProjectName,
     Language Language,
-    Baseline Baseline,
+    SnapshotManager SnapshotManager,
     RenderFormat Format,
     IReadOnlyList<string> Exclusions,
-    IReadOnlyList<string> FileExtensions
+    IReadOnlyList<string> FileExtensions,
+    string SnapshotDir = ".archlens",
+    string SnapshotFile = "snaphot",
+    string GitUrl = "",
+    string FullRootPath = ""
 );

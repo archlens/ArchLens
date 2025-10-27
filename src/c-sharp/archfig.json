@@ -1,0 +1,12 @@
+{
+    "ProjectName": "c-sharp",
+    "ProjectRoot": "./",
+    "Language": "C#",
+    "SnapshotManager": "local",
+    "GitUrl": "https://github.com/BabLoRP/ArchLens/tree/master/src/c-sharp",
+    "SnapshotDir": ".archlens",
+    "SnapshotFile": "snaphot",
+    "Format": "json",
+    "Exclusions": ["**/obj/"],
+    "FileExtensions": [".cs"]
+}

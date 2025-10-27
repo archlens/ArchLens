@@ -38,7 +38,7 @@ public sealed class JsonRenderer : IRenderer
             ],
 
             "edges": [
-            {{graph.ToJson()}}
+            {{graph.Serialize()}}
 
             ]
         }
