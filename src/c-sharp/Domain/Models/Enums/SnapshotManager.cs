@@ -1,6 +1,6 @@
 namespace Archlens.Domain.Models.Enums;
 
-public enum Baseline 
+public enum SnapshotManager 
 {
     Git,
     Local
