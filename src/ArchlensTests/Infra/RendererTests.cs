@@ -17,8 +17,14 @@ public sealed class RendererTests : IDisposable
         var leafA = new Leaf() { Name = "leafA" };
         var leafB = new Leaf() { Name = "leafB", Dependencies = ["leafA"] };
 
-        var graph = new Node() { Name = "node" };
-        graph.AddChildren([leafA, leafB]);
+        var graph = new Node() { Name = "root" };
+        var nodeA = new Node() { Name = "nodeA" };
+        var nodeB = new Node() { Name = "nodeB" };
+        nodeB.AddDependency("leafA", leafB);
+
+        nodeA.AddChild(leafA);
+        nodeB.AddChild(leafB);
+        graph.AddChildren([nodeA, nodeB]);
 
         _graph = graph;
     }
@@ -52,19 +58,19 @@ public sealed class RendererTests : IDisposable
         JsonRenderer renderer = new();
 
         string result = renderer.RenderGraph(_graph, MakeOptions(_root));
-        Console.WriteLine(result);
 
         Assert.NotEmpty(result);
         Assert.StartsWith("{", result);
         Assert.Contains("\"title\":", result);
         Assert.Contains("\"packages\": [", result);
         Assert.Contains("\"edges\": [", result);
+        Assert.Contains("\"relations\": [", result);
         Assert.EndsWith("}", result);
     }
 
     [Fact]
     public void PlantUMLRendererRendersCorrectly()
-    {    
+    {
         PlantUMLRenderer renderer = new();
 
         string result = renderer.RenderGraph(_graph, MakeOptions(_root));
@@ -72,7 +78,7 @@ public sealed class RendererTests : IDisposable
         Assert.NotEmpty(result);
         Assert.StartsWith("@startuml", result);
         Assert.Contains("title TestProject", result);
-        Assert.Contains("package \"node\" as node {", result);
+        Assert.Contains("package \"nodeA\" as nodeA {", result);
         Assert.Contains("\"leafB\"-->leafA", result);
         Assert.EndsWith("@enduml", result);
     }

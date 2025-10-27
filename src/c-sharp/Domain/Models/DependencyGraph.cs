@@ -121,7 +121,7 @@ public class Node : DependencyGraph
         {
             var child = Children[c];
             var childJson = child.ToJson();
-            if (c > 0 && childJson != "" && !childJson.StartsWith(","))
+            if (c > 0 && childJson != "" && !childJson.StartsWith(',') && str != "")
                 str += ",\n";
 
             str += childJson;
