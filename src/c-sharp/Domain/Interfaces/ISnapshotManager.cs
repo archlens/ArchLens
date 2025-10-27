@@ -4,7 +4,7 @@ using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
 namespace Archlens.Domain.Interfaces;
 
-public interface IBaselineManager
+public interface ISnapshotManager
 {
     Task SaveGraphAsync(DependencyGraph graph,
                    Options options,
