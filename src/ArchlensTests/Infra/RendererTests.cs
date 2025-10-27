@@ -14,13 +14,14 @@ public sealed class RendererTests : IDisposable
         _root = Path.Combine(Path.GetTempPath(), "archlens-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_root);
 
-        var leafA = new Leaf() { Name = "leafA" };
-        var leafB = new Leaf() { Name = "leafB", Dependencies = ["leafA"] };
+        var leafA = new DependencyGraphLeaf() { Name = "leafA" };
+        var leafB = new DependencyGraphLeaf() { Name = "leafB" };
+        leafB.AddDependency("leafA");
 
-        var graph = new Node() { Name = "root" };
-        var nodeA = new Node() { Name = "nodeA" };
-        var nodeB = new Node() { Name = "nodeB" };
-        nodeB.AddDependency("leafA", leafB);
+        var graph = new DependencyGraphNode() { Name = "root" };
+        var nodeA = new DependencyGraphNode() { Name = "nodeA" };
+        var nodeB = new DependencyGraphNode() { Name = "nodeB" };
+        leafA.AddDependency("leafB");
 
         nodeA.AddChild(leafA);
         nodeB.AddChild(leafB);
@@ -44,7 +45,7 @@ public sealed class RendererTests : IDisposable
             ProjectRoot: projectRoot,
             ProjectName: "TestProject",
             Language: default,
-            Baseline: default,
+            SnapshotManager: default,
             Format: default,
             Exclusions: exclusions ?? [],
             FileExtensions: extensions ?? [".cs"]

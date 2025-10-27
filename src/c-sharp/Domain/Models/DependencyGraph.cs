@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
-using System.Xml.Linq;
 
 namespace Archlens.Domain.Models;
 
@@ -36,6 +35,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     public virtual IReadOnlyList<DependencyGraph> GetChildren() => [];
     public override string ToString() => Name;
+    public virtual string ToJson() => "";
 
     public virtual string Serialize() => "{}";
 
@@ -162,6 +162,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 public class DependencyGraphNode : DependencyGraph
 {
     private List<DependencyGraph> _children { get; init; } = [];
+    private List<string> _packages;
     public override IReadOnlyList<DependencyGraph> GetChildren() => _children;
     public void AddChildren(IEnumerable<DependencyGraph> childr)
     {
@@ -195,23 +196,24 @@ public class DependencyGraphNode : DependencyGraph
     public override string ToJson()
     {
         var str = "";
-        if (Dependencies.Keys.Count > 0)
+        var dependencies = GetDependencies();
+        if (dependencies.Keys.Count > 0)
         {
-            for (int i = 0; i < Dependencies.Keys.Count; i++)
+            for (int i = 0; i < dependencies.Keys.Count; i++)
             {
-                var dep = Dependencies.Keys.ElementAt(i);
+                var dep = dependencies.Keys.ElementAt(i);
                 var relations = "";
-                for (int j = 0; j < Dependencies[dep].Count; j++)
+                for (int j = 0; j < dependencies[dep]; j++)
                 {
-                    var rel = Dependencies[dep][j];
+                    var rel = dependencies[dep];
                     if (j > 0) relations += ",\n";
 
                     relations +=
                     $$"""
                             {
                                 "from_file": {
-                                    "name": "{{rel.Name}}",
-                                    "path": "{{rel.Name}}"
+                                    "name": "{{dependencies.Keys}}",
+                                    "path": "{{dependencies.Keys}}"
                                 },
                                 "to_file": {
                                     "name": "{{dep}}",
@@ -229,7 +231,7 @@ public class DependencyGraphNode : DependencyGraph
                         "state": "NEUTRAL",
                         "fromPackage": "{{Name}}",
                         "toPackage": "{{dep}}",
-                        "label": "{{Dependencies[dep].Count}}",
+                        "label": "{{dependencies[dep]}}",
                         "relations": [
                             {{relations}}
                         ]
@@ -239,9 +241,10 @@ public class DependencyGraphNode : DependencyGraph
 
         }
 
-        for (int c = 0; c < Children.Count; c++)
+        var children = GetChildren();
+        for (int c = 0; c < children.Count; c++)
         {
-            var child = Children[c];
+            var child = children[c];
             var childJson = child.ToJson();
             if (c > 0 && childJson != "" && !childJson.StartsWith(',') && str != "")
                 str += ",\n";
