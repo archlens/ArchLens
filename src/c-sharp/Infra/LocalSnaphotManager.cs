@@ -31,13 +31,13 @@ public sealed class LocalSnaphotManager(string _localDirName, string _localFileN
         
         if (!File.Exists(path))
         {
-            return new DependencyGraph { Name = $"Snapshot@{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
+            return new DependencyGraph { Name = $"{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
         }
 
         var json = await File.ReadAllTextAsync(path, ct);
 
         var graph = DependencyGraph.Deserialize(json);
 
-        return graph ?? new DependencyGraph { Name = $"Snapshot@{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
+        return graph ?? new DependencyGraph { Name = $"{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
     }
 }

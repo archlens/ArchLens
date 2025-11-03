@@ -1,0 +1,412 @@
+{
+    "type": "node",
+    "name": "./",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 3 },
+{ "Domain.Models.Records": 4 },
+{ "Domain.Models": 3 },
+{ "Domain.Models.Enums": 2 },
+{ "Infra": 1 },
+{ "Domain": 1 },
+{ "Domain.Factories": 1 }
+ ],
+    "children": 
+    [
+{
+    "type": "node",
+    "name": "lastSession",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    []
+},
+{
+    "type": "node",
+    "name": "Infra",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 6 },
+{ "Domain.Models.Records": 6 },
+{ "Domain.Models": 4 }
+ ],
+    "children": 
+    [
+{
+    "type": "leaf",
+    "name": "CsharpDependencyParser.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "CsharpSyntaxWalkerParser.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "GitSnaphotManager.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "JsonRenderer.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "LocalSnaphotManager.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "PlantUMLRenderer.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Domain",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    [
+{
+    "type": "node",
+    "name": "Factories",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    []
+},
+{
+    "type": "node",
+    "name": "Interfaces",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    []
+},
+{
+    "type": "node",
+    "name": "Models",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    []
+},
+{
+    "type": "leaf",
+    "name": "ChangeDetector.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "ConfigManager.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models.Enums": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Domain/Models",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    [
+{
+    "type": "node",
+    "name": "Enums",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    []
+},
+{
+    "type": "node",
+    "name": "Records",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    []
+},
+{
+    "type": "leaf",
+    "name": "DependencyGraph.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Domain/Models/Records",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models.Enums": 1 }
+ ],
+    "children": 
+    [
+{
+    "type": "leaf",
+    "name": "Options.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models.Enums": 1 }
+ ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Domain/Models/Enums",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ],
+    "children": 
+    [
+{
+    "type": "leaf",
+    "name": "Language.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ]
+},
+{
+    "type": "leaf",
+    "name": "RenderFormat.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ]
+},
+{
+    "type": "leaf",
+    "name": "SnapshotManager.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Domain/Interfaces",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models": 2 },
+{ "Domain.Models.Records": 2 }
+ ],
+    "children": 
+    [
+{
+    "type": "leaf",
+    "name": "IDependencyParser.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [  ]
+},
+{
+    "type": "leaf",
+    "name": "IRenderer.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "ISnapshotManager.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Domain/Factories",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 3 },
+{ "Domain.Models.Enums": 3 },
+{ "Domain.Models.Records": 2 },
+{ "Infra": 3 }
+ ],
+    "children": 
+    [
+{
+    "type": "leaf",
+    "name": "DependencyParserFactory.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models.Enums": 1 },
+{ "Domain.Models.Records": 1 },
+{ "Infra": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "RendererFactory.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models.Enums": 1 },
+{ "Infra": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "SnapsnotManagerFactory.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models.Enums": 1 },
+{ "Domain.Models.Records": 1 },
+{ "Infra": 1 }
+ ]
+}
+]
+},
+{
+    "type": "node",
+    "name": "Application",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 },
+{ "Domain": 1 },
+{ "Domain.Factories": 1 }
+ ],
+    "children": 
+    [
+{
+    "type": "leaf",
+    "name": "DependencyGraphBuilder.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain.Interfaces": 1 },
+{ "Domain.Models": 1 },
+{ "Domain.Models.Records": 1 }
+ ]
+},
+{
+    "type": "leaf",
+    "name": "RendererService.cs",
+    "lastWriteTime": "03-11-2025 11:06:35",
+    "state": "NEUTRAL",
+    "relations": 
+    [ 
+{ "Domain": 1 },
+{ "Domain.Factories": 1 }
+ ]
+}
+]
+}
+]
+}

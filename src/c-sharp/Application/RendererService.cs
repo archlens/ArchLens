@@ -1,9 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Archlens.Domain.Interfaces;
 using Archlens.Domain;
-using Archlens.Domain.Models.Enums;
 using Archlens.Domain.Factories;
 
 namespace Archlens.Application;
@@ -24,9 +22,9 @@ public sealed class RendererService(ConfigManager _config)
         var graph = await new DependencyGraphBuilder(parser, options).GetGraphAsync(options.ProjectRoot, changedModules, ct);
 
         var renderer = RendererFactory.SelectRenderer(options.Format);
-        var artifactPath = renderer.RenderGraph(graph, options, ct); // currently not being written to any file
+        var artifactPath = renderer.RenderGraph(graph, options, ct);
 
-        await snapshotManager.SaveGraphAsync(graph, options, ct); // Maybe not necessary
+        await snapshotManager.SaveGraphAsync(graph, options, ct);
 
         return artifactPath;
     }

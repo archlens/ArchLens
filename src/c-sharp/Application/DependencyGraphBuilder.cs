@@ -13,7 +13,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
 {
     public async Task<DependencyGraph> GetGraphAsync(string root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
-        DependencyGraphNode graph = new() { Name = $"{root}" };
+        DependencyGraphNode graph = new() { Name = $"{_options.ProjectName}" };
 
         await BuildGraphAsync(graph, changedModules, ct);
 
@@ -22,6 +22,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
 
     private async Task BuildGraphAsync(DependencyGraphNode root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
+        
         List<DependencyGraphNode> children = [];
 
         foreach (var module in changedModules.Keys)
@@ -31,13 +32,21 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
             foreach (string content in changedModules[module])
             {
                 DependencyGraph child;
-                var attr = File.GetAttributes(content);
+
+                var path = Path.Combine(module, content);
+                var relativePath = Path.GetRelativePath(_options.ProjectRoot, path);
+                var attr = File.GetAttributes(path);
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
-                    child = new DependencyGraphNode { Name = content };
+                {
+                    var nameSpace = relativePath.Replace("\\", ".").Trim('.');
+                    var name = content.Split("\\").Last();
+                    child = new DependencyGraphNode { Name = name, NameSpace = nameSpace };
+                }
                 else
                 {
                     var deps = await _dependencyParser.ParseFileDependencies(content, ct);
-                    child = new() { Name = content.Split("\\").Last() };
+                    var nameSpace = relativePath.Replace("\\", ".").Trim('.');
+                    child = new DependencyGraphLeaf{ Name = content.Split("\\").Last(), NameSpace = nameSpace };
                     child.AddDependencyRange(deps);
                 }
                 node.AddChild(child);

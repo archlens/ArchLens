@@ -1,5 +1,5 @@
 {
-    "ProjectName": "c-sharp",
+    "ProjectName": "Archlens",
     "ProjectRoot": "./",
     "Language": "C#",
     "SnapshotManager": "local",
@@ -7,6 +7,6 @@
     "SnapshotDir": ".archlens",
     "SnapshotFile": "snaphot",
     "Format": "json",
-    "Exclusions": ["**/obj/"],
+    "Exclusions": ["obj/", "bin/", ".vs/"],
     "FileExtensions": [".cs"]
 }

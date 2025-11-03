@@ -24,28 +24,8 @@ public sealed class ChangeDetector
     {
         var projectRoot = String.IsNullOrEmpty(options.FullRootPath) ? Path.GetFullPath(options.ProjectRoot) : options.FullRootPath;
 
-        var candidates = EnumerateFiles(projectRoot, options.FileExtensions);
-
-        Dictionary<string, IEnumerable<string>> modules = [];
-        if (options.Exclusions != null && options.Exclusions.Count > 0)
-        {
-            var rules = CompileExclusions(options.Exclusions);
-            foreach(var module in candidates.Keys)
-            {
-                if (module == projectRoot)
-                    continue;
-                var isExcludedModule = IsExcluded(projectRoot, module, rules);
-                if (!isExcludedModule)
-                {
-                    var contents = candidates[module].Where(content => !IsExcluded(projectRoot, content, rules));
-                    modules.Add(module, contents);
-                }
-            }
-        }
-        else
-        {
-            modules = candidates;
-        }
+        var rules = CompileExclusions(options.Exclusions);
+        var modules = EnumerateFiles(projectRoot, options.FileExtensions, rules);
 
         var changed = new Dictionary<string, IEnumerable<string>>();
         var thread = new SemaphoreSlim(Environment.ProcessorCount - 1);
@@ -59,7 +39,7 @@ public sealed class ChangeDetector
                 var inLastGraph = lastSavedGraph.Packages().Contains(relativePath);
                 if (!inLastGraph)
                 {
-                    changed.Add(relativePath, pair.Value);
+                    changed.Add(pair.Key, pair.Value);
                 }
                 else
                 {
@@ -68,7 +48,7 @@ public sealed class ChangeDetector
                     var currentWriteTime = File.GetLastWriteTimeUtc(pair.Key);
 
                     if (currentWriteTime > lastNodeWriteTime)
-                        changed.Add(relativePath, pair.Value);
+                        changed.Add(pair.Key, pair.Value);
                 }
             }
             finally
@@ -81,7 +61,7 @@ public sealed class ChangeDetector
         return changed;
     }
 
-    private static Dictionary<string, IEnumerable<string>> EnumerateFiles(string root, IReadOnlyList<string> extensions)
+    private static Dictionary<string, IEnumerable<string>> EnumerateFiles(string root, IReadOnlyList<string> extensions, ExclusionRule exclusions)
     {
         var dirs = new Stack<string>();
         dirs.Push(root);
@@ -95,24 +75,27 @@ public sealed class ChangeDetector
         {
             var dir = dirs.Pop();
 
-            IEnumerable<string> subdirs = [];
             try { 
 
-                subdirs = Directory.EnumerateDirectories(dir);
+                var subdirs = Directory.EnumerateDirectories(dir).Where(d => !IsExcluded(root, d, exclusions));
+
+                foreach (var subdir in subdirs)
+                    dirs.Push(subdir);
+
+                result[dir] = result.TryGetValue(dir, out var contents)
+                    ? contents.Concat(subdirs).ToList()
+                    : [.. subdirs];
             } catch { /* ignore */ }
             
-            foreach (var subdir in subdirs)
-                dirs.Push(subdir);
-            
-            result[dir] = [..subdirs];
-
             IEnumerable<string> files = [];
             try { 
-                files = Directory.EnumerateFiles(dir);
+                files = Directory.EnumerateFiles(dir).Where(f => !IsExcluded(root, f, exclusions));
             } catch { /* ignore */ }
 
             var includedFiles = files.Where(file => extensions.Contains(Path.GetExtension(file))).Select(file => GetRelative(root, file).Split('/').Last()).ToList();
-            result[dir] = [.. includedFiles];
+            result[dir] = result.TryGetValue(dir, out var existing)
+                ? existing.Concat(includedFiles).ToList()
+                : [.. includedFiles];
         }
         result.Remove(root);
         return result;
@@ -175,7 +158,7 @@ public sealed class ChangeDetector
     {
         var path = GetRelative(projectRoot, content);
 
-        if (rules.DirPrefixes.Any(rule => rule.StartsWith(path, StringComparison.OrdinalIgnoreCase)))
+        if (rules.DirPrefixes.Any(rule => (path + '/').StartsWith(rule, StringComparison.OrdinalIgnoreCase)))
             return true;
 
 

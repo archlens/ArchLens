@@ -10,6 +10,7 @@ namespace Archlens.Domain.Models;
 public class DependencyGraph : IEnumerable<DependencyGraph>
 {
     public string Name { get; init; }
+    public string NameSpace { get; init; } 
     public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
     private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
 
@@ -173,14 +174,23 @@ public class DependencyGraphNode : DependencyGraph
     }
     public void AddChild(DependencyGraph child)
     {
-        if (child.GetDependencies().Count > 0)
+        var deps = child.GetDependencies().Keys;
+        if (deps.Count > 0)
         {
-            var ownedChildNames = _children.Select(c => c.Name);
+            var ownedChildNames = _children.Select(c => c.NameSpace).Where(ns => !string.IsNullOrEmpty(ns));
 
-            var uniqueKeys = child.GetDependencies().Keys
-                .Where(k => !ownedChildNames.Any(n => k.Contains(n, StringComparison.Ordinal)));
-
-            AddDependencyRange([.. uniqueKeys]);
+            if (ownedChildNames.Any())
+            {
+                foreach (var dep in deps)
+                {
+                    var isInternalDep = ownedChildNames.Any(cn => dep.Contains(cn, StringComparison.Ordinal));
+                    if (!isInternalDep)
+                        AddDependency(dep);
+                }
+            } else
+            {
+                AddDependencyRange([.. deps]);
+            }
         }
         _children.Add(child);
     }
@@ -264,9 +274,11 @@ public class DependencyGraphNode : DependencyGraph
         var children = GetChildren();
         var childrenJson = children.Any() ? $"\n{string.Join(",\n", GetChildren().Select(c => c.Serialize()))}\n" : "";
 
+        var name = Name.Split('\\').Last();
         return $$"""
                 {
-                    "name": "{{Name}}",
+                    "type": "node",
+                    "name": "{{name}}",
                     "lastWriteTime": "{{LastWriteTime}}",
                     "state": "NEUTRAL",
                     "relations": 
@@ -344,6 +356,20 @@ public class DependencyGraphLeaf : DependencyGraph
         return puml;
     }
 
-    public override string Serialize() => "";
+    public override string Serialize()
+    {
+        var dependencies = GetDependencies();
+        var depsJson = dependencies.Any() ? $"\n{string.Join(",\n", dependencies.Select(d => $"{{ \"{d.Key}\": {d.Value} }}"))}\n" : "";
+        return $$"""
+                {
+                    "type": "leaf",
+                    "name": "{{Name}}",
+                    "lastWriteTime": "{{LastWriteTime}}",
+                    "state": "NEUTRAL",
+                    "relations": 
+                    [ {{depsJson}} ]
+                }
+                """;
+    }
     public override List<string> Packages() => [];
 }
