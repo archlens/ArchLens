@@ -33,24 +33,26 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
             {
                 DependencyGraph child;
 
-                var path = Path.Combine(module, content);
-                var relativePath = Path.GetRelativePath(_options.ProjectRoot, path);
-                var attr = File.GetAttributes(path);
+                var contentPath = Path.Combine(module, content);
+
+                var relativePath = Path.GetRelativePath(_options.ProjectRoot, contentPath);
+                var nameSpace = relativePath.Replace("\\", ".").Trim('.');
+
+                var attr = File.GetAttributes(contentPath);
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    var nameSpace = relativePath.Replace("\\", ".").Trim('.');
                     var name = content.Split("\\").Last();
                     child = new DependencyGraphNode { Name = name, NameSpace = nameSpace };
                 }
                 else
                 {
-                    var deps = await _dependencyParser.ParseFileDependencies(content, ct);
-                    var nameSpace = relativePath.Replace("\\", ".").Trim('.');
+                    var deps = await _dependencyParser.ParseFileDependencies(contentPath, ct);
                     child = new DependencyGraphLeaf{ Name = content.Split("\\").Last(), NameSpace = nameSpace };
                     child.AddDependencyRange(deps);
                 }
                 node.AddChild(child);
             }
+
             children.Add(node);
         }
         root.AddChildren(children);
