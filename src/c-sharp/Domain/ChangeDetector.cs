@@ -97,7 +97,6 @@ public sealed class ChangeDetector
                 ? existing.Concat(includedFiles).ToList()
                 : [.. includedFiles];
         }
-        result.Remove(root);
         return result;
     }
 
