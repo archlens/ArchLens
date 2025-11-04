@@ -1,11 +1,11 @@
+using Archlens.Domain.Interfaces;
+using Archlens.Domain.Models;
+using Archlens.Domain.Models.Records;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Archlens.Domain.Interfaces;
-using Archlens.Domain.Models;
-using Archlens.Domain.Models.Records;
 
 namespace Archlens.Application;
 
@@ -13,23 +13,24 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
 {
     public async Task<DependencyGraph> GetGraphAsync(string root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
-        DependencyGraphNode graph = new() { Name = $"{_options.ProjectName}" };
-
-        await BuildGraphAsync(graph, changedModules, ct);
-
+        var graph = await BuildGraphAsync(changedModules, ct);
         return graph;
     }
 
 
     private async Task<DependencyGraphNode> BuildGraphAsync(IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
-        
-        List<DependencyGraphNode> children = [];
+        Dictionary<string, DependencyGraphNode> nodes = [];
+        List<string> children = [];
 
         foreach (var module in changedModules.Keys)
         {
             DependencyGraphNode node = new() { Name = module };
+            nodes.Add(module, node);
+        }
 
+        foreach (var module in changedModules.Keys)
+        {
             foreach (string content in changedModules[module])
             {
                 DependencyGraph child;
@@ -42,8 +43,16 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                 var attr = File.GetAttributes(contentPath);
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    var name = content.Split("\\").Last();
-                    child = new DependencyGraphNode { Name = name, NameSpace = nameSpace };
+                    if (nodes.TryGetValue(content, out var existing))
+                    {
+                        child = existing;
+                        children.Add(content);
+                    }
+                    else
+                    {
+                        var name = content.Split("\\").Last();
+                        child = new DependencyGraphNode { Name = name, NameSpace = nameSpace };
+                    }
                 }
                 else
                 {
@@ -51,11 +60,16 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                     child = new DependencyGraphLeaf{ Name = content.Split("\\").Last(), NameSpace = nameSpace };
                     child.AddDependencyRange(deps);
                 }
-                node.AddChild(child);
+                nodes[module].AddChild(child);
             }
-
-            children.Add(node);
         }
-        root.AddChildren(children);
+        List<DependencyGraphNode> res = [];
+        foreach(var node in nodes.Values)
+        {
+            if (!children.Contains(node.Name)) {
+                res.Add(node);
+            }
+        }
+        return res.FirstOrDefault();
     }
 }
