@@ -19,7 +19,7 @@ public sealed class RendererService(ConfigManager _config)
         var changedModules = await ChangeDetector.GetChangedProjectFilesAsync(options, snapshotGraph, ct);
 
         var parser = DependencyParserFactory.SelectDependencyParser(options);
-        var graph = await new DependencyGraphBuilder(parser, options).GetGraphAsync(options.ProjectRoot, changedModules, ct);
+        var graph = await new DependencyGraphBuilder(parser, options).GetGraphAsync(changedModules, ct);
 
         var renderer = RendererFactory.SelectRenderer(options.Format);
         var artifactPath = renderer.RenderGraph(graph, options, ct);
