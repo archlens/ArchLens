@@ -11,7 +11,7 @@ namespace Archlens.Application;
 
 public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options _options)
 {
-    public async Task<DependencyGraph> GetGraphAsync(string root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
+    public async Task<DependencyGraph> GetGraphAsync(IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
         var graph = await BuildGraphAsync(changedModules, ct);
         return graph;
