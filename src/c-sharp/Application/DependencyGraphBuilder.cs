@@ -1,6 +1,7 @@
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,23 +26,33 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
 
         foreach (var module in changedModules.Keys)
         {
-            DependencyGraphNode node = new() { Name = module };
-            nodes.Add(module, node);
+            var name = module.Equals(_options.FullRootPath) ? _options.ProjectName : module;
+            nodes[module] = new DependencyGraphNode { Name = name, LastWriteTime = File.GetLastWriteTimeUtc(module) };
         }
 
-        foreach (var module in changedModules.Keys)
+        foreach (var pair in changedModules)
         {
-            foreach (string content in changedModules[module])
+            var module = pair.Key;
+            var contents = pair.Value;
+
+            var parent = nodes[module];
+
+            foreach (var content in contents)
             {
+                var contentPath = Path.Combine(module, content);
+                var relPath     = Path.GetRelativePath(_options.ProjectRoot, contentPath);
+                var nameSpace   = relPath.Replace(Path.DirectorySeparatorChar, '.')
+                                         .Replace(Path.AltDirectorySeparatorChar, '.')
+                                         .Trim('.');
                 DependencyGraph child;
 
-                var contentPath = Path.Combine(module, content);
-
-                var relativePath = Path.GetRelativePath(_options.ProjectRoot, contentPath);
-                var nameSpace = relativePath.Replace("\\", ".").Trim('.');
-
-                var attr = File.GetAttributes(contentPath);
-                if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+                bool isDir;
+                try
+                {
+                    isDir = (File.GetAttributes(contentPath) & FileAttributes.Directory) != 0;
+                }
+                catch { continue; }
+                if (isDir)
                 {
                     if (nodes.TryGetValue(content, out var existing))
                     {
@@ -50,26 +61,35 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                     }
                     else
                     {
-                        var name = content.Split("\\").Last();
-                        child = new DependencyGraphNode { Name = name, NameSpace = nameSpace };
+                        var name = Path.GetFileName(content);
+                        child = new DependencyGraphNode 
+                        { 
+                            Name = name, 
+                            NameSpace = nameSpace, 
+                            LastWriteTime = File.GetLastWriteTimeUtc(module) 
+                        };
                     }
                 }
                 else
                 {
-                    var deps = await _dependencyParser.ParseFileDependencies(contentPath, ct);
-                    child = new DependencyGraphLeaf{ Name = content.Split("\\").Last(), NameSpace = nameSpace };
-                    child.AddDependencyRange(deps);
+                    var name = Path.GetFileName(content);
+                    var deps = await _dependencyParser.ParseFileDependencies(contentPath, ct).ConfigureAwait(false);
+                    var leaf = new DependencyGraphLeaf
+                    { 
+                        Name = name, 
+                        NameSpace = nameSpace 
+                    };
+                    leaf.AddDependencyRange(deps);
+                    child = leaf;
                 }
-                nodes[module].AddChild(child);
+                parent.AddChild(child);
             }
         }
-        List<DependencyGraphNode> res = [];
-        foreach(var node in nodes.Values)
-        {
-            if (!children.Contains(node.Name)) {
-                res.Add(node);
-            }
-        }
-        return res.FirstOrDefault();
+        var rootKey = nodes.Keys
+        .Except(children, StringComparer.OrdinalIgnoreCase)
+        .OrderBy(k => !k.Equals(_options.FullRootPath, StringComparison.OrdinalIgnoreCase))
+        .FirstOrDefault();
+
+        return rootKey is null ? null : nodes[rootKey];
     }
 }
