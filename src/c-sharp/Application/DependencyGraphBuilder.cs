@@ -20,7 +20,8 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         return graph;
     }
 
-    private async Task BuildGraphAsync(DependencyGraphNode root, IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
+
+    private async Task<DependencyGraphNode> BuildGraphAsync(IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
     {
         
         List<DependencyGraphNode> children = [];
