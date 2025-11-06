@@ -132,8 +132,8 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src", changed);
-        Assert.DoesNotContain("Tests", changed);
+        Assert.Contains(Path.Combine(_root, "src"), changed);
+        Assert.DoesNotContain(Path.Combine(_root, "Tests"), changed);
         Assert.Single(changed);
     }
 
@@ -150,10 +150,14 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src", changed);
-        Assert.Contains("src/good", changed);
-        Assert.DoesNotContain("bin", changed);
-        Assert.DoesNotContain("bin", changed["src"]);
+
+        var exp1 = Path.Combine(_root, "src");
+        var exp2 = Path.Combine(_root, "src", "good");
+        var exp3 = Path.Combine(_root, "src", "bin");
+        Assert.Contains(exp1, changed);
+        Assert.Contains(exp2, changed);
+        Assert.DoesNotContain(exp3, changed);
+        Assert.DoesNotContain(exp3, changed[exp1]);
     }
 
     [Fact]
@@ -170,8 +174,8 @@ public sealed class ChangeDetectorTests : IDisposable
 
         var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
 
-        Assert.Contains("src", changed);
-        Assert.DoesNotContain("A.dev.cs", changed["src"]);
+        Assert.Contains(Path.Combine(_root, "src"), changed);
+        Assert.DoesNotContain(p1, changed[Path.Combine(_root, "src")]);
         Assert.Single(changed);
     }
 }
