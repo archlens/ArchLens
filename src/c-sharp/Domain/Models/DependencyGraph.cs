@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text.Json;
 
 namespace Archlens.Domain.Models;
 
@@ -38,109 +36,9 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     public override string ToString() => Name;
     public virtual string ToJson() => "";
 
-    public virtual string Serialize() => "{}";
-
     public virtual List<string> ToPlantUML(bool diff) => [];
 
     public virtual List<string> Packages() => [];
-
-    public static DependencyGraph Deserialize(string json)
-    {
-        using var doc = JsonDocument.Parse(json);
-        var rootEl = doc.RootElement;
-
-        return rootEl.ValueKind switch
-        {
-            JsonValueKind.Object => ParseNode(rootEl),
-            _ => throw new InvalidOperationException("Expected a JSON object or array at root.")
-        };
-    }
-
-    private static DependencyGraph ParseNode(JsonElement jsonNode)
-    {
-        var name = jsonNode.TryGetProperty("name", out var nEl) ? nEl.GetString() : String.Empty;
-        var lastWrite = ReadDateTime(jsonNode);
-
-        var depKeys = new List<(string path, int count)>();
-        if (jsonNode.TryGetProperty("relations", out var jsonDeps) && jsonDeps.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var depPair in jsonDeps.EnumerateArray())
-            {
-                if (depPair.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var prop in depPair.EnumerateObject())
-                    {
-                        var key = prop.Name;
-                        int count =
-                            prop.Value.ValueKind == JsonValueKind.Number && prop.Value.TryGetInt32(out var n) ? n :
-                            prop.Value.ValueKind == JsonValueKind.String && int.TryParse(prop.Value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var s) ? s :
-                            -998;
-                        depKeys.Add((key, count));
-                    }
-                }
-                else if (depPair.ValueKind == JsonValueKind.String)
-                {
-                    depKeys.Add((depPair.GetString()!, -999));
-                }
-            }
-        }
-
-        var children = new List<DependencyGraph>();
-        if (jsonNode.TryGetProperty("children", out var jsonChildren) && jsonChildren.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var child in jsonChildren.EnumerateArray())
-                children.Add(ParseNode(child));
-        }
-
-        if (children.Count <= 0)
-        {
-            var leaf = new DependencyGraphLeaf
-            {
-                Name = name,
-                LastWriteTime = lastWrite
-            };
-            foreach (var (path, _) in depKeys)
-                leaf.AddDependency(path);
-            return leaf;
-        }
-        else
-        {
-            var node = new DependencyGraphNode
-            {
-                Name = name,
-                LastWriteTime = lastWrite
-            };
-            foreach (var (path, count) in depKeys)
-                for (int i = 0; i < count; i++) node.AddDependency(path);
-
-            node.AddChildren(children);
-            return node;
-        }
-    }
-
-    private static DateTime ReadDateTime(JsonElement el)
-    {
-        if (!el.TryGetProperty("lastWriteTime", out var tEl))
-            return DateTime.UtcNow;
-
-        if (tEl.ValueKind == JsonValueKind.String)
-        {
-            var s = tEl.GetString();
-            if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dt))
-                return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
-            if (DateTime.TryParse(s, out dt))
-                return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
-            return DateTime.UtcNow;
-        }
-
-        if (tEl.ValueKind == JsonValueKind.Number && tEl.TryGetInt64(out var ms))
-            return DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime;
-
-        if (tEl.TryGetDateTime(out var direct))
-            return DateTime.SpecifyKind(direct, DateTimeKind.Utc);
-
-        return DateTime.UtcNow;
-    }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -266,29 +164,6 @@ public class DependencyGraphNode : DependencyGraph
 
     }
 
-    public override string Serialize()
-    {
-        var dependencies = GetDependencies();
-        var depsJson = dependencies.Any() ? $"\n{string.Join(",\n", dependencies.Select(d => $"{{ \"{d.Key}\": {d.Value} }}"))}\n" : "";
-
-        var children = GetChildren();
-        var childrenJson = children.Any() ? $"\n{string.Join(",\n", GetChildren().Select(c => c.Serialize()))}\n" : "";
-
-        var name = Name.Split('\\').Last();
-        return $$"""
-                {
-                    "type": "node",
-                    "name": "{{name}}",
-                    "lastWriteTime": "{{LastWriteTime}}",
-                    "state": "NEUTRAL",
-                    "relations": 
-                    [ {{depsJson}} ],
-                    "children": 
-                    [{{childrenJson}}]
-                }
-                """;
-    }
-
     public override List<string> ToPlantUML(bool diff)
     { //TODO: Add color depending on diff
         string package = $"package \"{Name}\" as {Name} {{ \n";
@@ -354,22 +229,6 @@ public class DependencyGraphLeaf : DependencyGraph
             puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
         }
         return puml;
-    }
-
-    public override string Serialize()
-    {
-        var dependencies = GetDependencies();
-        var depsJson = dependencies.Any() ? $"\n{string.Join(",\n", dependencies.Select(d => $"{{ \"{d.Key}\": {d.Value} }}"))}\n" : "";
-        return $$"""
-                {
-                    "type": "leaf",
-                    "name": "{{Name}}",
-                    "lastWriteTime": "{{LastWriteTime}}",
-                    "state": "NEUTRAL",
-                    "relations": 
-                    [ {{depsJson}} ]
-                }
-                """;
     }
     public override List<string> Packages() => [];
 }
