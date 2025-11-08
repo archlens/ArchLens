@@ -11,11 +11,12 @@ public sealed class JsonRenderer : IRenderer
     public string RenderGraph(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         var packagestr = "";
-        for (int i = 0; i < graph.Packages().Count; i++)
+        var children = graph.GetChildren();
+        for (int i = 0; i < children.Count; i++)
         {
-            var package = graph.Packages()[i];
+            var package = children[i];
 
-            if (packagestr.Contains(package)) continue;
+            if (packagestr.Contains(package.Name)) continue;
 
             if (i > 0) packagestr += ",\n";
 
@@ -23,7 +24,7 @@ public sealed class JsonRenderer : IRenderer
                 $$"""
                 
                 {
-                    "name": "{{package}}",
+                    "name": "{{package.Name}}",
                     "state": "NEUTRAL"
                 }
             """;
