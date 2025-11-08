@@ -1,3 +1,4 @@
+using Archlens.Domain;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
@@ -19,7 +20,7 @@ public sealed class LocalSnaphotManager(string _localDirName, string _localFileN
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, _localFileName);
 
-        var json = graph.Serialize();
+        var json = DependencyGraphSerializer.Serialize(graph);
 
         await File.WriteAllTextAsync(path, json, ct);
     }
@@ -36,7 +37,7 @@ public sealed class LocalSnaphotManager(string _localDirName, string _localFileN
 
         var json = await File.ReadAllTextAsync(path, ct);
 
-        var graph = DependencyGraph.Deserialize(json);
+        var graph = DependencyGraphSerializer.Deserialize(json);
 
         return graph ?? new DependencyGraph { Name = $"{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
     }
