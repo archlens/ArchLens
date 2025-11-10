@@ -1,6 +1,7 @@
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
+using Archlens.Domain.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,7 +33,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
             { 
                 Name = name, 
                 NameSpace = GetNameSpace(modulePath),
-                Path = modulePath,
+                Path = PathNormaliser.NormalizePath(_options.FullRootPath, modulePath),
                 LastWriteTime = File.GetLastWriteTimeUtc(modulePath) 
             };
         }
@@ -70,7 +71,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                         child = new DependencyGraphNode 
                         { 
                             Name = name, 
-                            Path = contentPath,
+                            Path = PathNormaliser.NormalizePath(_options.FullRootPath, contentPath),
                             NameSpace = nameSpace, 
                             LastWriteTime = File.GetLastWriteTimeUtc(module) 
                         };
@@ -84,7 +85,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                     { 
                         Name = name, 
                         NameSpace = nameSpace,
-                        Path = contentPath,
+                        Path = PathNormaliser.NormalizePath(_options.FullRootPath, contentPath),
                         LastWriteTime = File.GetLastWriteTimeUtc(contentPath)
                     };
                     leaf.AddDependencyRange(deps);

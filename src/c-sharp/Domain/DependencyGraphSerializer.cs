@@ -1,5 +1,6 @@
 ﻿
 using Archlens.Domain.Models;
+using Archlens.Domain.Utils;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -23,10 +24,11 @@ public static class DependencyGraphSerializer
     {
         using var doc = JsonDocument.Parse(json);
         var rootEl = doc.RootElement;
+        var rootPath = rootEl.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
 
         return rootEl.ValueKind switch
         {
-            JsonValueKind.Object => ParseNode(rootEl),
+            JsonValueKind.Object => ParseNode(rootEl, rootPath),
             _ => throw new InvalidOperationException("Expected a JSON object or array at root.")
         };
     }
@@ -71,7 +73,7 @@ public static class DependencyGraphSerializer
                 """;
     }
 
-    private static DependencyGraph ParseNode(JsonElement jsonNode)
+    private static DependencyGraph ParseNode(JsonElement jsonNode, string rootPath)
     {
         var name = jsonNode.TryGetProperty("name", out var nEl) ? nEl.GetString() : String.Empty;
         var nameSpace = jsonNode.TryGetProperty("nameSpace", out var nsEl) ? nsEl.GetString() : String.Empty;
@@ -107,7 +109,7 @@ public static class DependencyGraphSerializer
         if (jsonNode.TryGetProperty("children", out var jsonChildren) && jsonChildren.ValueKind == JsonValueKind.Array)
         {
             foreach (var child in jsonChildren.EnumerateArray())
-                children.Add(ParseNode(child));
+                children.Add(ParseNode(child, rootPath));
         }
 
         if (children.Count <= 0)
@@ -116,7 +118,7 @@ public static class DependencyGraphSerializer
             {
                 Name = name,
                 NameSpace = nameSpace,
-                Path = path,
+                Path = PathNormaliser.NormalizePath(rootPath, path),
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, _) in depKeys)
@@ -129,7 +131,7 @@ public static class DependencyGraphSerializer
             {
                 Name = name,
                 NameSpace = nameSpace,
-                Path = path,
+                Path = PathNormaliser.NormalizePath(rootPath, path),
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, count) in depKeys)
