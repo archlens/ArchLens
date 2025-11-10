@@ -1,3 +1,4 @@
+using Archlens.Domain.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -5,15 +6,20 @@ using System.Linq;
 
 namespace Archlens.Domain.Models;
 
-public class DependencyGraph : IEnumerable<DependencyGraph>
+public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 {
-    public string Name { get; init; }
-    public string Path { get; init; }
-    public string NameSpace { get; init; } 
-    public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
-    
+    private readonly string _path;
     private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
 
+    required public string Name { get; init; }
+    required public string Path 
+    {
+        get => _path;
+        init { _path = PathNormaliser.NormalisePath(_projectRoot, value); }
+    }
+
+    required public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
+    
     public IDictionary<string, int> GetDependencies() => _dependencies;
 
     public void AddDependency(string depPath)
@@ -59,7 +65,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     }
 }
 
-public class DependencyGraphNode : DependencyGraph
+public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRoot)
 {
     private List<DependencyGraph> _children { get; init; } = [];
     public override IReadOnlyList<DependencyGraph> GetChildren() => _children;
@@ -75,7 +81,7 @@ public class DependencyGraphNode : DependencyGraph
         var deps = child.GetDependencies().Keys;
         if (deps.Count > 0)
         {
-            var ownedChildNames = _children.Select(c => c.NameSpace).Where(ns => !string.IsNullOrEmpty(ns));
+            var ownedChildNames = _children.Select(c => c.Name).Where(ns => !string.IsNullOrEmpty(ns));
 
             if (ownedChildNames.Any())
             {
@@ -195,7 +201,7 @@ public class DependencyGraphNode : DependencyGraph
     }
 }
 
-public class DependencyGraphLeaf : DependencyGraph
+public class DependencyGraphLeaf(string projectRoot) : DependencyGraph(projectRoot)
 {
     public override string ToString()
     {
