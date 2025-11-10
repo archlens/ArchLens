@@ -10,6 +10,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
     public string Name { get; init; }
     public string NameSpace { get; init; } 
     public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
+    
     private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
 
     public IDictionary<string, int> GetDependencies() => _dependencies;
@@ -38,7 +39,6 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 
     public virtual List<string> ToPlantUML(bool diff) => [];
 
-    public virtual List<string> Packages() => [];
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -61,7 +61,6 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 public class DependencyGraphNode : DependencyGraph
 {
     private List<DependencyGraph> _children { get; init; } = [];
-    private List<string> _packages;
     public override IReadOnlyList<DependencyGraph> GetChildren() => _children;
     public void AddChildren(IEnumerable<DependencyGraph> childr)
     {
