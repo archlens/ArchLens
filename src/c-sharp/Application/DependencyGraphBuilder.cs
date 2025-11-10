@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,10 +25,16 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         Dictionary<string, DependencyGraphNode> nodes = [];
         List<string> children = [];
 
-        foreach (var module in changedModules.Keys)
+        foreach (var modulePath in changedModules.Keys)
         {
-            var name = module.Equals(_options.FullRootPath) ? _options.ProjectName : module;
-            nodes[module] = new DependencyGraphNode { Name = name, LastWriteTime = File.GetLastWriteTimeUtc(module) };
+            var name = modulePath.Equals(_options.FullRootPath) ? _options.ProjectName : Path.GetFileName(modulePath);
+            nodes[modulePath] = new DependencyGraphNode 
+            { 
+                Name = name, 
+                NameSpace = GetNameSpace(modulePath),
+                Path = modulePath,
+                LastWriteTime = File.GetLastWriteTimeUtc(modulePath) 
+            };
         }
 
         foreach (var pair in changedModules)
@@ -40,10 +47,8 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
             foreach (var content in contents)
             {
                 var contentPath = Path.Combine(module, content);
-                var relPath     = Path.GetRelativePath(_options.ProjectRoot, contentPath);
-                var nameSpace   = relPath.Replace(Path.DirectorySeparatorChar, '.')
-                                         .Replace(Path.AltDirectorySeparatorChar, '.')
-                                         .Trim('.');
+                var nameSpace   = GetNameSpace(contentPath);
+
                 DependencyGraph child;
 
                 bool isDir;
@@ -65,6 +70,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                         child = new DependencyGraphNode 
                         { 
                             Name = name, 
+                            Path = contentPath,
                             NameSpace = nameSpace, 
                             LastWriteTime = File.GetLastWriteTimeUtc(module) 
                         };
@@ -77,7 +83,9 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                     var leaf = new DependencyGraphLeaf
                     { 
                         Name = name, 
-                        NameSpace = nameSpace 
+                        NameSpace = nameSpace,
+                        Path = contentPath,
+                        LastWriteTime = File.GetLastWriteTimeUtc(contentPath)
                     };
                     leaf.AddDependencyRange(deps);
                     child = leaf;
@@ -91,5 +99,14 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         .FirstOrDefault();
 
         return rootKey is null ? null : nodes[rootKey];
+    }
+
+    private string GetNameSpace(string fullPath)
+    {
+        var relPath = Path.GetRelativePath(_options.FullRootPath, fullPath);
+        var nameSpace = relPath.Replace(Path.DirectorySeparatorChar, '.')
+                               .Replace(Path.AltDirectorySeparatorChar, '.')
+                               .Trim('.');
+        return nameSpace;
     }
 }

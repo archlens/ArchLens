@@ -8,6 +8,7 @@ namespace Archlens.Domain.Models;
 public class DependencyGraph : IEnumerable<DependencyGraph>
 {
     public string Name { get; init; }
+    public string Path { get; init; }
     public string NameSpace { get; init; } 
     public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
     
@@ -31,7 +32,7 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
         }
     }
 
-    public virtual DependencyGraph GetChild(string name) =>  GetChildren().Where(child => child.Name == name).FirstOrDefault();
+    public virtual DependencyGraph GetChild(string path) =>  GetChildren().Where(child => child.Path == path).FirstOrDefault();
 
     public virtual IReadOnlyList<DependencyGraph> GetChildren() => [];
     public override string ToString() => Name;
