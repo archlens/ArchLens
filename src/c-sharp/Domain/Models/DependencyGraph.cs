@@ -193,6 +193,20 @@ public class DependencyGraphNode : DependencyGraph
         return puml;
     }
 
+    public override List<string> Packages()
+    {
+        if (_packages != null) return _packages;
+
+        List<string> res = [];
+        foreach (var package in _children)
+        {
+            res.Add(Name);
+            res.AddRange(package.Packages());
+        }
+
+        _packages = res;
+        return res;
+    }
 }
 
 public class DependencyGraphLeaf : DependencyGraph
@@ -215,20 +229,5 @@ public class DependencyGraphLeaf : DependencyGraph
         }
         return puml;
     }
-
-    public override string Serialize()
-    {
-        var dependencies = GetDependencies();
-        var depsJson = dependencies.Any() ? $"\n{string.Join(",\n", dependencies.Select(d => $"{{ \"{d.Key}\": {d.Value} }}"))}\n" : "";
-        return $$"""
-                {
-                    "type": "leaf",
-                    "name": "{{Name}}",
-                    "lastWriteTime": "{{LastWriteTime}}",
-                    "state": "NEUTRAL",
-                    "relations": 
-                    [ {{depsJson}} ]
-                }
-                """;
-    }
+    public override List<string> Packages() => [];
 }
