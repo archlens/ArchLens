@@ -1,5 +1,6 @@
 ﻿
 using Archlens.Domain.Models;
+using Archlens.Domain.Utils;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -23,10 +24,11 @@ public static class DependencyGraphSerializer
     {
         using var doc = JsonDocument.Parse(json);
         var rootEl = doc.RootElement;
+        var rootPath = rootEl.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
 
         return rootEl.ValueKind switch
         {
-            JsonValueKind.Object => ParseNode(rootEl),
+            JsonValueKind.Object => ParseNode(rootEl, rootPath),
             _ => throw new InvalidOperationException("Expected a JSON object or array at root.")
         };
     }
@@ -44,7 +46,6 @@ public static class DependencyGraphSerializer
                 {
                     "type": "node",
                     "name": "{{node.Name}}",
-                    "nameSpace": "{{node.NameSpace}}",
                     "path": "{{node.Path}}",
                     "lastWriteTime": "{{node.LastWriteTime}}",
                     "relations": [{{depsSerialized}}],
@@ -63,7 +64,6 @@ public static class DependencyGraphSerializer
                 {
                     "type": "leaf",
                     "name": "{{leaf.Name}}",
-                    "nameSpace": "{{leaf.NameSpace}}",
                     "path": "{{leaf.Path}}",
                     "lastWriteTime": "{{leaf.LastWriteTime}}",
                     "relations": [{{depsJson}}]
@@ -71,7 +71,7 @@ public static class DependencyGraphSerializer
                 """;
     }
 
-    private static DependencyGraph ParseNode(JsonElement jsonNode)
+    private static DependencyGraph ParseNode(JsonElement jsonNode, string rootPath)
     {
         var name = jsonNode.TryGetProperty("name", out var nEl) ? nEl.GetString() : String.Empty;
         var nameSpace = jsonNode.TryGetProperty("nameSpace", out var nsEl) ? nsEl.GetString() : String.Empty;
@@ -107,15 +107,14 @@ public static class DependencyGraphSerializer
         if (jsonNode.TryGetProperty("children", out var jsonChildren) && jsonChildren.ValueKind == JsonValueKind.Array)
         {
             foreach (var child in jsonChildren.EnumerateArray())
-                children.Add(ParseNode(child));
+                children.Add(ParseNode(child, rootPath));
         }
 
         if (children.Count <= 0)
         {
-            var leaf = new DependencyGraphLeaf
+            var leaf = new DependencyGraphLeaf(rootPath)
             {
                 Name = name,
-                NameSpace = nameSpace,
                 Path = path,
                 LastWriteTime = lastWrite
             };
@@ -125,11 +124,10 @@ public static class DependencyGraphSerializer
         }
         else
         {
-            var node = new DependencyGraphNode
+            var node = new DependencyGraphNode(rootPath)
             {
                 Name = name,
-                NameSpace = nameSpace,
-                Path = path,
+                Path = PathNormaliser.NormalisePath(rootPath, path),
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, count) in depKeys)

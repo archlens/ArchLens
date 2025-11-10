@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Archlens.Domain;
@@ -9,7 +10,7 @@ namespace Archlens.Application;
 public sealed class RendererService(ConfigManager _config)
 {
 
-    public async Task<string> RenderDependencyGraphAsync(CancellationToken ct = default)
+    public async Task RenderDependencyGraphAsync(CancellationToken ct = default)
     {
         var options = await _config.LoadAsync(ct);
 
@@ -22,10 +23,7 @@ public sealed class RendererService(ConfigManager _config)
         var graph = await new DependencyGraphBuilder(parser, options).GetGraphAsync(changedModules, ct);
 
         var renderer = RendererFactory.SelectRenderer(options.Format);
-        var artifactPath = renderer.RenderGraph(graph, options, ct);
-
+        await renderer.SaveGraphToFileAsync(graph, options, ct);
         await snapshotManager.SaveGraphAsync(graph, options, ct);
-
-        return artifactPath;
     }
 }

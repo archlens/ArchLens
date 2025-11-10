@@ -29,16 +29,16 @@ public sealed class LocalSnaphotManager(string _localDirName, string _localFileN
     {
         var root = string.IsNullOrEmpty(options.FullRootPath) ? Path.GetFullPath(options.ProjectRoot) : options.FullRootPath;
         var path = Path.Combine(root, _localDirName, _localFileName);
-        
+
         if (!File.Exists(path))
         {
-            return new DependencyGraph { Name = $"{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
+            return null;
         }
 
         var json = await File.ReadAllTextAsync(path, ct);
 
-        var graph = DependencyGraphSerializer.Deserialize(json);
+        var graph = DependencyGraphSerializer.Deserialize(json.Replace("\\", "/"));
 
-        return graph ?? new DependencyGraph { Name = $"{options.ProjectRoot}", LastWriteTime = DateTime.UtcNow };
+        return graph ?? null;
     }
 }

@@ -36,7 +36,7 @@ public sealed class ChangeDetector
             try
             {
                 var relativePath = GetRelative(projectRoot, pair.Key);
-                var inLastGraph = lastSavedGraph.GetChild(relativePath) != null;
+                var inLastGraph = lastSavedGraph?.GetChild(relativePath) != null;
                 if (!inLastGraph)
                 {
                     changed.Add(pair.Key, pair.Value);

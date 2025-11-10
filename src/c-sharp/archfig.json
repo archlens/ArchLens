@@ -6,7 +6,14 @@
     "GitUrl": "https://github.com/BabLoRP/ArchLens/tree/master/src/c-sharp",
     "SnapshotDir": ".archlens",
     "SnapshotFile": "snaphot",
-    "Format": "json",
-    "Exclusions": ["obj/", "bin/", ".vs/"],
-    "FileExtensions": [".cs"]
+    "Format": "puml",
+    "Exclusions": [
+        "obj/",
+        "bin/",
+        ".vs/",
+        ".git/"
+    ],
+    "FileExtensions": [
+        ".cs"
+    ]
 }

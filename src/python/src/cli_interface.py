@@ -36,7 +36,7 @@ def render(config_path: str = "../../archlens.json"):
 
     if (config["language"] == "C#"):
         path = os.path.dirname(os.path.abspath(os.path.curdir))
-        command = "dotnet run --project {p}\c-sharp\Archlens.csproj {a}".format(p=path, a=config_path)
+        command = "dotnet run --project {p}\c-sharp\Archlens.csproj".format(p=path)
         subprocess.run(["powershell", command], shell=True)
 
         file_name = os.path.dirname(path) + "\diagrams\graph-puml.puml"
