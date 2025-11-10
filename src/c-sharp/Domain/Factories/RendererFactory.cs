@@ -9,7 +9,8 @@ public sealed class RendererFactory
 {
     public static IRenderer SelectRenderer(RenderFormat f) => f switch
     {
-        RenderFormat.Json     => new JsonRenderer(),
+        RenderFormat.Json => new JsonRenderer(),
+        RenderFormat.PlantUML => new PlantUMLRenderer(),
         _ => throw new ArgumentOutOfRangeException(nameof(f))
     };
 }

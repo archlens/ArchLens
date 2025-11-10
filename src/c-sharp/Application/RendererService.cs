@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Archlens.Domain;
@@ -25,6 +26,11 @@ public sealed class RendererService(ConfigManager _config)
         var artifactPath = renderer.RenderGraph(graph, options, ct);
 
         await snapshotManager.SaveGraphAsync(graph, options, ct);
+
+        if (options.Format == Domain.Models.Enums.RenderFormat.Json)
+            await File.WriteAllTextAsync($"{options.FullRootPath.Replace("src\\c-sharp\\", "")}/diagrams/graph-json.json", artifactPath, ct);
+        else if (options.Format == Domain.Models.Enums.RenderFormat.PlantUML)
+            await File.WriteAllTextAsync($"{options.FullRootPath.Replace("src\\c-sharp\\", "")}/diagrams/graph-puml.puml", artifactPath, ct);
 
         return artifactPath;
     }

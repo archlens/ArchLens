@@ -43,6 +43,7 @@ public class ConfigManager(string _path)
         ) ?? throw new InvalidOperationException($"Could not parse JSON in {configFile}.");
 
         var baseDir = Path.GetDirectoryName(configFile) ?? Environment.CurrentDirectory;
+        Console.WriteLine("baseDir " + baseDir);
         var options = MapOptions(dto, baseDir);
 
         return options;
@@ -65,6 +66,7 @@ public class ConfigManager(string _path)
             throw new DirectoryNotFoundException($"projectRoot does not exist: {projectRoot}");
 
         var fullRootPath = GetFullRootPath(projectRoot);
+        Console.WriteLine("fullRootPath " + fullRootPath + " " + projectRoot);
 
         if (fileExts.Length == 0)
             throw new InvalidOperationException("fileExtensions resolved to an empty list.");
@@ -83,9 +85,9 @@ public class ConfigManager(string _path)
 
     private static string GetFullRootPath(string root)
     {
-#if DEBUG
-        root = String.Concat("../../../", root);
-#endif
+        /* #if DEBUG
+                root = String.Concat("../../../", root);
+        #endif */
         return Path.GetFullPath(root);
     }
 
@@ -128,6 +130,7 @@ public class ConfigManager(string _path)
         return s switch
         {
             "json" or "application/json" => RenderFormat.Json,
+            "puml" or "plantuml" or "plant-uml" => RenderFormat.PlantUML,
             _ => throw new NotSupportedException($"Unsupported format: '{raw}'.")
         };
     }
