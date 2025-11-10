@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
@@ -25,5 +27,12 @@ public sealed class PlantUMLRenderer : IRenderer
         """;
 
         return uml_str;
+    }
+
+    public async Task SaveGraphToFileAsync(DependencyGraph graph, Options options, CancellationToken ct = default)
+    {
+        var filename = options.FullRootPath.Replace("src\\c-sharp\\", "") + "/diagrams/graph-puml.puml"; //TODO
+        var content = RenderGraph(graph, options, ct);
+        await File.WriteAllTextAsync(filename, content, ct);
     }
 }
