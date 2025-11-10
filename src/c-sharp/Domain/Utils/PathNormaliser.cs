@@ -4,10 +4,11 @@ namespace Archlens.Domain.Utils;
 
 public static class PathNormaliser
 {
-    public static string NormalizePath(string root, string path)
+    public static string NormalisePath(string root, string path)
     {
+        var rootPath = Path.GetFullPath(root);
         var isModule = IsDirectoryPath(path);
-        var relativePath = Path.GetRelativePath(root, path).Replace(Path.DirectorySeparatorChar, '/');
+        var relativePath = Path.GetRelativePath(rootPath, path).Replace(Path.DirectorySeparatorChar, '/');
         if (isModule)
             return  $"./{relativePath}/";
         return $"./{relativePath}";
