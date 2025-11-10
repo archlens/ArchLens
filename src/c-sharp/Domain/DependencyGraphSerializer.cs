@@ -46,7 +46,6 @@ public static class DependencyGraphSerializer
                 {
                     "type": "node",
                     "name": "{{node.Name}}",
-                    "nameSpace": "{{node.NameSpace}}",
                     "path": "{{node.Path}}",
                     "lastWriteTime": "{{node.LastWriteTime}}",
                     "relations": [{{depsSerialized}}],
@@ -65,7 +64,6 @@ public static class DependencyGraphSerializer
                 {
                     "type": "leaf",
                     "name": "{{leaf.Name}}",
-                    "nameSpace": "{{leaf.NameSpace}}",
                     "path": "{{leaf.Path}}",
                     "lastWriteTime": "{{leaf.LastWriteTime}}",
                     "relations": [{{depsJson}}]
@@ -114,11 +112,10 @@ public static class DependencyGraphSerializer
 
         if (children.Count <= 0)
         {
-            var leaf = new DependencyGraphLeaf
+            var leaf = new DependencyGraphLeaf(rootPath)
             {
                 Name = name,
-                NameSpace = nameSpace,
-                Path = PathNormaliser.NormalizePath(rootPath, path),
+                Path = path,
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, _) in depKeys)
@@ -127,11 +124,10 @@ public static class DependencyGraphSerializer
         }
         else
         {
-            var node = new DependencyGraphNode
+            var node = new DependencyGraphNode(rootPath)
             {
                 Name = name,
-                NameSpace = nameSpace,
-                Path = PathNormaliser.NormalizePath(rootPath, path),
+                Path = PathNormaliser.NormalisePath(rootPath, path),
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, count) in depKeys)

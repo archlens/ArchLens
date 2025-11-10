@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,11 +28,10 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         foreach (var modulePath in changedModules.Keys)
         {
             var name = modulePath.Equals(_options.FullRootPath) ? _options.ProjectName : Path.GetFileName(modulePath);
-            nodes[modulePath] = new DependencyGraphNode 
+            nodes[modulePath] = new DependencyGraphNode(_options.FullRootPath)
             { 
-                Name = name, 
-                NameSpace = GetNameSpace(modulePath),
-                Path = PathNormaliser.NormalizePath(_options.FullRootPath, modulePath),
+                Name = name,
+                Path = modulePath,
                 LastWriteTime = File.GetLastWriteTimeUtc(modulePath) 
             };
         }
@@ -68,11 +66,10 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                     else
                     {
                         var name = Path.GetFileName(content);
-                        child = new DependencyGraphNode 
+                        child = new DependencyGraphNode(_options.FullRootPath)
                         { 
                             Name = name, 
-                            Path = PathNormaliser.NormalizePath(_options.FullRootPath, contentPath),
-                            NameSpace = nameSpace, 
+                            Path = contentPath,
                             LastWriteTime = File.GetLastWriteTimeUtc(module) 
                         };
                     }
@@ -81,11 +78,10 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                 {
                     var name = Path.GetFileName(content);
                     var deps = await _dependencyParser.ParseFileDependencies(contentPath, ct).ConfigureAwait(false);
-                    var leaf = new DependencyGraphLeaf
+                    var leaf = new DependencyGraphLeaf(_options.FullRootPath)
                     { 
                         Name = name, 
-                        NameSpace = nameSpace,
-                        Path = PathNormaliser.NormalizePath(_options.FullRootPath, contentPath),
+                        Path = contentPath,
                         LastWriteTime = File.GetLastWriteTimeUtc(contentPath)
                     };
                     leaf.AddDependencyRange(deps);
