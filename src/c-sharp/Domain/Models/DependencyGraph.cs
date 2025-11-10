@@ -192,21 +192,6 @@ public class DependencyGraphNode : DependencyGraph
         puml.Add(package);
         return puml;
     }
-
-    public override List<string> Packages()
-    {
-        if (_packages != null) return _packages;
-
-        List<string> res = [];
-        foreach (var package in _children)
-        {
-            res.Add(Name);
-            res.AddRange(package.Packages());
-        }
-
-        _packages = res;
-        return res;
-    }
 }
 
 public class DependencyGraphLeaf : DependencyGraph
@@ -229,5 +214,4 @@ public class DependencyGraphLeaf : DependencyGraph
         }
         return puml;
     }
-    public override List<string> Packages() => [];
 }
