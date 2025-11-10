@@ -7,10 +7,15 @@ namespace Archlens.Domain.Models;
 
 public class DependencyGraph : IEnumerable<DependencyGraph>
 {
+    private readonly DateTime _lastWriteTime;
     public string Name { get; init; }
     public string Path { get; init; }
     public string NameSpace { get; init; } 
-    public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
+    public DateTime LastWriteTime 
+    { 
+        get => _lastWriteTime;
+        init { _lastWriteTime = NormaliseUTC(value); }
+    }
     
     private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
 
@@ -56,6 +61,12 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
                     yield return desc;
             }
         }
+    }
+
+    private static DateTime NormaliseUTC(DateTime time)
+    {
+        var convertedDate = DateTime.SpecifyKind(time, DateTimeKind.Utc);
+        return convertedDate.ToLocalTime();
     }
 }
 
