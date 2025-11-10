@@ -8,8 +8,15 @@ namespace Archlens.Domain.Models;
 
 public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 {
+    private readonly DateTime _lastWriteTime;
     private readonly string _path;
     private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
+    
+    required public DateTime LastWriteTime 
+    { 
+        get => _lastWriteTime;
+        init { _lastWriteTime = NormaliseUTC(value); }
+    }
 
     required public string Name { get; init; }
     required public string Path 
@@ -17,8 +24,6 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
         get => _path;
         init { _path = PathNormaliser.NormalisePath(_projectRoot, value); }
     }
-
-    required public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
     
     public IDictionary<string, int> GetDependencies() => _dependencies;
 
@@ -62,6 +67,12 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
                     yield return desc;
             }
         }
+    }
+
+    private static DateTime NormaliseUTC(DateTime time)
+    {
+        var convertedDate = DateTime.SpecifyKind(time, DateTimeKind.Utc);
+        return convertedDate.ToLocalTime();
     }
 }
 
