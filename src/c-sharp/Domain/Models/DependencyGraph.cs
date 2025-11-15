@@ -224,4 +224,15 @@ public class DependencyGraphLeaf(string projectRoot) : DependencyGraph(projectRo
             res += "\n \t \t --> " + d;
         return res;
     }
+
+    public override List<string> ToPlantUML(bool diff)
+    { //TODO: diff
+        List<string> puml = [];
+
+        foreach (var dep in GetDependencies().Keys)
+        {
+            puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
+        }
+        return puml;
+    }
 }
