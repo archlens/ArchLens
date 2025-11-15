@@ -47,7 +47,6 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 
     public virtual IReadOnlyList<DependencyGraph> GetChildren() => [];
     public override string ToString() => Name;
-    public virtual string ToJson() => "";
 
     public virtual List<string> ToPlantUML(bool diff, bool isRoot = true) => [];
 
