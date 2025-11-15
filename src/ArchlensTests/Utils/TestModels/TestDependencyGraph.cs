@@ -2,7 +2,7 @@
 
 namespace ArchlensTests.Utils.TestModels;
 
-public sealed class TestDependencyGraph : DependencyGraph
+public sealed class TestDependencyGraph(string projectRootPath) : DependencyGraph(projectRootPath)
 {
     private readonly Dictionary<string, TestNode> _nodes =
         new(StringComparer.OrdinalIgnoreCase);
@@ -12,14 +12,14 @@ public sealed class TestDependencyGraph : DependencyGraph
         var pair = Normalize(relativePath);
         var nameIndx = pair.LastIndexOf('/');
         var key = pair[..nameIndx];
-        _nodes[key] = new TestNode
+        _nodes[key] = new TestNode("") // TODO: fix in other PR
         {
             Name = key,
+            Path = key,
             LastWriteTime = DateTime.SpecifyKind(lastWriteUtc, DateTimeKind.Utc)
         };
     }
 
-    public override List<string> Packages() => [.. _nodes.Keys];
 
     public override DependencyGraph GetChild(string relativePath)
     {
@@ -29,7 +29,7 @@ public sealed class TestDependencyGraph : DependencyGraph
         return node;
     }
 
-    private sealed class TestNode : DependencyGraph { }
+    private sealed class TestNode(string projectRootPath) : DependencyGraph(projectRootPath) { }
 
     private static string Normalize(string p) => p.Replace('\\', '/');
 }

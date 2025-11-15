@@ -1,11 +1,11 @@
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
+using Archlens.Domain.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,10 +28,9 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         foreach (var modulePath in changedModules.Keys)
         {
             var name = modulePath.Equals(_options.FullRootPath) ? _options.ProjectName : Path.GetFileName(modulePath);
-            nodes[modulePath] = new DependencyGraphNode
-            {
+            nodes[modulePath] = new DependencyGraphNode(_options.FullRootPath)
+            { 
                 Name = name,
-                NameSpace = GetNameSpace(modulePath),
                 Path = modulePath,
                 LastWriteTime = File.GetLastWriteTimeUtc(modulePath)
             };
@@ -67,12 +66,11 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                     else
                     {
                         var name = Path.GetFileName(content);
-                        child = new DependencyGraphNode
-                        {
-                            Name = name,
+                        child = new DependencyGraphNode(_options.FullRootPath)
+                        { 
+                            Name = name, 
                             Path = contentPath,
-                            NameSpace = nameSpace,
-                            LastWriteTime = File.GetLastWriteTimeUtc(module)
+                            LastWriteTime = File.GetLastWriteTimeUtc(module) 
                         };
                     }
                 }
@@ -80,10 +78,9 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
                 {
                     var name = Path.GetFileName(content);
                     var deps = await _dependencyParser.ParseFileDependencies(contentPath, ct).ConfigureAwait(false);
-                    var leaf = new DependencyGraphLeaf
-                    {
-                        Name = name,
-                        NameSpace = nameSpace,
+                    var leaf = new DependencyGraphLeaf(_options.FullRootPath)
+                    { 
+                        Name = name, 
                         Path = contentPath,
                         LastWriteTime = File.GetLastWriteTimeUtc(contentPath)
                     };
