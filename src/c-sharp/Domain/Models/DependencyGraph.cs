@@ -9,9 +9,9 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
 {
     public string Name { get; init; }
     public string Path { get; init; }
-    public string NameSpace { get; init; } 
+    public string NameSpace { get; init; }
     public DateTime LastWriteTime { get; init; } = DateTime.UtcNow;
-    
+
     private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
 
     public IDictionary<string, int> GetDependencies() => _dependencies;
@@ -32,13 +32,13 @@ public class DependencyGraph : IEnumerable<DependencyGraph>
         }
     }
 
-    public virtual DependencyGraph GetChild(string path) =>  GetChildren().Where(child => child.Path == path).FirstOrDefault();
+    public virtual DependencyGraph GetChild(string path) => GetChildren().Where(child => child.Path == path).FirstOrDefault();
 
     public virtual IReadOnlyList<DependencyGraph> GetChildren() => [];
     public override string ToString() => Name;
     public virtual string ToJson() => "";
 
-    public virtual List<string> ToPlantUML(bool diff) => [];
+    public virtual List<string> ToPlantUML(bool diff, bool isRoot = true) => [];
 
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -85,7 +85,8 @@ public class DependencyGraphNode : DependencyGraph
                     if (!isInternalDep)
                         AddDependency(dep);
                 }
-            } else
+            }
+            else
             {
                 AddDependencyRange([.. deps]);
             }
@@ -104,93 +105,96 @@ public class DependencyGraphNode : DependencyGraph
     public override string ToJson()
     {
         var str = "";
-        var dependencies = GetDependencies();
-        if (dependencies.Keys.Count > 0)
+        var relations = "";
+        var children = GetChildren();
+
+        foreach (var (dep, count) in GetDependencies())
         {
-            for (int i = 0; i < dependencies.Keys.Count; i++)
+            foreach (var child in children)
             {
-                var dep = dependencies.Keys.ElementAt(i);
-                var relations = "";
-                for (int j = 0; j < dependencies[dep]; j++)
+                if (child.GetDependencies().TryGetValue(dep, out int val))
                 {
-                    var rel = dependencies[dep];
-                    if (j > 0) relations += ",\n";
+                    var childName = child.Name.Replace("\\", ".");
+                    if (!relations.EndsWith(",\n") && !string.IsNullOrEmpty(relations)) relations += ",\n";
 
                     relations +=
-                    $$"""
+                        $$"""
                             {
                                 "from_file": {
-                                    "name": "{{dependencies.Keys}}",
-                                    "path": "{{dependencies.Keys}}"
+                                    "name": "{{childName}}",
+                                    "path": "{{childName}}"
                                 },
                                 "to_file": {
                                     "name": "{{dep}}",
                                     "path": "{{dep}}"
                                 }
                             }
-                    """;
+                        """;
                 }
-
-                if (i > 0) str += ",\n";
-
-                str +=
-                $$"""
-                    {
-                        "state": "NEUTRAL",
-                        "fromPackage": "{{Name}}",
-                        "toPackage": "{{dep}}",
-                        "label": "{{dependencies[dep]}}",
-                        "relations": [
-                            {{relations}}
-                        ]
-                    }
-                """;
             }
 
-        }
+            if (!str.EndsWith(",\n") && !string.IsNullOrEmpty(str)) str += ",\n";
 
-        var children = GetChildren();
-        for (int c = 0; c < children.Count; c++)
-        {
-            var child = children[c];
-            var childJson = child.ToJson();
-            if (c > 0 && childJson != "" && !childJson.StartsWith(',') && str != "")
-                str += ",\n";
-
-            str += childJson;
+            str += //TODO: diff view (state)
+                $$"""
+                        {
+                            "state": "NEUTRAL",
+                            "fromPackage": "{{Name}}",
+                            "toPackage": "{{dep}}",
+                            "label": "{{count}}",
+                            "relations": [
+                                {{relations}}
+                            ]
+                        }
+                    """;
         }
 
         return str;
 
     }
 
-    public override List<string> ToPlantUML(bool diff)
-    { //TODO: Add color depending on diff
-        string package = $"package \"{Name}\" as {Name} {{ \n";
 
+    public override List<string> ToPlantUML(bool diff, bool isRoot = true)
+    {
         List<string> puml = [];
 
-        foreach (var child in _children)
+        if (isRoot)
         {
-            string childName = child.Name.Replace(" ", "-");
+            foreach (var child in _children)
+            {
+                if (child is DependencyGraphNode)
+                {
+                    var childList = child.ToPlantUML(diff, false);
 
-            if (child is DependencyGraphLeaf)
-            {
-                package += $"\n [{childName}]";
-                var childList = child.ToPlantUML(diff);
-                puml.AddRange(childList);
-            }
-            else
-            {
-                var childList = child.ToPlantUML(diff);
-                var c = childList.Last(); //last is the package declaration, which we want to be added here
-                package += $"\n{c}\n";
-                childList.Remove(c);
-                puml.AddRange(childList);
+                    puml.AddRange(childList);
+                }
             }
         }
-        package += "\n}\n";
-        puml.Add(package);
+        else
+        {
+            puml.Add($"package \"{Name.Replace("\\", ".")}\" as {Name.Replace("\\", ".")} {{ }}");
+
+            foreach (var (dep, count) in GetDependencies())
+            {
+                var fromName = Name;
+                var toName = dep.Split(".")[0];
+                var existing = puml.Find(p => p.StartsWith($"{fromName}-->{toName} : "));
+                if (string.IsNullOrEmpty(existing))
+                    puml.Add($"{fromName}-->{toName} : {count}"); //TODO: Add color depending on diff
+                else
+                {
+                    var existingCount = existing.Replace($"{fromName}-->{toName} : ", "");
+                    var canParse = int.TryParse(existingCount, out var exCount);
+
+                    if (!canParse) Console.WriteLine("Error parsing " + existingCount);
+
+                    var newCount = canParse ? exCount + count : count;
+
+                    puml.Remove(existing);
+                    puml.Add($"{fromName}-->{toName} : {newCount}"); //TODO: Add color depending on diff
+                }
+            }
+        }
         return puml;
     }
 }
@@ -203,16 +207,5 @@ public class DependencyGraphLeaf : DependencyGraph
         foreach (var d in GetDependencies().Keys)
             res += "\n \t \t --> " + d;
         return res;
-    }
-
-    public override List<string> ToPlantUML(bool diff)
-    { //TODO: diff
-        List<string> puml = [];
-
-        foreach (var dep in GetDependencies().Keys)
-        {
-            puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
-        }
-        return puml;
     }
 }
