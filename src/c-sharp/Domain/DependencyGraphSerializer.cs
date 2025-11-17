@@ -1,4 +1,5 @@
 ﻿
+using Archlens.Application;
 using Archlens.Domain.Models;
 using Archlens.Domain.Utils;
 using System;
@@ -26,11 +27,13 @@ public static class DependencyGraphSerializer
         var rootEl = doc.RootElement;
         var rootPath = rootEl.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
 
-        return rootEl.ValueKind switch
+        var parsedNode = rootEl.ValueKind switch
         {
             JsonValueKind.Object => ParseNode(rootEl, rootPath),
             _ => throw new InvalidOperationException("Expected a JSON object or array at root.")
         };
+        DependencyAggregator.RecomputeAggregates(parsedNode);
+        return parsedNode;
     }
 
     private static string SerializeNode(DependencyGraphNode node)
@@ -74,7 +77,6 @@ public static class DependencyGraphSerializer
     private static DependencyGraph ParseNode(JsonElement jsonNode, string rootPath)
     {
         var name = jsonNode.TryGetProperty("name", out var nEl) ? nEl.GetString() : String.Empty;
-        var nameSpace = jsonNode.TryGetProperty("nameSpace", out var nsEl) ? nsEl.GetString() : String.Empty;
         var path = jsonNode.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
         var lastWrite = ReadDateTime(jsonNode);
 
@@ -119,7 +121,12 @@ public static class DependencyGraphSerializer
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, _) in depKeys)
+            {
+                if (children.Select(d => d.Path).Contains(dep))
+                    continue;
                 leaf.AddDependency(dep);
+
+            }
             return leaf;
         }
         else
@@ -147,7 +154,7 @@ public static class DependencyGraphSerializer
         {
             var s = tEl.GetString();
             if (DateTime.TryParse(s, out var dt))
-                return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                return dt.AddHours(-1);
             return DateTime.UtcNow;
         }
 

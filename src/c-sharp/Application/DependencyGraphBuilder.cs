@@ -1,7 +1,6 @@
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
-using Archlens.Domain.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,97 +12,95 @@ namespace Archlens.Application;
 
 public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options _options)
 {
-    public async Task<DependencyGraph> GetGraphAsync(IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
+    public async Task<DependencyGraph> GetGraphAsync(
+        IReadOnlyDictionary<string, IEnumerable<string>> changedModules,
+        CancellationToken ct = default)
     {
-        var graph = await BuildGraphAsync(changedModules, ct);
-        return graph;
+        var root = await BuildGraphAsync(changedModules, ct);
+        DependencyAggregator.RecomputeAggregates(root);
+        return root;
     }
 
-
-    private async Task<DependencyGraphNode> BuildGraphAsync(IReadOnlyDictionary<string, IEnumerable<string>> changedModules, CancellationToken ct = default)
+    private static string CanonRel(string root, string path)
     {
-        Dictionary<string, DependencyGraphNode> nodes = [];
-        List<string> children = [];
+        var abs = Path.GetFullPath(path);
+        var rel = Path.GetRelativePath(root, abs);
+        rel = rel.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
+        return rel.Length == 0 ? "." : rel;
+    }
 
-        foreach (var modulePath in changedModules.Keys)
+    private static string JoinRel(string parentRel, string child)
+    {
+        var p = parentRel == "." ? child : Path.Combine(parentRel, child);
+        return p.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+                .TrimEnd(Path.DirectorySeparatorChar);
+    }
+
+    private async Task<DependencyGraphNode> BuildGraphAsync(
+        IReadOnlyDictionary<string, IEnumerable<string>> changedModules,
+        CancellationToken ct)
+    {
+        var comparer = StringComparer.OrdinalIgnoreCase;
+        var nodes = new Dictionary<string, DependencyGraphNode>(comparer);
+
+        var rootNode = new DependencyGraphNode(_options.FullRootPath)
         {
-            var name = modulePath.Equals(_options.FullRootPath) ? _options.ProjectName : Path.GetFileName(modulePath);
-            nodes[modulePath] = new DependencyGraphNode(_options.FullRootPath)
-            { 
+            Name = _options.ProjectName,
+            Path = _options.ProjectRoot,
+            LastWriteTime = File.GetLastWriteTimeUtc(_options.FullRootPath)
+        };
+        nodes["."] = rootNode;
+
+        foreach (var moduleAbs in changedModules.Keys)
+        {
+            var key = CanonRel(_options.FullRootPath, moduleAbs);
+            var name = key == "." ? _options.ProjectName : Path.GetFileName(key);
+            nodes[key] = new DependencyGraphNode(_options.FullRootPath)
+            {
                 Name = name,
-                Path = modulePath,
-                LastWriteTime = File.GetLastWriteTimeUtc(modulePath)
+                Path = moduleAbs,
+                LastWriteTime = File.GetLastWriteTimeUtc(moduleAbs)
             };
         }
 
-        foreach (var pair in changedModules)
+        foreach (var key in nodes.Keys.OrderBy(k => k.Count(c => c == Path.DirectorySeparatorChar)))
         {
-            var module = pair.Key;
-            var contents = pair.Value;
+            if (key == ".") continue;
+            var parentKey = Path.GetDirectoryName(key);
+            if (string.IsNullOrEmpty(parentKey)) parentKey = ".";
+            nodes[parentKey].AddChild(nodes[key]);
+        }
 
-            var parent = nodes[module];
+        foreach (var (moduleAbs, contents) in changedModules)
+        {
+            var moduleKey = CanonRel(_options.FullRootPath, moduleAbs);
+            var moduleNode = nodes[moduleKey];
 
-            foreach (var content in contents)
+            foreach (var absPath in contents)
             {
-                var contentPath = Path.Combine(module, content);
-                var nameSpace = GetNameSpace(contentPath);
+                var childKey = JoinRel(moduleKey, absPath);
 
-                DependencyGraph child;
+                if (nodes.TryGetValue(childKey, out var childDir))
+                {
+                    moduleNode.AddChild(childDir);
+                    continue;
+                }
 
-                bool isDir;
-                try
+                if (!Path.HasExtension(absPath)) continue;
+
+                var deps = await _dependencyParser.ParseFileDependencies(absPath, ct).ConfigureAwait(false);
+                var leaf = new DependencyGraphLeaf(_options.FullRootPath)
                 {
-                    isDir = (File.GetAttributes(contentPath) & FileAttributes.Directory) != 0;
-                }
-                catch { continue; }
-                if (isDir)
-                {
-                    if (nodes.TryGetValue(content, out var existing))
-                    {
-                        child = existing;
-                        children.Add(content);
-                    }
-                    else
-                    {
-                        var name = Path.GetFileName(content);
-                        child = new DependencyGraphNode(_options.FullRootPath)
-                        { 
-                            Name = name, 
-                            Path = contentPath,
-                            LastWriteTime = File.GetLastWriteTimeUtc(module) 
-                        };
-                    }
-                }
-                else
-                {
-                    var name = Path.GetFileName(content);
-                    var deps = await _dependencyParser.ParseFileDependencies(contentPath, ct).ConfigureAwait(false);
-                    var leaf = new DependencyGraphLeaf(_options.FullRootPath)
-                    { 
-                        Name = name, 
-                        Path = contentPath,
-                        LastWriteTime = File.GetLastWriteTimeUtc(contentPath)
-                    };
-                    leaf.AddDependencyRange(deps);
-                    child = leaf;
-                }
-                parent.AddChild(child);
+                    Name = Path.GetFileName(childKey),
+                    Path = $"{absPath}",
+                    LastWriteTime = File.GetLastWriteTimeUtc(absPath)
+                };
+                leaf.AddDependencyRange(deps);
+                moduleNode.AddChild(leaf);
             }
         }
-        var rootKey = nodes.Keys
-        .Except(children, StringComparer.OrdinalIgnoreCase)
-        .OrderBy(k => !k.Equals(_options.FullRootPath, StringComparison.OrdinalIgnoreCase))
-        .FirstOrDefault();
 
-        return rootKey is null ? null : nodes[rootKey];
-    }
-
-    private string GetNameSpace(string fullPath)
-    {
-        var relPath = Path.GetRelativePath(_options.FullRootPath, fullPath);
-        var nameSpace = relPath.Replace(Path.DirectorySeparatorChar, '.')
-                               .Replace(Path.AltDirectorySeparatorChar, '.')
-                               .Trim('.');
-        return nameSpace;
+        return nodes["."]; // project root
     }
 }
+

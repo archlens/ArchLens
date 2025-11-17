@@ -10,12 +10,12 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 {
     private readonly DateTime _lastWriteTime;
     private readonly string _path;
-    private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
+    private Dictionary<string, int> _dependencies { get; init; } = [];
     
     required public DateTime LastWriteTime 
     { 
         get => _lastWriteTime;
-        init { _lastWriteTime = NormaliseUTC(value); }
+        init { _lastWriteTime = DateTimeNormaliser.NormaliseUTC(value); }
     }
 
     required public string Name { get; init; }
@@ -24,7 +24,7 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
         get => _path;
         init { _path = PathNormaliser.NormalisePath(_projectRoot, value); }
     }
-    
+
     public IDictionary<string, int> GetDependencies() => _dependencies;
 
     public void AddDependency(string depPath)
@@ -67,12 +67,6 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
             }
         }
     }
-
-    private static DateTime NormaliseUTC(DateTime time)
-    {
-        var convertedDate = DateTime.SpecifyKind(time, DateTimeKind.Utc);
-        return convertedDate.ToLocalTime();
-    }
 }
 
 public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRoot)
@@ -88,27 +82,19 @@ public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRo
     }
     public void AddChild(DependencyGraph child)
     {
-        var deps = child.GetDependencies().Keys;
-        if (deps.Count > 0)
-        {
-            var ownedChildNames = _children.Select(c => c.Name).Where(ns => !string.IsNullOrEmpty(ns));
-
-            if (ownedChildNames.Any())
-            {
-                foreach (var dep in deps)
-                {
-                    var isInternalDep = ownedChildNames.Any(cn => dep.Contains(cn, StringComparison.Ordinal));
-                    if (!isInternalDep)
-                        AddDependency(dep);
-                }
-            }
-            else
-            {
-                AddDependencyRange([.. deps]);
-            }
-        }
+        if (_children.Any(c => ReferenceEquals(c, child) || c.Path == child.Path))
+            return;
         _children.Add(child);
     }
+
+    internal void ReplaceDependencies(IDictionary<string, int> newDeps)
+    {
+        var dict = GetDependencies();
+        dict.Clear();
+        foreach (var kv in newDeps)
+            dict[kv.Key] = kv.Value;
+    }
+
     public override string ToString()
     {
         string res = Name + $" ({GetDependencies()})";

@@ -6,22 +6,34 @@ public static class PathNormaliser
 {
     public static string NormalisePath(string root, string path)
     {
-        var rootPath = Path.GetFullPath(root);
-        var isModule = IsDirectoryPath(path);
-        var relativePath = Path.GetRelativePath(rootPath, path).Replace(Path.DirectorySeparatorChar, '/');
-        if (isModule)
-            return  $"./{relativePath}/";
-        return $"./{relativePath}";
+        if (!Path.IsPathFullyQualified(root))
+            root = Path.GetFullPath(root);
+        var fullPath = Path.IsPathRooted(path)
+            ? path
+            : Path.GetFullPath(path, root);
+
+        var isDirectory = IsDirectoryPath(fullPath);
+
+        var relativePath = Path
+            .GetRelativePath(root, fullPath)
+            .Replace(Path.DirectorySeparatorChar, '/')
+            .TrimEnd('/');
+
+        if (relativePath == "." || relativePath == string.Empty)
+            return "./";
+
+        return isDirectory ? $"./{relativePath}/" : $"./{relativePath}";
     }
 
-    public static bool IsDirectoryPath(string path)
+    private static bool IsDirectoryPath(string fullPath)
     {
-        bool isDir = false;
         try
         {
-            isDir = (File.GetAttributes(path) & FileAttributes.Directory) != 0;
+            return Directory.Exists(fullPath);
         }
-        catch { /* ignore */ }
-        return isDir;
+        catch
+        {
+            return false;
+        }
     }
 }

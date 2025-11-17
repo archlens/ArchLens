@@ -1,52 +1,61 @@
 ﻿using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
 using Archlens.Infra;
+using ArchlensTests.Utils;
 
 namespace ArchlensTests.Infra;
-/* TODO: Fix in other PR
+
 public sealed class LocalSnapshotManagerTests : IDisposable
 {
-    private readonly string _tempRoot;
+    private readonly TestFileSystem _fs = new();
+    public void Dispose() => _fs.Dispose();
 
-    public LocalSnapshotManagerTests()
+    private Options MakeOptions() => new(
+        ProjectRoot: _fs.Root,
+        ProjectName: "Archlens",
+        Language: default,
+        SnapshotManager: default,
+        Format: default,
+        Exclusions: [],
+        FileExtensions: [".cs"],
+        FullRootPath: _fs.Root
+    );
+
+    private static DependencyGraphNode MakeGraph(string rootPath)
     {
-        _tempRoot = Path.Combine(Path.GetTempPath(), "archlens-tests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(_tempRoot);
-    }
+        var root = TestGraphs.Node(rootPath, "Archlens", "./");
 
-    public void Dispose()
-    {
-        try { Directory.Delete(_tempRoot, recursive: true); } catch { /* ignore  }
-    }
+        var domain = TestGraphs.Node(rootPath, "Domain", "./Domain/");
+        var factory = TestGraphs.Node(rootPath, "Factories", "./Domain/Factories/");
+        var models = TestGraphs.Node(rootPath, "Models", "./Domain/Models/");
+        var records = TestGraphs.Node(rootPath, "Records", "./Domain/Models/Records/");
+        var enums = TestGraphs.Node(rootPath, "Enums", "./Domain/Models/Enums/");
+        var utils = TestGraphs.Node(rootPath, "Utils", "./Domain/Utils/");
 
-    private static Options MakeOptions(string projectRoot) =>
-        new(
-            ProjectRoot: projectRoot,
-            ProjectName: "TestProject",
-            Language: default,
-            SnapshotManager: default,
-            Format: default,
-            Exclusions: [],
-            FileExtensions: [".cs"]
-        );
+        root.AddChild(domain);
+        domain.AddChild(factory);
+        domain.AddChild(models);
+        domain.AddChild(utils);
+        models.AddChild(records);
+        models.AddChild(enums);
 
-    private static DependencyGraphNode MakeGraph()
-    {
-        var leafA = new DependencyGraphLeaf(){ Name = "ModuleA.FileA", LastWriteTime = DateTime.UtcNow.AddHours(-1) };
-        var leafB = new DependencyGraphLeaf(){ Name = "ModuleB.FileB", LastWriteTime = DateTime.UtcNow };
+        factory.AddChild(TestGraphs.Leaf(rootPath, "DependencyParserFactory.cs",
+            "./Domain/Factories/DependencyParserFactory.cs",
+            "Domain.Interfaces", "Domain.Models.Enums", "Domain.Models.Records", "Infra"));
 
-        var nodeA = new DependencyGraphNode(){ Name = "ModuleA", LastWriteTime = DateTime.UtcNow.AddHours(-1) };
-        nodeA.AddChild(leafA);
-        
-        leafB.AddDependency(leafA.Name);
+        factory.AddChild(TestGraphs.Leaf(rootPath, "RendererFactory.cs",
+            "./Domain/Factories/RendererFactory.cs",
+            "Domain.Interfaces", "Domain.Models.Enums", "Infra"));
 
-        var nodeB = new DependencyGraphNode(){ Name = "ModuleB", LastWriteTime = DateTime.UtcNow };
-        nodeB.AddChild(leafB);
+        records.AddChild(TestGraphs.Leaf(rootPath, "Options.cs",
+            "./Domain/Models/Records/Options.cs",
+            "Domain.Models.Enums"));
 
-        var graph = new DependencyGraphNode() { Name = "Root", LastWriteTime = DateTime.UtcNow.AddHours(-1) };
-        graph.AddChildren([ nodeA, nodeB ]);
+        models.AddChild(TestGraphs.Leaf(rootPath, "DependencyGraph.cs",
+            "./Domain/Models/DependencyGraph.cs",
+            "Domain.Utils"));
 
-        return graph;
+        return root;
     }
 
     [Fact]
@@ -57,11 +66,11 @@ public sealed class LocalSnapshotManagerTests : IDisposable
         var fileName = "snapshot.json";
         var snapshotManager = new LocalSnaphotManager(dirName, fileName);
         
-        var opts = MakeOptions(_tempRoot);
+        var opts = MakeOptions();
 
-        var graph = MakeGraph();
+        var graph = MakeGraph(_fs.Root);
 
-        var expectedDir = Path.Combine(_tempRoot, dirName);
+        var expectedDir = Path.Combine(_fs.Root, dirName);
         var expectedFile = Path.Combine(expectedDir, fileName);
 
         // Act
@@ -80,9 +89,9 @@ public sealed class LocalSnapshotManagerTests : IDisposable
     {
         // Arrange
         var snapshotManager = new LocalSnaphotManager(".archlens", "snapshot.json");
-        var opts = MakeOptions(_tempRoot);
+        var opts = MakeOptions();
 
-        var graph = MakeGraph();
+        var graph = MakeGraph(_fs.Root);
 
         // Act
         await snapshotManager.SaveGraphAsync(graph, opts);
@@ -94,17 +103,17 @@ public sealed class LocalSnapshotManagerTests : IDisposable
     }
 
     [Fact]
-    public async Task GetLastSavedDependencyGraphAsync_ReturnsDefault_WhenFileMissing()
+    public async Task GetLastSavedDependencyGraphAsync_ReturnsNull_WhenFileMissing()
     {
         // Arrange
         var snapshotManager = new LocalSnaphotManager(".archlens", "snapshot.json");
-        var opts = MakeOptions(_tempRoot);
+        var opts = MakeOptions();
 
         // Act
         var loaded = await snapshotManager.GetLastSavedDependencyGraphAsync(opts);
 
         // Assert
-        Assert.StartsWith("Snapshot@", loaded.Name, StringComparison.Ordinal);
+        Assert.Null(loaded);
     }
 
     [Fact]
@@ -113,11 +122,17 @@ public sealed class LocalSnapshotManagerTests : IDisposable
         // Arrange
         var customDir = "_state";
         var customFile = "dep.json";
-        var snapshotManager = new LocalSnaphotManager(customDir, customFile);
-        var opts = MakeOptions(_tempRoot);
 
-        var graph = new DependencyGraphNode { Name = "CustomNames", LastWriteTime = DateTime.UtcNow };
-        var expectedPath = Path.Combine(_tempRoot, customDir, customFile);
+        var snapshotManager = new LocalSnaphotManager(customDir, customFile);
+        var opts = MakeOptions();
+
+        var graph = new DependencyGraphNode(_fs.Root) 
+        { 
+            Name = "CustomNames", 
+            Path = customDir,
+            LastWriteTime = DateTime.UtcNow 
+        };
+        var expectedPath = Path.Combine(_fs.Root, customDir, customFile);
 
         // Act
         await snapshotManager.SaveGraphAsync(graph, opts);
@@ -131,9 +146,9 @@ public sealed class LocalSnapshotManagerTests : IDisposable
     {
         // Arrange
         var snapshotManager = new LocalSnaphotManager(".archlens", "snapshot.json");
-        var opts = MakeOptions(_tempRoot);
+        var opts = MakeOptions();
 
-        var graph = MakeGraph();
+        var graph = MakeGraph(_fs.Root);
         await snapshotManager.SaveGraphAsync(graph, opts);
 
         // Act
@@ -148,9 +163,9 @@ public sealed class LocalSnapshotManagerTests : IDisposable
     {
         // Arrange
         var snapshotManager = new LocalSnaphotManager(".archlens", "snapshot.json");
-        var opts = MakeOptions(_tempRoot);
+        var opts = MakeOptions();
 
-        var graph = MakeGraph();
+        var graph = MakeGraph(_fs.Root);
         await snapshotManager.SaveGraphAsync(graph, opts);
 
         // Act
@@ -158,7 +173,10 @@ public sealed class LocalSnapshotManagerTests : IDisposable
 
         // Assert
         Assert.Equal(graph.Name, loaded.Name);
-        Assert.Equal(2, loaded.GetChildren().Count);
+        Assert.Single(loaded.GetChildren());
+        var domain = loaded.GetChild("./Domain");
+        Assert.NotNull(domain);
+        Assert.Equal(3, domain.GetChildren().Count);
     }
 
     [Fact]
@@ -166,19 +184,17 @@ public sealed class LocalSnapshotManagerTests : IDisposable
     {
         // Arrange
         var snapshotManager = new LocalSnaphotManager(".archlens", "snapshot.json");
-        var opts = MakeOptions(_tempRoot);
+        var opts = MakeOptions();
 
-        var graph = MakeGraph();
+        var graph = MakeGraph(_fs.Root);
         await snapshotManager.SaveGraphAsync(graph, opts);
 
         // Act
         var loaded = await snapshotManager.GetLastSavedDependencyGraphAsync(opts);
-        var moduleB = loaded.GetChild("ModuleB");
-
+        var domain = loaded.GetChild("./Domain");
         // Assert
-        Assert.NotNull(moduleB);
+        Assert.NotNull(domain);
         Assert.Empty(loaded.GetDependencies());
-        Assert.Single(moduleB.GetDependencies());
+        Assert.Single(domain.GetDependencies());
     }
 }
-*/

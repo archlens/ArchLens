@@ -2,7 +2,6 @@ using Archlens.Domain;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,7 +36,7 @@ public sealed class LocalSnaphotManager(string _localDirName, string _localFileN
 
         var json = await File.ReadAllTextAsync(path, ct);
 
-        var graph = DependencyGraphSerializer.Deserialize(json.Replace("\\", "/"));
+        var graph = DependencyGraphSerializer.Deserialize(json);
 
         return graph ?? null;
     }

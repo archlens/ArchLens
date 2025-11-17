@@ -1,180 +1,185 @@
 ﻿using Archlens.Domain;
+using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
-using ArchlensTests.Utils.TestModels;
+using ArchlensTests.Utils;
 
 namespace ArchlensTests.Domain;
-/* TODO: Fix in other PR
+
 public sealed class ChangeDetectorTests : IDisposable
 {
-    private readonly string _root;
-
-    public ChangeDetectorTests()
-    {
-        _root = Path.Combine(Path.GetTempPath(), "archlens-tests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(_root);
-    }
-
-    public void Dispose()
-    {
-        try { Directory.Delete(_root, recursive: true); } catch {  }
-    }
-
-    private static void WriteFile(string path, string contents, DateTime? utcWriteTime = null)
-    {
-        var dir = Path.GetDirectoryName(path);
-        Directory.CreateDirectory(dir!);
-        File.WriteAllText(path, contents);
-        if (utcWriteTime is { } t)
-        {
-            Directory.SetLastWriteTimeUtc(dir!, t);
-            File.SetLastWriteTimeUtc(path, t);
-        }
-    }
-
-    private static Options MakeOptions(
-        string projectRoot,
-        IReadOnlyList<string>? exclusions = null,
-        IReadOnlyList<string>? extensions = null
-    )
-    {
-        return new Options(
-            ProjectRoot: projectRoot,
+    private readonly TestFileSystem _fs = new();
+    private Options MakeOptions(IReadOnlyList<string>? exclusions = null, IReadOnlyList<string>? extensions = null)
+        => new(
+            ProjectRoot: _fs.Root,
             ProjectName: "TestProject",
             Language: default,
             SnapshotManager: default,
             Format: default,
             Exclusions: exclusions ?? [],
-            FileExtensions: extensions ?? [".cs"]
+            FileExtensions: extensions ?? [".cs"],
+            FullRootPath: _fs.Root
         );
+
+    public void Dispose() => _fs.Dispose();
+
+    private static SnapshotGraph MakeDefaultSnapshotGraph(string projectRoot)
+    {
+        return new SnapshotGraph(projectRoot)
+        {
+            Name = "src",
+            Path = "./",
+            LastWriteTime = DateTime.UtcNow
+        };
+    }
+
+    private sealed class SnapshotGraph(string projectRoot) : DependencyGraph(projectRoot)
+    {
+        private readonly Dictionary<string, DependencyGraph> _nodes = new(StringComparer.OrdinalIgnoreCase);
+
+        public void AddFile(string relPath, DateTime lastWriteUtc)
+        {
+            var n = new DependencyGraphLeaf(projectRoot) { Name = System.IO.Path.GetFileName(relPath), Path = "./" + relPath.Replace('\\', '/'), LastWriteTime = lastWriteUtc };
+            var dir = System.IO.Path.GetDirectoryName(relPath)?.Replace('\\', '/') ?? ".";
+            _nodes[relPath.Replace('\\', '/')] = n;
+            _nodes[dir] = new DependencyGraphNode(projectRoot) { Name = dir, Path = "./" + dir, LastWriteTime = lastWriteUtc };
+        }
+
+        public override DependencyGraph GetChild(string path)
+        {
+            var key = path.Replace('\\', '/');
+            if (_nodes.TryGetValue(key, out var n)) return n;
+            if (_nodes.TryGetValue(key.TrimEnd('/'), out n)) return n;
+            return null!;
+        }
     }
 
     [Fact]
     public async Task Returns_NewFiles_When_NotInLastSavedGraph()
     {
-        var now = DateTime.UtcNow;
-        var path = Path.Combine(_root, "src", "A.cs");
-        WriteFile(path, "class A {}", now);
+        var t = DateTime.UtcNow;
+        _fs.File("src/A.cs", "class A {}", t);
 
-        var opts = MakeOptions(_root);
-        var depGraph = new TestDependencyGraph();
+        var opts = MakeOptions();
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
-        Assert.Contains("src", changed);
-        Assert.Contains("A.cs", changed["src"]);
-        Assert.Single(changed);
+        Assert.Contains(Path.Combine(_fs.Root, "src"), changed.Keys);
+        Assert.Contains(Path.Combine(_fs.Root, "src", "A.cs"), changed[Path.Combine(_fs.Root, "src")]);
     }
 
     [Fact]
-    public async Task DoesNotReturn_UnchangedFiles_When_TimestampsEqual()
+    public async Task DoesNotReturn_Unchanged_When_TimestampsEqual()
     {
         var t = DateTime.UtcNow.AddMinutes(-5);
-        var path = Path.Combine(_root, "src", "B.cs");
-        WriteFile(path, "class B {}", t);
+        _fs.File("src/B.cs", "class B {}", t);
 
-        var opts = MakeOptions(_root);
-        var depGraph = new TestDependencyGraph();
-        depGraph.SetFile("src/B.cs", t);
+        var opts = MakeOptions();
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
+        snap.AddFile("src/B.cs", t);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
         Assert.Empty(changed);
     }
 
     [Fact]
-    public async Task Returns_ModifiedFiles_When_CurrentIsNewer()
+    public async Task Returns_Modified_When_CurrentIsNewer()
     {
         var oldT = DateTime.UtcNow.AddMinutes(-10);
         var newT = DateTime.UtcNow.AddMinutes(-1);
 
-        var path = Path.Combine(_root, "src", "C.cs");
-        WriteFile(path, "class C {}", newT);
+        _fs.File("src/C.cs", "class C {}", newT);
 
-        var opts = MakeOptions(_root);
-        var depGraph = new TestDependencyGraph();
-        depGraph.SetFile("src/C.cs", oldT);
+        var opts = MakeOptions();
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
+        snap.AddFile("src/C.cs", oldT);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
-        Assert.Contains("src", changed);
-        Assert.Contains("C.cs", changed["src"]);
         Assert.Single(changed);
+        var mod = changed.Single();
+        Assert.Equal(Path.Combine(_fs.Root, "src"), mod.Key);
+        Assert.Contains(Path.Combine(_fs.Root, "src", "C.cs"), mod.Value);
     }
 
     [Fact]
     public async Task Respects_FileExtensions_Filter()
     {
-        var a = Path.Combine(_root, "src", "A.txt");
-        var b = Path.Combine(_root, "src", "B.cs");
-        WriteFile(a, "text");
-        WriteFile(b, "class B {}");
+        _fs.File("src/A.txt", "text");
+        _fs.File("src/B.cs", "class B {}");
 
-        var opts = MakeOptions(_root, extensions: [".cs"]);
-        var depGraph = new TestDependencyGraph();
+        var opts = MakeOptions(extensions: [".cs"]);
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
-        Assert.Contains("src", changed);
-        Assert.Contains("B.cs", changed["src"]);
-        Assert.DoesNotContain("A.txt", changed["src"]);
-        Assert.Single(changed);
+        var srcKey = Path.Combine(_fs.Root, "src");
+        Assert.Contains(srcKey, changed.Keys);
+        Assert.DoesNotContain(Path.Combine(_fs.Root, "src", "A.txt"), changed[srcKey]);
+        Assert.Contains(Path.Combine(_fs.Root, "src", "B.cs"), changed[srcKey]);
     }
 
     [Fact]
-    public async Task Excludes_DirectoryPrefix_TestsSlash()
+    public async Task Excludes_DirectoryPrefix_RelativeWithSlash()
     {
-        var t1 = Path.Combine(_root, "Tests", "X.cs");
-        var t2 = Path.Combine(_root, "src", "Y.cs");
-        WriteFile(t1, "class X {}");
-        WriteFile(t2, "class Y {}");
+        _fs.File("Tests/X.cs", "class X {}");
+        _fs.File("src/Y.cs", "class Y {}");
 
-        var opts = MakeOptions(_root, exclusions: ["*Tests/"], extensions: [".cs"]);
-        var depGraph = new TestDependencyGraph();
+        var opts = MakeOptions(exclusions: ["Tests/"]);
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
-        Assert.Contains("src", changed);
-        Assert.DoesNotContain("Tests", changed);
-        Assert.Single(changed);
+        Assert.DoesNotContain(Path.Combine(_fs.Root, "Tests"), changed.Keys);
+        Assert.Contains(Path.Combine(_fs.Root, "src"), changed.Keys);
     }
 
     [Fact]
-    public async Task Excludes_Segment_bin_AnywhereInPath()
+    public async Task Excludes_Segment_bin_Anywhere()
     {
-        var p1 = Path.Combine(_root, "src", "bin", "Gen.cs");
-        var p2 = Path.Combine(_root, "src", "good", "Ok.cs");
-        WriteFile(p1, "class Gen {}");
-        WriteFile(p2, "class Ok {}");
+        _fs.File("src/bin/Gen.cs", "class Gen {}");
+        _fs.File("src/good/Ok.cs", "class Ok {}");
 
-        var opts = MakeOptions(_root, exclusions: ["bin"]);
-        var depGraph = new TestDependencyGraph();
+        var opts = MakeOptions(exclusions: ["bin"]);
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
-        Assert.Contains("src", changed);
-        Assert.Contains("src/good", changed);
-        Assert.DoesNotContain("bin", changed);
-        Assert.DoesNotContain("bin", changed["src"]);
+        Assert.Contains(Path.Combine(_fs.Root, "src", "good"), changed.Keys);
+        Assert.DoesNotContain(Path.Combine(_fs.Root, "src", "bin"), changed.Keys);
+        Assert.DoesNotContain(Path.Combine(_fs.Root, "src", "bin", "Gen.cs"),
+                              changed.GetValueOrDefault(Path.Combine(_fs.Root, "src")) ?? Array.Empty<string>());
     }
 
     [Fact]
-    public async Task Excludes_FilenameSuffix_dev_cs_With_TrailingDot()
+    public async Task Excludes_FilenameSuffix_Wildcard_With_TrailingDot()
     {
-        var p1 = Path.Combine(_root, "src", "A.dev.cs");
-        var p2 = Path.Combine(_root, "src", "A.cs");
-        
-        WriteFile(p1, "class ADev {}");
-        WriteFile(p2, "class A {}");
+        _fs.File("src/A.dev.cs", "class ADev {}");
+        _fs.File("src/A.cs", "class A {}");
 
-        var opts = MakeOptions(_root, exclusions: ["**.dev.cs."]);
-        var depGraph = new TestDependencyGraph();
+        var opts = MakeOptions(exclusions: ["**.dev.cs."]);
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
 
-        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, depGraph);
+        var changed = await ChangeDetector.GetChangedProjectFilesAsync(opts, snap);
 
-        Assert.Contains("src", changed);
-        Assert.DoesNotContain("A.dev.cs", changed["src"]);
-        Assert.Single(changed);
+        var srcKey = Path.Combine(_fs.Root, "src");
+        Assert.Contains(srcKey, changed.Keys);
+        Assert.DoesNotContain(Path.Combine(_fs.Root, "src", "A.dev.cs"), changed[srcKey]);
+        Assert.Contains(Path.Combine(_fs.Root, "src", "A.cs"), changed[srcKey]);
     }
 
+    [Fact]
+    public async Task Cancellation_Propagates()
+    {
+        using var cts = new CancellationTokenSource();
+        _fs.File("src/A.cs", "class A {}");
+
+        var opts = MakeOptions();
+        var snap = MakeDefaultSnapshotGraph(_fs.Root);
+
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await ChangeDetector.GetChangedProjectFilesAsync(opts, snap, cts.Token));
+    }
 }
-*/

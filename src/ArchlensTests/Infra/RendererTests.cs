@@ -1,56 +1,60 @@
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
 using Archlens.Infra;
+using ArchlensTests.Utils;
 
 namespace ArchlensTests.Infra;
-/* TODO: Fix in other PR
 public sealed class RendererTests : IDisposable
 {
-    private readonly string _root;
-    private readonly DependencyGraph _graph;
-
-    public RendererTests()
+    private readonly TestFileSystem _fs = new();
+    public void Dispose() => _fs.Dispose();
+    private static DependencyGraphNode MakeGraph(string rootPath)
     {
-        _root = Path.Combine(Path.GetTempPath(), "archlens-tests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(_root);
+        var root = TestGraphs.Node(rootPath, "Archlens", "./");
 
-        var leafA = new DependencyGraphLeaf() { Name = "leafA" };
-        var leafB = new DependencyGraphLeaf() { Name = "leafB" };
-        leafB.AddDependency("leafA");
+        var domain = TestGraphs.Node(rootPath, "Domain", "./Domain/");
+        var factory = TestGraphs.Node(rootPath, "Factories", "./Domain/Factories/");
+        var models = TestGraphs.Node(rootPath, "Models", "./Domain/Models/");
+        var records = TestGraphs.Node(rootPath, "Records", "./Domain/Models/Records/");
+        var enums = TestGraphs.Node(rootPath, "Enums", "./Domain/Models/Enums/");
+        var utils = TestGraphs.Node(rootPath, "Utils", "./Domain/Utils/");
 
-        var graph = new DependencyGraphNode() { Name = "root" };
-        var nodeA = new DependencyGraphNode() { Name = "nodeA" };
-        var nodeB = new DependencyGraphNode() { Name = "nodeB" };
-        leafA.AddDependency("leafB");
+        root.AddChild(domain);
+        domain.AddChild(factory);
+        domain.AddChild(models);
+        domain.AddChild(utils);
+        models.AddChild(records);
+        models.AddChild(enums);
 
-        nodeA.AddChild(leafA);
-        nodeB.AddChild(leafB);
-        graph.AddChildren([nodeA, nodeB]);
+        factory.AddChild(TestGraphs.Leaf(rootPath, "DependencyParserFactory.cs",
+            "./Domain/Factories/DependencyParserFactory.cs",
+            "Domain.Interfaces", "Domain.Models.Enums", "Domain.Models.Records", "Infra"));
 
-        _graph = graph;
+        factory.AddChild(TestGraphs.Leaf(rootPath, "RendererFactory.cs",
+            "./Domain/Factories/RendererFactory.cs",
+            "Domain.Interfaces", "Domain.Models.Enums", "Infra"));
+
+        records.AddChild(TestGraphs.Leaf(rootPath, "Options.cs",
+            "./Domain/Models/Records/Options.cs",
+            "Domain.Models.Enums"));
+
+        models.AddChild(TestGraphs.Leaf(rootPath, "DependencyGraph.cs",
+            "./Domain/Models/DependencyGraph.cs",
+            "Domain.Utils"));
+
+        return root;
     }
 
-    public void Dispose()
-    {
-        try { Directory.Delete(_root, recursive: true); } catch { /* ignore  }
-    }
-
-    private static Options MakeOptions(
-        string projectRoot,
-        IReadOnlyList<string>? exclusions = null,
-        IReadOnlyList<string>? extensions = null
-    )
-    {
-        return new Options(
-            ProjectRoot: projectRoot,
-            ProjectName: "TestProject",
-            Language: default,
-            SnapshotManager: default,
-            Format: default,
-            Exclusions: exclusions ?? [],
-            FileExtensions: extensions ?? [".cs"]
-        );
-    }
+    private Options MakeOptions() => new(
+        ProjectRoot: _fs.Root,
+        ProjectName: "Archlens",
+        Language: default,
+        SnapshotManager: default,
+        Format: default,
+        Exclusions: [],
+        FileExtensions: [".cs"],
+        FullRootPath: _fs.Root
+    );
 
 
     [Fact]
@@ -58,14 +62,15 @@ public sealed class RendererTests : IDisposable
     {
         JsonRenderer renderer = new();
 
-        string result = renderer.RenderGraph(_graph, MakeOptions(_root));
+        var opts = MakeOptions();
+        var root = MakeGraph(opts.ProjectRoot);
+        string result = renderer.RenderGraph(root, opts);
 
         Assert.NotEmpty(result);
         Assert.StartsWith("{", result);
         Assert.Contains("\"title\":", result);
         Assert.Contains("\"packages\": [", result);
         Assert.Contains("\"edges\": [", result);
-        Assert.Contains("\"relations\": [", result);
         Assert.EndsWith("}", result);
     }
 
@@ -74,15 +79,15 @@ public sealed class RendererTests : IDisposable
     {
         PlantUMLRenderer renderer = new();
 
-        string result = renderer.RenderGraph(_graph, MakeOptions(_root));
+        var opts = MakeOptions();
+        var root = MakeGraph(opts.ProjectRoot);
+        string result = renderer.RenderGraph(root, opts);
 
         Assert.NotEmpty(result);
         Assert.StartsWith("@startuml", result);
-        Assert.Contains("title TestProject", result);
-        Assert.Contains("package \"nodeA\" as nodeA {", result);
-        Assert.Contains("\"leafB\"-->leafA", result);
+        Assert.Contains("title Archlens", result);
+        Assert.Contains("package \"Domain\" as Domain {", result);
         Assert.EndsWith("@enduml", result);
     }
 
 }
-*/

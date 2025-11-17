@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Archlens.Domain.Models;
+using Archlens.Domain.Models.Records;
+using Archlens.Domain.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Archlens.Domain.Models;
-using Archlens.Domain.Models.Records;
 
 namespace Archlens.Domain;
 
@@ -36,6 +38,8 @@ public sealed class ChangeDetector
             try
             {
                 var relativePath = GetRelative(projectRoot, pair.Key);
+                if (relativePath.Equals("."))
+                    return;
                 var inLastGraph = lastSavedGraph?.GetChild(relativePath) != null;
                 if (!inLastGraph)
                 {
@@ -45,7 +49,7 @@ public sealed class ChangeDetector
                 {
                     var lastNodeWriteTime = lastSavedGraph.GetChild(relativePath).LastWriteTime;
 
-                    var currentWriteTime = File.GetLastWriteTimeUtc(pair.Key);
+                    var currentWriteTime = DateTimeNormaliser.NormaliseUTC(File.GetLastWriteTimeUtc(pair.Key));
 
                     if (currentWriteTime > lastNodeWriteTime)
                         changed.Add(pair.Key, pair.Value);
@@ -92,7 +96,7 @@ public sealed class ChangeDetector
                 files = Directory.EnumerateFiles(dir).Where(f => !IsExcluded(root, f, exclusions));
             } catch { /* ignore */ }
 
-            var includedFiles = files.Where(file => extensions.Contains(Path.GetExtension(file))).Select(file => GetRelative(root, file).Split('/').Last()).ToList();
+            var includedFiles = files.Where(file => extensions.Contains(Path.GetExtension(file)));
             result[dir] = result.TryGetValue(dir, out var existing)
                 ? existing.Concat(includedFiles).ToList()
                 : [.. includedFiles];
@@ -166,7 +170,7 @@ public sealed class ChangeDetector
         {
             foreach (var ban in rules.Segments)
             {
-                if (segment.Equals(ban, StringComparison.OrdinalIgnoreCase))
+                if (MatchesSuffixPattern(segment, ban))
                     return true;
             }
         }
@@ -178,6 +182,16 @@ public sealed class ChangeDetector
 
         return false;
     }
+
+    public static bool MatchesSuffixPattern(string value, string pattern)
+    {
+        if (!pattern.Contains('*'))
+            return string.Equals(value, pattern, StringComparison.Ordinal);
+
+        var suffix = pattern.TrimStart('*');
+        return value.EndsWith(suffix, StringComparison.Ordinal);
+    }
+
 
     private static string GetRelative(string root, string path)
     {
