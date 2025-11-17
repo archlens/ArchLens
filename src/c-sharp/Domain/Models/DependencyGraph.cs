@@ -89,10 +89,10 @@ public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRo
     }
     public void AddChild(DependencyGraph child)
     {
-        var deps = child.GetDependencies().Keys;
-        if (deps.Count > 0)
-        {
-            var ownedChildNames = _children.Select(c => c.Name).Where(ns => !string.IsNullOrEmpty(ns));
+        if (_children.Any(c => ReferenceEquals(c, child) || c.Path == child.Path))
+            return;
+        _children.Add(child);
+    }
 
     internal void ReplaceDependencies(IDictionary<string, int> newDeps)
             {
