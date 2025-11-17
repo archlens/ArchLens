@@ -109,109 +109,12 @@ public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRo
         }
         _children.Add(child);
     }
-
     public override string ToString()
     {
         string res = Name + $" ({GetDependencies()})";
         foreach (var c in _children)
             res += "\n \t" + c;
         return res;
-    }
-
-    public override string ToJson()
-    {
-        var str = "";
-        var relations = "";
-        var children = GetChildren();
-
-        foreach (var (dep, count) in GetDependencies())
-        {
-            foreach (var child in children)
-            {
-                if (child.GetDependencies().TryGetValue(dep, out int val))
-                {
-                    var childName = child.Name.Replace("\\", ".");
-                    if (!relations.EndsWith(",\n") && !string.IsNullOrEmpty(relations)) relations += ",\n";
-
-                    relations +=
-                        $$"""
-                            {
-                                "from_file": {
-                                    "name": "{{childName}}",
-                                    "path": "{{childName}}"
-                                },
-                                "to_file": {
-                                    "name": "{{dep}}",
-                                    "path": "{{dep}}"
-                                }
-                            }
-                        """;
-                }
-            }
-
-            if (!str.EndsWith(",\n") && !string.IsNullOrEmpty(str)) str += ",\n";
-
-            str += //TODO: diff view (state)
-                $$"""
-                        {
-                            "state": "NEUTRAL",
-                            "fromPackage": "{{Name}}",
-                            "toPackage": "{{dep}}",
-                            "label": "{{count}}",
-                            "relations": [
-                                {{relations}}
-                            ]
-                        }
-                    """;
-        }
-
-        return str;
-
-    }
-
-
-    public override List<string> ToPlantUML(bool diff, bool isRoot = true)
-    {
-        List<string> puml = [];
-
-        if (isRoot)
-        {
-            foreach (var child in _children)
-            {
-                if (child is DependencyGraphNode)
-                {
-                    var childList = child.ToPlantUML(diff, false);
-
-                    puml.AddRange(childList);
-                }
-            }
-        }
-        else
-        {
-            puml.Add($"package \"{Name.Replace("\\", ".")}\" as {Name.Replace("\\", ".")} {{ }}");
-
-            foreach (var (dep, count) in GetDependencies())
-            {
-                var fromName = Name;
-                var toName = dep.Split(".")[0];
-                var existing = puml.Find(p => p.StartsWith($"{fromName}-->{toName} : "));
-                if (string.IsNullOrEmpty(existing))
-                    puml.Add($"{fromName}-->{toName} : {count}"); //TODO: Add color depending on diff
-                else
-                {
-                    var existingCount = existing.Replace($"{fromName}-->{toName} : ", "");
-                    var canParse = int.TryParse(existingCount, out var exCount);
-
-                    if (!canParse) Console.WriteLine("Error parsing " + existingCount);
-
-                    var newCount = canParse ? exCount + count : count;
-
-                    puml.Remove(existing);
-                    puml.Add($"{fromName}-->{toName} : {newCount}"); //TODO: Add color depending on diff
-                }
-            }
-        }
-        return puml;
     }
 }
 
@@ -223,16 +126,5 @@ public class DependencyGraphLeaf(string projectRoot) : DependencyGraph(projectRo
         foreach (var d in GetDependencies().Keys)
             res += "\n \t \t --> " + d;
         return res;
-    }
-
-    public override List<string> ToPlantUML(bool diff)
-    { //TODO: diff
-        List<string> puml = [];
-
-        foreach (var dep in GetDependencies().Keys)
-        {
-            puml.Add($"\n\"{Name}\"-->{dep}"); //package alias
-        }
-        return puml;
     }
 }
