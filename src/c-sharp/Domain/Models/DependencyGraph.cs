@@ -24,7 +24,7 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
         get => _path;
         init { _path = PathNormaliser.NormalisePath(_projectRoot, value); }
     }
-    
+
     public IDictionary<string, int> GetDependencies() => _dependencies;
 
     public void AddDependency(string depPath)
@@ -95,7 +95,7 @@ public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRo
     }
 
     internal void ReplaceDependencies(IDictionary<string, int> newDeps)
-            {
+    {
         var dict = GetDependencies();
         dict.Clear();
         foreach (var kv in newDeps)
