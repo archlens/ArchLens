@@ -6,6 +6,8 @@ public static class PathNormaliser
 {
     public static string NormalisePath(string root, string path)
     {
+        if (!Path.IsPathFullyQualified(root))
+            root = Path.GetFullPath(root);
         var fullPath = Path.IsPathRooted(path)
             ? path
             : Path.GetFullPath(path, root);
