@@ -3,3 +3,4 @@ include CHANGELOG.md
 include LICENSE
 include requirements.txt
 recursive-include src *.json
+include ../src/c-sharp/bin/Debug/net9.0/Archlens.dll 

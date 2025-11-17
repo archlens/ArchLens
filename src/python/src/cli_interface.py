@@ -27,19 +27,24 @@ import astroid
 
 astroid.MANAGER = None
 
+from pythonnet import load
+load("coreclr")
+import clr
+clr.AddReference(os.path.abspath(os.path.dirname(__file__)).replace('src\\python', '') + "\\c-sharp\\bin\\Debug\\net9.0\\Archlens.dll")
+from Archlens.Main import Program
+
 app = typer.Typer(add_completion=True)
 
 
 @app.command()
 def render(config_path: str = "../../archlens.json"):
     config = read_config_file(config_path)
-
+    
     if (config["language"] == "C#"):
-        path = os.path.dirname(os.path.abspath(os.path.curdir))
-        command = "dotnet run --project {p}\c-sharp\Archlens.csproj".format(p=path)
-        subprocess.run(["powershell", command], shell=True)
-
-        file_name = os.path.dirname(path) + "\diagrams\graph-puml.puml"
+        #Program.Main(["C:/Users/lotte/Skrivebord/Repos/hygge-projekter/MilanoProject/archfig.json"])
+        Program.Main([config_path])
+        #TODO: Get diagrams path from config
+        file_name = "C:/Users/lotte/Skrivebord/Repos/hygge-projekter/MilanoProject/diagrams/graph-puml.puml"
         puml_command = f"{sys.executable} -m plantuml --server https://www.plantuml.com/plantuml/img/  {file_name}"
         subprocess.run(["powershell", puml_command], shell=True)
 
@@ -55,17 +60,21 @@ def render(config_path: str = "../../archlens.json"):
 
 
 @app.command()
-def render_json(config_path: str = "archlens.json"):
+def render_json(config_path: str = "./archlens.json"):
     config = read_config_file(config_path)
 
-    mt_path_manager = PathManagerSingleton()
-    mt_path_manager.setup(config)
+    if (config["language"] == "C#"):
+        #Program.Main(["C:/Users/lotte/Skrivebord/Repos/hygge-projekter/MilanoProject/archfig.json"])
+        Program.Main([config_path])
+    else:
+        mt_path_manager = PathManagerSingleton()
+        mt_path_manager.setup(config)
 
-    am = _create_astroid()
-    g = BTGraph(am)
-    g.build_graph(config)
+        am = _create_astroid()
+        g = BTGraph(am)
+        g.build_graph(config)
 
-    render_views(g, config, save_json)
+        render_views(g, config, save_json)
 
 
 def _create_astroid():
