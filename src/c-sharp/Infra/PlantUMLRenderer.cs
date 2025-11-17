@@ -4,7 +4,6 @@ using Archlens.Domain.Models.Records;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,50 +41,51 @@ public sealed class PlantUMLRenderer : IRenderer
         return graph switch
         {
             DependencyGraphNode node => NodeToPuml(node, diff),
-            DependencyGraphLeaf leaf => LeafToPuml(leaf, diff),
+            DependencyGraphLeaf => [],
             _ => throw new InvalidOperationException("Unknown DependencyGraph type"),
         };
     }
 
-    private static List<string> NodeToPuml(DependencyGraphNode node, bool diff)
+    private static List<string> NodeToPuml(DependencyGraphNode node, bool diff, bool isRoot = true)
     {
-        //TODO: Add color depending on diff
-        string package = $"package \"{node.Name}\" as {node.Name} {{ \n";
-
         List<string> puml = [];
 
-        foreach (var child in node.GetChildren())
+        if (isRoot)
         {
-            string childName = child.Name.Replace(" ", "-");
+            foreach (var child in node.GetChildren())
+            {
+                if (child is DependencyGraphNode)
+                {
+                    var childList = child.ToPlantUML(diff, false);
 
-            if (child is DependencyGraphLeaf)
-            {
-                package += $"\n [{childName}]";
-                var childList = ToPlantUML(child, diff);
-                puml.AddRange(childList);
-            }
-            else
-            {
-                var childList = ToPlantUML(child, diff);
-                var c = childList.Last(); //last is the package declaration, which we want to be added here
-                package += $"\n{c}\n";
-                childList.Remove(c);
-                puml.AddRange(childList);
+                    puml.AddRange(childList);
+                }
             }
         }
-        package += "\n}\n";
-        puml.Add(package);
-        return puml;
-    }
-
-    private static List<string> LeafToPuml(DependencyGraphLeaf leaf, bool diff)
-    {
-        //TODO: diff
-        List<string> puml = [];
-
-        foreach (var dep in leaf.GetDependencies().Keys)
+        else
         {
-            puml.Add($"\n\"{leaf.Name}\"-->{dep}"); //package alias
+            puml.Add($"package \"{node.Name.Replace("\\", ".")}\" as {node.Name.Replace("\\", ".")} {{ }}");
+
+            foreach (var (dep, count) in node.GetDependencies())
+            {
+                var fromName = node.Name;
+                var toName = dep.Split(".")[0];
+                var existing = puml.Find(p => p.StartsWith($"{fromName}-->{toName} : "));
+                if (string.IsNullOrEmpty(existing))
+                    puml.Add($"{fromName}-->{toName} : {count}"); //TODO: Add color depending on diff
+                else
+                {
+                    var existingCount = existing.Replace($"{fromName}-->{toName} : ", "");
+                    var canParse = int.TryParse(existingCount, out var exCount);
+
+                    if (!canParse) Console.WriteLine("Error parsing " + existingCount);
+
+                    var newCount = canParse ? exCount + count : count;
+
+                    puml.Remove(existing);
+                    puml.Add($"{fromName}-->{toName} : {newCount}"); //TODO: Add color depending on diff
+                }
+            }
         }
         return puml;
     }
