@@ -43,6 +43,14 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
         var comparer = StringComparer.OrdinalIgnoreCase;
         var nodes = new Dictionary<string, DependencyGraphNode>(comparer);
 
+        var rootNode = new DependencyGraphNode(_options.FullRootPath)
+        {
+            Name = _options.ProjectName,
+            Path = _options.ProjectRoot,
+            LastWriteTime = File.GetLastWriteTimeUtc(_options.FullRootPath)
+        };
+        nodes["."] = rootNode;
+
         foreach (var moduleAbs in changedModules.Keys)
         {
             var key = CanonRel(_options.FullRootPath, moduleAbs);
