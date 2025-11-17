@@ -9,19 +9,19 @@ namespace ArchlensTests.Application;
 public sealed class DependencyGraphBuilderTests : IDisposable
 {
     private readonly TestFileSystem _fs = new();
+    public void Dispose() => _fs.Dispose();
 
-    private Options MakeOptions() => new Options(
+    private Options MakeOptions() => new(
         ProjectRoot: _fs.Root,
         ProjectName: "Archlens",
         Language: default,
         SnapshotManager: default,
         Format: default,
-        Exclusions: Array.Empty<string>(),
+        Exclusions: [],
         FileExtensions: [".cs"],
         FullRootPath: _fs.Root
     );
 
-    public void Dispose() => _fs.Dispose();
 
     [Fact]
     public async Task Builds_Tree_And_Aggregates_As_Expected()

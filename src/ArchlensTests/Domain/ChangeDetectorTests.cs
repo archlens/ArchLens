@@ -38,10 +38,10 @@ public sealed class ChangeDetectorTests : IDisposable
 
         public void AddFile(string relPath, DateTime lastWriteUtc)
         {
-            var n = new DependencyGraphLeaf("") { Name = System.IO.Path.GetFileName(relPath), Path = "./" + relPath.Replace('\\', '/'), LastWriteTime = lastWriteUtc };
+            var n = new DependencyGraphLeaf(projectRoot) { Name = System.IO.Path.GetFileName(relPath), Path = "./" + relPath.Replace('\\', '/'), LastWriteTime = lastWriteUtc };
             var dir = System.IO.Path.GetDirectoryName(relPath)?.Replace('\\', '/') ?? ".";
             _nodes[relPath.Replace('\\', '/')] = n;
-            _nodes[dir] = new DependencyGraphNode("") { Name = dir, Path = "./" + dir, LastWriteTime = lastWriteUtc };
+            _nodes[dir] = new DependencyGraphNode(projectRoot) { Name = dir, Path = "./" + dir, LastWriteTime = lastWriteUtc };
         }
 
         public override DependencyGraph GetChild(string path)

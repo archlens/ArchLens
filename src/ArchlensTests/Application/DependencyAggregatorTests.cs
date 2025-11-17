@@ -4,18 +4,19 @@ using ArchlensTests.Utils;
 
 namespace ArchlensTests.Application;
 
-public sealed class DependencyAggregatorTests
+public sealed class DependencyAggregatorTests : IDisposable
 {
-    private static DependencyGraphNode MakeDomainTree()
+    private readonly TestFileSystem _fs = new();
+    private static DependencyGraphNode MakeDomainTree(string rootPath)
     {
-        var root = TestGraphs.Node(".", "Archlens", "./");
+        var root = TestGraphs.Node(rootPath, "Archlens", "./");
 
-        var domain = TestGraphs.Node(".", "Domain", "./Domain/");
-        var factory = TestGraphs.Node(".", "Factories", "./Domain/Factories/");
-        var models = TestGraphs.Node(".", "Models", "./Domain/Models/");
-        var records = TestGraphs.Node(".", "Records", "./Domain/Models/Records/");
-        var enums = TestGraphs.Node(".", "Enums", "./Domain/Models/Enums/");
-        var utils = TestGraphs.Node(".", "Utils", "./Domain/Utils/");
+        var domain = TestGraphs.Node(rootPath, "Domain", "./Domain/");
+        var factory = TestGraphs.Node(rootPath, "Factories", "./Domain/Factories/");
+        var models = TestGraphs.Node(rootPath, "Models", "./Domain/Models/");
+        var records = TestGraphs.Node(rootPath, "Records", "./Domain/Models/Records/");
+        var enums = TestGraphs.Node(rootPath, "Enums", "./Domain/Models/Enums/");
+        var utils = TestGraphs.Node(rootPath, "Utils", "./Domain/Utils/");
 
         root.AddChild(domain);
         domain.AddChild(factory);
@@ -24,29 +25,30 @@ public sealed class DependencyAggregatorTests
         models.AddChild(records);
         models.AddChild(enums);
 
-        factory.AddChild(TestGraphs.Leaf(".", "DependencyParserFactory.cs",
+        factory.AddChild(TestGraphs.Leaf(rootPath, "DependencyParserFactory.cs",
             "./Domain/Factories/DependencyParserFactory.cs",
             "Domain.Interfaces", "Domain.Models.Enums", "Domain.Models.Records", "Infra"));
 
-        factory.AddChild(TestGraphs.Leaf(".", "RendererFactory.cs",
+        factory.AddChild(TestGraphs.Leaf(rootPath, "RendererFactory.cs",
             "./Domain/Factories/RendererFactory.cs",
             "Domain.Interfaces", "Domain.Models.Enums", "Infra"));
 
-        records.AddChild(TestGraphs.Leaf(".", "Options.cs",
+        records.AddChild(TestGraphs.Leaf(rootPath, "Options.cs",
             "./Domain/Models/Records/Options.cs",
             "Domain.Models.Enums"));
 
-        models.AddChild(TestGraphs.Leaf(".", "DependencyGraph.cs",
+        models.AddChild(TestGraphs.Leaf(rootPath, "DependencyGraph.cs",
             "./Domain/Models/DependencyGraph.cs",
             "Domain.Utils"));
 
         return root;
     }
+    public void Dispose() => _fs.Dispose();
 
     [Fact]
     public void Aggregation_Drops_Internal_Subtree_Relations_And_Preserves_External()
     {
-        var root = MakeDomainTree();
+        var root = MakeDomainTree(_fs.Root);
         DependencyAggregator.RecomputeAggregates(root);
 
         var domain = root.GetChildren().Single(c => c.Name == "Domain");
@@ -70,12 +72,12 @@ public sealed class DependencyAggregatorTests
     }
 
     [Fact]
-    public void Root_Shows_All_External_Relations()
+    public void Node_Shows_All_External_Relations()
     {
-        var root = MakeDomainTree();
+        var root = MakeDomainTree(_fs.Root);
         DependencyAggregator.RecomputeAggregates(root);
 
-        var rootDeps = root.GetDependencies().Keys;
+        var rootDeps = root.GetChildren()[0].GetDependencies().Keys;
         Assert.Contains("Infra", rootDeps);
     }
 }
