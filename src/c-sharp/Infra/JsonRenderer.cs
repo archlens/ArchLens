@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -13,14 +14,15 @@ public sealed class JsonRenderer : IRenderer
     public string RenderGraph(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         var childrenJson = "";
+        var childrenRelations = "";
         var children = graph.GetChildren();
         for (int i = 0; i < children.Count; i++)
         {
             var child = children[i];
 
             if (childrenJson.Contains(child.Name)) continue;
-
-            if (i > 0) childrenJson += ",\n";
+            if (!childrenJson.EndsWith(",\n") && !string.IsNullOrEmpty(childrenJson)) childrenJson += ",\n";
+            if (!childrenRelations.EndsWith(",\n") && !string.IsNullOrEmpty(childrenRelations) && !string.IsNullOrEmpty(child.ToJson())) childrenRelations += ",\n";
 
             childrenJson +=
                 $$"""
@@ -30,6 +32,8 @@ public sealed class JsonRenderer : IRenderer
                     "state": "NEUTRAL"
                 }
             """;
+
+            childrenRelations += child.ToJson();
         }
 
         var str =
@@ -41,8 +45,7 @@ public sealed class JsonRenderer : IRenderer
             ],
 
             "edges": [
-            {{graph.ToJson()}}
-
+                {{childrenRelations}}
             ]
         }
         """;

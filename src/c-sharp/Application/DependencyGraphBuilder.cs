@@ -32,7 +32,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
             { 
                 Name = name,
                 Path = modulePath,
-                LastWriteTime = File.GetLastWriteTimeUtc(modulePath) 
+                LastWriteTime = File.GetLastWriteTimeUtc(modulePath)
             };
         }
 
@@ -46,7 +46,7 @@ public class DependencyGraphBuilder(IDependencyParser _dependencyParser, Options
             foreach (var content in contents)
             {
                 var contentPath = Path.Combine(module, content);
-                var nameSpace   = GetNameSpace(contentPath);
+                var nameSpace = GetNameSpace(contentPath);
 
                 DependencyGraph child;
 
