@@ -18,7 +18,6 @@ public static class DependencyAggregator
     {
         if (node is DependencyGraphLeaf)
         {
-            // Leaves already contain their file-level dependencies
             return new Dictionary<string, int>(node.GetDependencies(), Cmp);
         }
 
@@ -30,7 +29,6 @@ public static class DependencyAggregator
 
             foreach (var (dep, count) in childAgg)
             {
-                // Drop internal references that belong to this node’s subtree.
                 if (IsInternal(node, dep)) continue;
                 agg[dep] = agg.TryGetValue(dep, out var cur) ? cur + count : count;
             }
