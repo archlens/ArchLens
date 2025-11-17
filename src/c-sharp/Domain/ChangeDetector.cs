@@ -92,7 +92,7 @@ public sealed class ChangeDetector
                 files = Directory.EnumerateFiles(dir).Where(f => !IsExcluded(root, f, exclusions));
             } catch { /* ignore */ }
 
-            var includedFiles = files.Where(file => extensions.Contains(Path.GetExtension(file))).Select(file => GetRelative(root, file).Split('/').Last()).ToList();
+            var includedFiles = files.Where(file => extensions.Contains(Path.GetExtension(file)));
             result[dir] = result.TryGetValue(dir, out var existing)
                 ? existing.Concat(includedFiles).ToList()
                 : [.. includedFiles];
