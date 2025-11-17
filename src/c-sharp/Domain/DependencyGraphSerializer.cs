@@ -74,7 +74,6 @@ public static class DependencyGraphSerializer
     private static DependencyGraph ParseNode(JsonElement jsonNode, string rootPath)
     {
         var name = jsonNode.TryGetProperty("name", out var nEl) ? nEl.GetString() : String.Empty;
-        var nameSpace = jsonNode.TryGetProperty("nameSpace", out var nsEl) ? nsEl.GetString() : String.Empty;
         var path = jsonNode.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
         var lastWrite = ReadDateTime(jsonNode);
 
