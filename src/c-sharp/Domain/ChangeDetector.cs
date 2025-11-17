@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Archlens.Domain.Models;
+using Archlens.Domain.Models.Records;
+using Archlens.Domain.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Archlens.Domain.Models;
-using Archlens.Domain.Models.Records;
 
 namespace Archlens.Domain;
 
@@ -36,6 +38,8 @@ public sealed class ChangeDetector
             try
             {
                 var relativePath = GetRelative(projectRoot, pair.Key);
+                if (relativePath.Equals("."))
+                    return;
                 var inLastGraph = lastSavedGraph?.GetChild(relativePath) != null;
                 if (!inLastGraph)
                 {
