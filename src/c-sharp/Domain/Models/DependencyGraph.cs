@@ -10,7 +10,7 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 {
     private readonly DateTime _lastWriteTime;
     private readonly string _path;
-    private IDictionary<string, int> _dependencies { get; init; } = new Dictionary<string, int>();
+    private Dictionary<string, int> _dependencies { get; init; } = [];
     
     required public DateTime LastWriteTime 
     { 
