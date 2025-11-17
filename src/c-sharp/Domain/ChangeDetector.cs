@@ -166,7 +166,7 @@ public sealed class ChangeDetector
         {
             foreach (var ban in rules.Segments)
             {
-                if (segment.Equals(ban, StringComparison.OrdinalIgnoreCase))
+                if (MatchesSuffixPattern(segment, ban))
                     return true;
             }
         }
@@ -178,6 +178,16 @@ public sealed class ChangeDetector
 
         return false;
     }
+
+    public static bool MatchesSuffixPattern(string value, string pattern)
+    {
+        if (!pattern.Contains('*'))
+            return string.Equals(value, pattern, StringComparison.Ordinal);
+
+        var suffix = pattern.TrimStart('*');
+        return value.EndsWith(suffix, StringComparison.Ordinal);
+    }
+
 
     private static string GetRelative(string root, string path)
     {
