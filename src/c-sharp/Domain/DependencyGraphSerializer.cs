@@ -151,7 +151,7 @@ public static class DependencyGraphSerializer
         {
             var s = tEl.GetString();
             if (DateTime.TryParse(s, out var dt))
-                return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                return dt.AddHours(-1);
             return DateTime.UtcNow;
         }
 
