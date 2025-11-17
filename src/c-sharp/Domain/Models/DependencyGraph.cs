@@ -94,21 +94,12 @@ public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRo
         {
             var ownedChildNames = _children.Select(c => c.Name).Where(ns => !string.IsNullOrEmpty(ns));
 
-            if (ownedChildNames.Any())
+    internal void ReplaceDependencies(IDictionary<string, int> newDeps)
             {
-                foreach (var dep in deps)
-                {
-                    var isInternalDep = ownedChildNames.Any(cn => dep.Contains(cn, StringComparison.Ordinal));
-                    if (!isInternalDep)
-                        AddDependency(dep);
-                }
-            }
-            else
-            {
-                AddDependencyRange([.. deps]);
-            }
-        }
-        _children.Add(child);
+        var dict = GetDependencies();
+        dict.Clear();
+        foreach (var kv in newDeps)
+            dict[kv.Key] = kv.Value;
     }
 
     public override string ToString()
