@@ -33,12 +33,12 @@ class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependen
         {
             StreamReader sr = new(path);
 
-            string line = await sr.ReadLineAsync();
+            string line = await sr.ReadLineAsync(ct);
 
             while (line != null)
             {
                 lines += "\n" + line;
-                line = await sr.ReadLineAsync();
+                line = await sr.ReadLineAsync(ct);
             }
 
             sr.Close();
