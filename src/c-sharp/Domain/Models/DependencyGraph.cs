@@ -47,7 +47,6 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 
     public virtual IReadOnlyList<DependencyGraph> GetChildren() => [];
     public override string ToString() => Name;
-    public virtual string ToJson() => "";
 
     public virtual List<string> ToPlantUML(bool diff, bool isRoot = true) => [];
 
@@ -102,102 +101,6 @@ public class DependencyGraphNode(string projectRoot) : DependencyGraph(projectRo
         foreach (var c in _children)
             res += "\n \t" + c;
         return res;
-    }
-
-    public override string ToJson()
-    {
-        var str = "";
-        var relations = "";
-        var children = GetChildren();
-
-        foreach (var (dep, count) in GetDependencies())
-        {
-            foreach (var child in children)
-            {
-                if (child.GetDependencies().TryGetValue(dep, out int val))
-                {
-                    var childName = child.Name.Replace("\\", ".");
-                    if (!relations.EndsWith(",\n") && !string.IsNullOrEmpty(relations)) relations += ",\n";
-
-                    relations +=
-                        $$"""
-                            {
-                                "from_file": {
-                                    "name": "{{childName}}",
-                                    "path": "{{childName}}"
-                                },
-                                "to_file": {
-                                    "name": "{{dep}}",
-                                    "path": "{{dep}}"
-                                }
-                            }
-                        """;
-                }
-            }
-
-            if (!str.EndsWith(",\n") && !string.IsNullOrEmpty(str)) str += ",\n";
-
-            str += //TODO: diff view (state)
-                $$"""
-                        {
-                            "state": "NEUTRAL",
-                            "fromPackage": "{{Name}}",
-                            "toPackage": "{{dep}}",
-                            "label": "{{count}}",
-                            "relations": [
-                                {{relations}}
-                            ]
-                        }
-                    """;
-        }
-
-        return str;
-
-    }
-
-
-    public override List<string> ToPlantUML(bool diff, bool isRoot = true)
-    {
-        List<string> puml = [];
-
-        if (isRoot)
-        {
-            foreach (var child in _children)
-            {
-                if (child is DependencyGraphNode)
-                {
-                    var childList = child.ToPlantUML(diff, false);
-
-                    puml.AddRange(childList);
-                }
-            }
-        }
-        else
-        {
-            puml.Add($"package \"{Name.Replace("\\", ".")}\" as {Name.Replace("\\", ".")} {{ }}");
-
-            foreach (var (dep, count) in GetDependencies())
-            {
-                var fromName = Name;
-                var toName = dep.Split(".")[0];
-                var existing = puml.Find(p => p.StartsWith($"{fromName}-->{toName} : "));
-                if (string.IsNullOrEmpty(existing))
-                    puml.Add($"{fromName}-->{toName} : {count}"); //TODO: Add color depending on diff
-                else
-                {
-                    var existingCount = existing.Replace($"{fromName}-->{toName} : ", "");
-                    var canParse = int.TryParse(existingCount, out var exCount);
-
-                    if (!canParse) Console.WriteLine("Error parsing " + existingCount);
-
-                    var newCount = canParse ? exCount + count : count;
-
-                    puml.Remove(existing);
-                    puml.Add($"{fromName}-->{toName} : {newCount}"); //TODO: Add color depending on diff
-                }
-            }
-        }
-        return puml;
     }
 }
 
