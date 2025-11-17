@@ -45,7 +45,7 @@ public sealed class ChangeDetector
                 {
                     var lastNodeWriteTime = lastSavedGraph.GetChild(relativePath).LastWriteTime;
 
-                    var currentWriteTime = File.GetLastWriteTimeUtc(pair.Key);
+                    var currentWriteTime = DateTimeNormaliser.NormaliseUTC(File.GetLastWriteTimeUtc(pair.Key));
 
                     if (currentWriteTime > lastNodeWriteTime)
                         changed.Add(pair.Key, pair.Value);
