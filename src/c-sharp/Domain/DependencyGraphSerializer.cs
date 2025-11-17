@@ -118,7 +118,12 @@ public static class DependencyGraphSerializer
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, _) in depKeys)
+            {
+                if (children.Select(d => d.Path).Contains(dep))
+                    continue;
                 leaf.AddDependency(dep);
+
+            }
             return leaf;
         }
         else
