@@ -15,7 +15,7 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
     required public DateTime LastWriteTime 
     { 
         get => _lastWriteTime;
-        init { _lastWriteTime = NormaliseUTC(value); }
+        init { _lastWriteTime = DateTimeNormaliser.NormaliseUTC(value); }
     }
 
     required public string Name { get; init; }
@@ -67,12 +67,6 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
                     yield return desc;
             }
         }
-    }
-
-    private static DateTime NormaliseUTC(DateTime time)
-    {
-        var convertedDate = DateTime.SpecifyKind(time, DateTimeKind.Utc);
-        return convertedDate.ToLocalTime();
     }
 }
 
