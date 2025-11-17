@@ -84,7 +84,26 @@ public class ConfigManager(string _path)
 
     private static string GetFullRootPath(string root)
     {
-        return Path.GetFullPath(root);
+        if (string.IsNullOrWhiteSpace(root))
+            throw new ArgumentException("Path is required.", nameof(root));
+
+        var full = Path.GetFullPath(root);
+
+        var dir = Directory.Exists(full)
+            ? new DirectoryInfo(full)
+            : new FileInfo(full).Directory!;
+
+        var comp = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
+        while (dir is not null && !string.Equals(dir.Name, "bin", comp))
+            dir = dir.Parent;
+
+        if (dir is null || dir.Parent is null)
+            throw new InvalidOperationException($"'bin' segment not found in '{full}'.");
+
+        return dir.Parent.FullName;
     }
 
     private static string NormalizeExtension(string ext)
