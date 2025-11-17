@@ -1,4 +1,5 @@
 ﻿
+using Archlens.Application;
 using Archlens.Domain.Models;
 using Archlens.Domain.Utils;
 using System;
@@ -26,11 +27,13 @@ public static class DependencyGraphSerializer
         var rootEl = doc.RootElement;
         var rootPath = rootEl.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
 
-        return rootEl.ValueKind switch
+        var parsedNode = rootEl.ValueKind switch
         {
             JsonValueKind.Object => ParseNode(rootEl, rootPath),
             _ => throw new InvalidOperationException("Expected a JSON object or array at root.")
         };
+        DependencyAggregator.RecomputeAggregates(parsedNode);
+        return parsedNode;
     }
 
     private static string SerializeNode(DependencyGraphNode node)
