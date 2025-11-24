@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-using Archlens.Application;
-using Archlens.Domain;
+﻿using Archlens.Application;
 using System;
 using System.IO;
 
@@ -14,9 +12,7 @@ public class Program
         {
             var configPath = args.Length > 0 ? args[0].Trim() : FindConfigFile("archlens.json");
 
-            var configManager = new ConfigManager(configPath);
-
-            var rendererService = new RendererService(configManager);
+            var rendererService = new RendererService(configPath);
 
             await rendererService.RenderDependencyGraphAsync();
         }
