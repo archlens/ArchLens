@@ -1,11 +1,10 @@
-﻿
-using Archlens.Application;
-using Archlens.Domain.Models;
+﻿using Archlens.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
+
 namespace Archlens.Domain;
 
 public static class DependencyGraphSerializer

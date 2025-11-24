@@ -2,7 +2,7 @@
 using Archlens.Domain.Models;
 using Archlens.Domain.Models.Enums;
 using Archlens.Domain.Models.Records;
-using Archlens.Infra;
+using Archlens.Infra.SnapshotManagers;
 using ArchlensTests.Utils;
 using System.Net;
 

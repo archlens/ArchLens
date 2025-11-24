@@ -1,6 +1,6 @@
 ﻿using Archlens.Domain.Models;
 using Archlens.Domain.Models.Records;
-using Archlens.Infra;
+using Archlens.Infra.SnapshotManagers;
 using ArchlensTests.Utils;
 
 namespace ArchlensTests.Infra;
