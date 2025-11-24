@@ -11,9 +11,4 @@ public sealed class TestDependencyParser(IReadOnlyDictionary<string, IReadOnlyLi
         _map.TryGetValue(path, out var deps);
         return Task.FromResult(deps ?? []);
     }
-
-    public Task<IReadOnlyList<string>> ParseModuleDependencies(string path, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
 }

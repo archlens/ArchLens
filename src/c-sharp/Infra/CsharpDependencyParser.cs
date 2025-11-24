@@ -48,11 +48,4 @@ class CsharpDependencyParser(Options _options) : IDependencyParser
         }
 
     }
-
-    public Task<IReadOnlyList<string>> ParseModuleDependencies(string path, CancellationToken ct = default)
-    {
-        //for each file in module --> Parse file dependencies
-        //for each module in module --> Parse module dependencies
-        throw new System.NotImplementedException();
-    }
 }
