@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,6 +27,7 @@ public sealed class ChangeDetector
 
         var rules = CompileExclusions(options.Exclusions);
         var modules = EnumerateFiles(projectRoot, options.FileExtensions, rules);
+        if (lastSavedGraph == null) return modules;
 
         var changed = new Dictionary<string, IEnumerable<string>>();
         var thread = new SemaphoreSlim(Environment.ProcessorCount - 1);
@@ -37,21 +37,21 @@ public sealed class ChangeDetector
             await thread.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                var relativePath = GetRelative(projectRoot, pair.Key);
-                if (relativePath.Equals("."))
+                var relativePath = PathNormaliser.NormalisePath(projectRoot, pair.Key);
+                if (relativePath.Equals("./"))
                     return;
-                var inLastGraph = lastSavedGraph?.GetChild(relativePath) != null;
+                var inLastGraph = lastSavedGraph.ContainsPath(relativePath);
                 if (!inLastGraph)
                 {
                     changed.Add(pair.Key, pair.Value);
                 }
                 else
                 {
-                    var lastNodeWriteTime = lastSavedGraph.GetChild(relativePath).LastWriteTime;
+                    var lastNodeWriteTime = lastSavedGraph.FindByPath(relativePath).LastWriteTime;
 
                     var currentWriteTime = DateTimeNormaliser.NormaliseUTC(File.GetLastWriteTimeUtc(pair.Key));
 
-                    if (currentWriteTime > lastNodeWriteTime)
+                    if (TrimMilliseconds(currentWriteTime) > TrimMilliseconds(lastNodeWriteTime))
                         changed.Add(pair.Key, pair.Value);
                 }
             }
@@ -64,6 +64,15 @@ public sealed class ChangeDetector
         await Task.WhenAll(tasks).ConfigureAwait(false);
         return changed;
     }
+
+    // Source - https://stackoverflow.com/a
+    // Posted by Dean Chalk, modified by community. See post 'Timeline' for change history
+    // Retrieved 2025-11-23, License - CC BY-SA 4.0
+    public static DateTime TrimMilliseconds(DateTime dt)
+    {
+        return new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second, 0, dt.Kind);
+    }
+
 
     private static Dictionary<string, IEnumerable<string>> EnumerateFiles(string root, IReadOnlyList<string> extensions, ExclusionRule exclusions)
     {
