@@ -1,12 +1,12 @@
-namespace Archlens.Domain.Factories;
-
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models.Enums;
 using Archlens.Domain.Models.Records;
-using Archlens.Infra;
+using Archlens.Infra.SnapshotManagers;
 using System;
 
-public sealed class SnapsnotManagerFactory
+namespace Archlens.Domain.Strategies;
+
+public sealed class SnapsnotManagerStrategy
 {
     public static ISnapshotManager SelectSnapshotManager(Options o) => o.SnapshotManager switch
     {

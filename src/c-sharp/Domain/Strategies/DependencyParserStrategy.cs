@@ -2,10 +2,11 @@ using System;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models.Enums;
 using Archlens.Domain.Models.Records;
-using Archlens.Infra;
+using Archlens.Infra.Parsers;
 
-namespace Archlens.Domain.Factories;
-public sealed class DependencyParserFactory
+namespace Archlens.Domain.Strategies;
+
+public sealed class DependencyParserStrategy
 {
     public static IDependencyParser SelectDependencyParser(Options o) => o.Language switch
     {

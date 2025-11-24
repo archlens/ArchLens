@@ -1,11 +1,11 @@
-namespace Archlens.Domain.Factories;
-
 using System;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models.Enums;
-using Archlens.Infra;
+using Archlens.Infra.Renderers;
 
-public sealed class RendererFactory
+namespace Archlens.Domain.Strategies;
+
+public sealed class RendererStrategy
 {
     public static IRenderer SelectRenderer(RenderFormat f) => f switch
     {
