@@ -1,7 +1,6 @@
 ﻿
 using Archlens.Application;
 using Archlens.Domain.Models;
-using Archlens.Domain.Utils;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,11 +20,10 @@ public static class DependencyGraphSerializer
         };
     }
 
-    public static DependencyGraph Deserialize(string json)
+    public static DependencyGraph Deserialize(string json, string rootPath)
     {
         using var doc = JsonDocument.Parse(json);
         var rootEl = doc.RootElement;
-        var rootPath = rootEl.TryGetProperty("path", out var pEl) ? pEl.GetString() : String.Empty;
 
         var parsedNode = rootEl.ValueKind switch
         {
@@ -134,7 +132,7 @@ public static class DependencyGraphSerializer
             var node = new DependencyGraphNode(rootPath)
             {
                 Name = name,
-                Path = PathNormaliser.NormalisePath(rootPath, path),
+                Path = path,
                 LastWriteTime = lastWrite
             };
             foreach (var (dep, count) in depKeys)
