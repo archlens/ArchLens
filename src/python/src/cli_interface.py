@@ -37,16 +37,16 @@ app = typer.Typer(add_completion=True)
 
 
 @app.command()
-def render(config_path: str = "../../archlens.json"):
+def render(config_path: str = "./archlens.json"):
     config = read_config_file(config_path)
     
     if (config["language"] == "C#"):
-        #Program.Main(["C:/Users/lotte/Skrivebord/Repos/hygge-projekter/MilanoProject/archfig.json"])
         Program.Main([config_path])
-        #TODO: Get diagrams path from config
-        file_name = "C:/Users/lotte/Skrivebord/Repos/hygge-projekter/MilanoProject/diagrams/graph-puml.puml"
-        puml_command = f"{sys.executable} -m plantuml --server https://www.plantuml.com/plantuml/img/  {file_name}"
-        subprocess.run(["powershell", puml_command], shell=True)
+
+        if (config["format"] == "puml" or config["format"] == "PlantUML"):
+            file_name = config["saveLocation"] + "/graph-puml.puml"
+            puml_command = f"{sys.executable} -m plantuml --server https://www.plantuml.com/plantuml/img/  {file_name}"
+            subprocess.run(["powershell", puml_command], shell=True)
 
     else:
         mt_path_manager = PathManagerSingleton()
@@ -64,7 +64,6 @@ def render_json(config_path: str = "./archlens.json"):
     config = read_config_file(config_path)
 
     if (config["language"] == "C#"):
-        #Program.Main(["C:/Users/lotte/Skrivebord/Repos/hygge-projekter/MilanoProject/archfig.json"])
         Program.Main([config_path])
     else:
         mt_path_manager = PathManagerSingleton()

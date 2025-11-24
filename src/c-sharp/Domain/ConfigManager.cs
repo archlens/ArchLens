@@ -99,13 +99,13 @@ public class ConfigManager(string _path)
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
-        while (dir is not null && !string.Equals(dir.Name, "bin", comp))
+        while (dir is not null && dir.FullName.Contains("bin", comp))
             dir = dir.Parent;
 
         if (dir is null || dir.Parent is null)
-            throw new InvalidOperationException($"'bin' segment not found in '{full}'.");
+            throw new InvalidOperationException($"Root not found segment not found in '{full}'.");
 
-        return dir.Parent.FullName;
+        return dir.FullName;
     }
 
     private static string NormalizeExtension(string ext)
@@ -120,7 +120,7 @@ public class ConfigManager(string _path)
         _ => []
     };
 
-    private static string MapProjectRoot(ConfigDto dto) 
+    private static string MapProjectRoot(ConfigDto dto)
     {
         if (!String.IsNullOrEmpty(dto.ProjectRoot))
             return dto.ProjectRoot;
@@ -129,9 +129,9 @@ public class ConfigManager(string _path)
         return String.Empty;
     }
 
-    private static string MapName(ConfigDto dto) 
-    { 
-        if(!String.IsNullOrEmpty(dto.ProjectName))
+    private static string MapName(ConfigDto dto)
+    {
+        if (!String.IsNullOrEmpty(dto.ProjectName))
             return dto.ProjectName;
         if (!String.IsNullOrEmpty(dto.Name))
             return dto.Name;

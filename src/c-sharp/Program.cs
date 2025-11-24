@@ -3,7 +3,6 @@ using Archlens.Application;
 using Archlens.Domain;
 using System;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace Archlens.Main;
 
@@ -11,13 +10,21 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        var configPath = args.Length > 0 ? args[0].Trim() : FindConfigFile("archlens.json");
-        
-        var configManager = new ConfigManager(configPath);
+        try
+        {
+            var configPath = args.Length > 0 ? args[0].Trim() : FindConfigFile("archlens.json");
 
-        var rendererService = new RendererService(configManager);
+            var configManager = new ConfigManager(configPath);
 
-        await rendererService.RenderDependencyGraphAsync();
+            var rendererService = new RendererService(configManager);
+
+            await rendererService.RenderDependencyGraphAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"EXCEPTION: {e.Message}\n{e.StackTrace}");
+        }
+
     }
 
     private static string FindConfigFile(string fileName)
