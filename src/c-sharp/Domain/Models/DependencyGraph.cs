@@ -11,15 +11,15 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
     private readonly DateTime _lastWriteTime;
     private readonly string _path;
     private Dictionary<string, int> _dependencies { get; init; } = [];
-    
-    required public DateTime LastWriteTime 
-    { 
+
+    required public DateTime LastWriteTime
+    {
         get => _lastWriteTime;
         init { _lastWriteTime = DateTimeNormaliser.NormaliseUTC(value); }
     }
 
     required public string Name { get; init; }
-    required public string Path 
+    required public string Path
     {
         get => _path;
         init { _path = PathNormaliser.NormalisePath(_projectRoot, value); }
@@ -47,8 +47,6 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 
     public virtual IReadOnlyList<DependencyGraph> GetChildren() => [];
     public override string ToString() => Name;
-
-    public virtual List<string> ToPlantUML(bool diff, bool isRoot = true) => [];
 
     public bool ContainsPath(string path)
     {

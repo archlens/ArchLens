@@ -14,7 +14,7 @@ public sealed class PlantUMLRenderer : IRenderer
     public string RenderGraph(DependencyGraph graph, Options options, CancellationToken ct = default)
     {
         string title = options.ProjectName;
-        List<string> graphString = ToPlantUML(graph, false); //TODO: diff
+        List<string> graphString = ToPlantUML(graph); //TODO: diff
         graphString.Sort((s1, s2) => s1.Contains("package") ? (s2.Contains("package") ? 0 : -1) : (s2.Contains("package") ? 1 : 0));
 
         string uml_str = $"""
@@ -36,17 +36,17 @@ public sealed class PlantUMLRenderer : IRenderer
         await File.WriteAllTextAsync(filename, content, ct);
     }
 
-    public static List<string> ToPlantUML(DependencyGraph graph, bool diff)
+    public static List<string> ToPlantUML(DependencyGraph graph, bool isRoot = true)
     {
         return graph switch
         {
-            DependencyGraphNode node => NodeToPuml(node, diff),
+            DependencyGraphNode node => NodeToPuml(node, isRoot),
             DependencyGraphLeaf => [],
             _ => throw new InvalidOperationException("Unknown DependencyGraph type"),
         };
     }
 
-    private static List<string> NodeToPuml(DependencyGraphNode node, bool diff, bool isRoot = true)
+    private static List<string> NodeToPuml(DependencyGraphNode node, bool isRoot = true)
     {
         List<string> puml = [];
 
@@ -56,7 +56,7 @@ public sealed class PlantUMLRenderer : IRenderer
             {
                 if (child is DependencyGraphNode)
                 {
-                    var childList = child.ToPlantUML(diff, false);
+                    var childList = ToPlantUML(child, false);
 
                     puml.AddRange(childList);
                 }
