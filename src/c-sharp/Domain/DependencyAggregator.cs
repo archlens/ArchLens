@@ -3,7 +3,7 @@ using Archlens.Domain.Models;
 using System;
 using System.Collections.Generic;
 
-namespace Archlens.Application;
+namespace Archlens.Domain;
 
 public static class DependencyAggregator
 {
@@ -47,4 +47,3 @@ public static class DependencyAggregator
         return dep.StartsWith(ns, true, System.Globalization.CultureInfo.InvariantCulture);
     }
 }
-
