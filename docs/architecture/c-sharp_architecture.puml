@@ -1,0 +1,112 @@
+@startuml
+title ArchLens C# Project Architecture
+skinparam linetype ortho
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam maxMessageSize 200
+
+package "ArchLens" {
+
+  package "Presentation (CLI)" as Presentation {
+    [--render_graph] as RenderAPI
+  }
+
+  package "Application Layer" as Application {
+    [RenderService] as RenderService
+    [DependencyGraphBuilder] as Builder
+  }
+
+  package "Domain Layer" as Domain{
+
+    [ChangeDetector] as ChangeDetector
+    [ConfigManager] as Config
+    [DependencyAggregator] as DependencyAggregator
+    [DependencyGraphSerialiser] as Serialiser
+
+    ChangeDetector -[hidden]down-> Config
+    Config -[hidden]down-> DependencyAggregator
+    DependencyAggregator -[hidden]down-> Serialiser
+
+    package "Strategies" as Strategies {
+      [DependencyParserStrategy] as ParserStrategy
+      [RendererStrategy] as RenderStrategy
+      [SnapshotManagerStrategy] as SnapStrategy
+
+      ParserStrategy -[hidden]down-> RenderStrategy
+      RenderStrategy -[hidden]down-> SnapStrategy
+    }
+
+    package "Interfaces" as Interfaces {
+      [IDependencyParser] as IParser
+      [IRenderer] as IRenderer      
+      [ISnapshotManager] as ISnapshotManager
+
+      IParser -[hidden]down-> IRenderer
+      IRenderer -[hidden]down-> ISnapshotManager
+    }
+
+    package "Models" as Models {
+      [DependencyGraph] as DependencyGraph
+
+      package "Enums" as Enums {
+        [Language] as Language
+        [RenderFormat] as RenderFormat
+        [SnapshotManager] as SnapshotManager
+
+        Language -[hidden]down-> RenderFormat
+        RenderFormat -[hidden]down-> SnapshotManager
+      }
+      package "Records" as Records {
+        [Options] as Options
+      }
+
+      DependencyGraph -[hidden]d-> Records
+    }
+
+    Strategies -[hidden]r-> Interfaces
+    Interfaces -[hidden]r-> Models
+    Models -[hidden]r-> ChangeDetector
+    Models -[hidden]r-> Config
+    Models -[hidden]r-> DependencyAggregator
+    Models -[hidden]r-> Serialiser
+  }
+
+  package "Infrastructure Layer" as Infra{
+    package "Parsers" as Parsers {
+      [CsharpDependencyParser] as CsharpDependencyParser
+    }
+    package "Renderes" as Renderes {
+      [JsonRenderer] as JSONRenderer
+      [PlantUMLRenderer] as PlantUMLRenderer
+
+      JSONRenderer -[hidden]d-> PlantUMLRenderer
+    }
+    package "SnapshotManagers" as SnapshotManagers {
+      [GitSnapshotManager] as GitBase
+      [LocalSnapshotManager] as LocalBase
+
+      GitBase -[hidden]d-> LocalBase
+    }
+  }
+
+  Presentation-[hidden]down-> Application
+  Application -[hidden]down-> Domain
+
+  Models -[hidden]down-> Infra
+  Strategies -[hidden]down-> Infra
+  Interfaces -[hidden]down-> Infra
+  Serialiser -[hidden]d-> Infra    
+
+  Infra -[hidden]u-> Serialiser    
+  Infra -[hidden]u-> Models    
+  Infra -[hidden]u-> Strategies
+  Infra -[hidden]u-> Interfaces
+}
+
+Infra .u.> Strategies
+Infra -u-|> Interfaces
+
+Infra .u.> Models
+
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+title ArchLens Python Paser Architecture
+skinparam linetype ortho
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam maxMessageSize 200
+skinparam nodesep 40
+skinparam ranksep 75
+
+package "src" as src {
+
+    [cli_interface] as cli
+
+    folder "core" as core 
+
+
+    folder "views" as views 
+
+
+    folder "utils" as utils 
+
+
+    folder "git_integration" as git
+
+
+    folder "devScripts" as dev
+
+
+    folder "terraform" as terraform 
+
+
+    folder "providers" as providers {
+        folder "json" as json
+        folder "plantuml" as puml
+    }
+}
+
+cli --> utils
+cli --> core
+cli --> views
+cli --> providers
+cli -r-> git
+git -[hidden]-> dev
+dev -[hidden]-> terraform
+
+utils --> core
+
+views -u-> core
+
+json -u-> views
+puml -u-> views
+
+
+@enduml
