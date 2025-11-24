@@ -13,7 +13,7 @@ namespace Archlens.Infra;
 
 class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependencyParser
 {
-    public ICollection<UsingDirectiveSyntax> Usings { get; } = new List<UsingDirectiveSyntax>();
+    public ICollection<UsingDirectiveSyntax> Usings { get; set; } = [];
 
     public override void VisitUsingDirective(UsingDirectiveSyntax node)
     {
@@ -25,7 +25,7 @@ class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependen
 
     public async Task<IReadOnlyList<string>> ParseFileDependencies(string path, CancellationToken ct = default)
     {
-
+        Usings = [];
         string lines = "";
         List<string> usings = [];
 
@@ -59,10 +59,5 @@ class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependen
         }
 
         return usings;
-    }
-
-    public Task<IReadOnlyList<string>> ParseModuleDependencies(string path, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
     }
 }
