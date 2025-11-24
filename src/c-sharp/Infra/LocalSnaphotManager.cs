@@ -36,7 +36,7 @@ public sealed class LocalSnaphotManager(string _localDirName, string _localFileN
 
         var json = await File.ReadAllTextAsync(path, ct);
 
-        var graph = DependencyGraphSerializer.Deserialize(json);
+        var graph = DependencyGraphSerializer.Deserialize(json, root);
 
         return graph ?? null;
     }

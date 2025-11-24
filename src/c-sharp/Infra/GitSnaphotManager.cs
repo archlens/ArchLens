@@ -53,7 +53,7 @@ public sealed class GitSnaphotManager : ISnapshotManager
                 if (string.IsNullOrWhiteSpace(json))
                     continue;
 
-                var graph = DependencyGraphSerializer.Deserialize(json);
+                var graph = DependencyGraphSerializer.Deserialize(json, options.FullRootPath);
                 if (graph is not null) return graph;
             }
             catch (OperationCanceledException) { throw; }
