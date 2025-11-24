@@ -1,4 +1,4 @@
-﻿using Archlens.Application;
+﻿using Archlens.Domain;
 using Archlens.Domain.Models;
 using ArchlensTests.Utils;
 
