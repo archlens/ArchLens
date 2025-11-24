@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Archlens.Infra;
+namespace Archlens.Infra.SnapshotManagers;
 
 public sealed class GitSnaphotManager : ISnapshotManager
 {
@@ -21,7 +21,7 @@ public sealed class GitSnaphotManager : ISnapshotManager
     public GitSnaphotManager(string gitDirName, string gitFileName)
         : this(gitDirName, gitFileName, handler: null) { }
 
-    public GitSnaphotManager(string gitDirName, string gitFileName, HttpMessageHandler? handler)
+    public GitSnaphotManager(string gitDirName, string gitFileName, HttpMessageHandler handler)
     {
         _gitDirName = gitDirName;
         _gitFileName = gitFileName;

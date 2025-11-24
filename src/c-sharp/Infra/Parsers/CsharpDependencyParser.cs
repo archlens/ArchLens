@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models.Records;
 
-namespace Archlens.Infra;
+namespace Archlens.Infra.Parsers;
 
 class CsharpDependencyParser(Options _options) : IDependencyParser
 {

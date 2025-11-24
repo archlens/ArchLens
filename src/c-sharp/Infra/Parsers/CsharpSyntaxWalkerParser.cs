@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace Archlens.Infra;
+namespace Archlens.Infra.Parsers;
 
 class CsharpSyntaxWalkerParser(Options _options) : CSharpSyntaxWalker, IDependencyParser
 {

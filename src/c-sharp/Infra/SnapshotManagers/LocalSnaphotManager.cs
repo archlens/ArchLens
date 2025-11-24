@@ -6,7 +6,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Archlens.Infra;
+namespace Archlens.Infra.SnapshotManagers;
 
 public sealed class LocalSnaphotManager(string _localDirName, string _localFileName) : ISnapshotManager
 {

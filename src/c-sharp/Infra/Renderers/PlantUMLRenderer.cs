@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Archlens.Infra;
+namespace Archlens.Infra.Renderers;
 
 public sealed class PlantUMLRenderer : IRenderer
 {
