@@ -50,6 +50,54 @@ public class DependencyGraph(string _projectRoot) : IEnumerable<DependencyGraph>
 
     public virtual List<string> ToPlantUML(bool diff, bool isRoot = true) => [];
 
+    public bool ContainsPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        var target = PathNormaliser.NormalisePath(_projectRoot, path);
+
+        var stack = new Stack<DependencyGraph>();
+        stack.Push(this);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+
+            if (current.Path == target)
+                return true;
+
+            var children = current.GetChildren();
+            for (int i = children.Count - 1; i >= 0; i--)
+                stack.Push(children[i]);
+        }
+
+        return false;
+    }
+
+    public DependencyGraph? FindByPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
+
+        var target = PathNormaliser.NormalisePath(_projectRoot, path);
+
+        var stack = new Stack<DependencyGraph>();
+        stack.Push(this);
+
+        while (stack.Count > 0)
+        {
+            var current = stack.Pop();
+            if (current.Path == target)
+                return current;
+
+            var children = current.GetChildren();
+            for (int i = children.Count - 1; i >= 0; i--)
+                stack.Push(children[i]);
+        }
+
+        return null;
+    }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
