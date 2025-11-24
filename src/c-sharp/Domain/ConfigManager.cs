@@ -16,7 +16,9 @@ public class ConfigManager(string _path)
     {
 #pragma warning disable CS8632
         public string? ProjectRoot { get; set; }
+        public string? RootFolder { get; set; }
         public string? ProjectName { get; set; }
+        public string? Name { get; set; }
         public string? Language { get; set; }
         public string? SnapshotManager { get; set; }
         public string? Format { get; set; }
@@ -51,8 +53,8 @@ public class ConfigManager(string _path)
 
     private static Options MapOptions(ConfigDto dto, string baseDir)
     {
-        var projectRoot = dto.ProjectRoot ?? baseDir;
-        var projectName = dto.ProjectName ?? baseDir.Split("\\").Last();
+        var projectRoot = MapProjectRoot(dto) ?? baseDir;
+        var projectName = MapName(dto) ?? baseDir.Split("\\").Last();
         var language = MapLanguage(dto.Language ?? "c#");
         var snapshotManager = MapSnapshotManager(dto.SnapshotManager ?? "git");
         var format = MapFormat(dto.Format ?? "json");
@@ -62,10 +64,10 @@ public class ConfigManager(string _path)
 
         var fileExts = (dto.FileExtensions ?? DefaultExtensions(language)).Select(NormalizeExtension).ToArray();
 
-        if (!Directory.Exists(projectRoot))
-            throw new DirectoryNotFoundException($"projectRoot does not exist: {projectRoot}");
-
         var fullRootPath = GetFullRootPath(projectRoot);
+
+        if (!Directory.Exists(fullRootPath))
+            throw new DirectoryNotFoundException($"projectRoot does not exist: {projectRoot}");
 
         if (fileExts.Length == 0)
             throw new InvalidOperationException("fileExtensions resolved to an empty list.");
@@ -117,6 +119,24 @@ public class ConfigManager(string _path)
         Language.CSharp => [".cs"],
         _ => []
     };
+
+    private static string MapProjectRoot(ConfigDto dto) 
+    {
+        if (!String.IsNullOrEmpty(dto.ProjectRoot))
+            return dto.ProjectRoot;
+        if (!String.IsNullOrEmpty(dto.RootFolder))
+            return dto.RootFolder;
+        return String.Empty;
+    }
+
+    private static string MapName(ConfigDto dto) 
+    { 
+        if(!String.IsNullOrEmpty(dto.ProjectName))
+            return dto.ProjectName;
+        if (!String.IsNullOrEmpty(dto.Name))
+            return dto.Name;
+        return String.Empty;
+    }
 
     private static Language MapLanguage(string raw)
     {

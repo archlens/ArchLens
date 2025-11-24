@@ -1,13 +1,26 @@
 {
     "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/config.schema.json",
-    "name": "ArchLens",
+    "name": "Archlens",
     "rootFolder": "src/c-sharp/",
     "language": "C#",
     "github": {
-        "url": "",
+        "url": "https://github.com/BabLoRP/ArchLens/tree/master/src/c-sharp",
         "branch": "main"
     },
+    "snapshotManager": "local",
+    "snapshotDir": ".archlens",
+    "snapshotFile": "snaphot",
     "saveLocation": "./diagrams/",
+    "format": "json",
+    "exclusions": [
+        "obj/",
+        "bin/",
+        ".vs/",
+        ".git/"
+    ],
+    "fileExtensions": [
+        ".cs"
+    ],
     "views": {
         "completeView": {
             "packages": [],
