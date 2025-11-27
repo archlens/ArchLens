@@ -41,14 +41,23 @@ def render_diff_views(
     remote_bt_graph: BTGraph,
     config: dict,
     save_to_file: Callable[[list[ViewPackage], str, dict], None],
-):
+) -> set[str]:
+    """
+    Renders diff views between local and remote graphs.
+
+    Returns:
+        set[str]: Set of view names that have architectural changes.
+    """
+    changed_views: set[str] = set()
     local_graph_views = _create_view_graphs(local_bt_graph, config)
     remote_graph_views = _create_view_graphs(remote_bt_graph, config)
-    packages_to_skip_dependency_update = set()
 
     for view_name, local_graph in local_graph_views.items():
         diff_graph: list[ViewPackage] = []
         remote_graph = remote_graph_views[view_name]
+        packages_to_skip_dependency_update: set[str] = set()
+        view_has_changes = False
+
         # Created packages
         for path, package in local_graph.items():
             if path not in remote_graph:
@@ -56,6 +65,7 @@ def render_diff_views(
                 for package_dependency in package.view_dependency_list:
                     package_dependency.state = EntityState.CREATED
                 diff_graph.append(package)
+                view_has_changes = True
 
         # Deleted packages
         for remote_path, remote_package in remote_graph.items():
@@ -66,6 +76,7 @@ def render_diff_views(
                 diff_graph.append(remote_package)
                 local_graph[remote_path] = remote_package
                 packages_to_skip_dependency_update.add(remote_path)
+                view_has_changes = True
 
         # Change dependency state
         for path, package in local_graph.items():
@@ -87,6 +98,7 @@ def render_diff_views(
                         "color": color,
                         "label": f"0 ({dependency_count})",
                     }
+                    view_has_changes = True
                     continue
 
                 local_value = local_dependency_map[remote_key]
@@ -108,6 +120,7 @@ def render_diff_views(
                         "color": color,
                         "label": f"{dependency_count}",
                     }
+                    view_has_changes = True
 
             # Created dependencies
             for dependency_path, dependency in local_dependency_map.items():
@@ -121,6 +134,7 @@ def render_diff_views(
                         "color": color,
                         "label": f"{dependency_count} (+{dependency_count})",
                     }
+                    view_has_changes = True
 
             # Deleted dependencies
             for (
@@ -134,6 +148,7 @@ def render_diff_views(
                         remote_dependency_path
                     ]  # Ensures that the package refs will be in the final graph
                     package.view_dependency_list.append(remote_dependency)
+                    view_has_changes = True
 
             diff_graph.append(package)
 
@@ -142,7 +157,11 @@ def render_diff_views(
         if not use_package_path_as_label:
             _handle_duplicate_name(diff_graph)
 
-        save_to_file(diff_graph, view_name, config)
+        if view_has_changes:
+            changed_views.add(view_name)
+            save_to_file(diff_graph, view_name, config)
+
+    return changed_views
 
 
 def _handle_duplicate_name(view_graph: list[ViewPackage]):

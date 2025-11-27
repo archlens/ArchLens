@@ -87,7 +87,11 @@ def render_diff(config_path: str = "archlens.json"):
         remote_graph.build_graph(config_git)
         # verify_config_options(config_git, g_git)
 
-        render_diff_views(local_graph, remote_graph, config, save_plant_uml_diff)
+        changed_views = render_diff_views(local_graph, remote_graph, config, save_plant_uml_diff)
+
+        # Output marker for GitHub Actions to detect which views have architectural changes
+        if changed_views:
+            print(f"ARCHLENS_CHANGED_VIEWS={','.join(sorted(changed_views))}")
 
 
 @app.command()
