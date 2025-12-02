@@ -9,7 +9,7 @@ using Archlens.Domain.Models.Records;
 
 namespace Archlens.Infra.Parsers;
 
-class CsharpDependencyParser(Options _options) : IDependencyParser
+public class CsharpDependencyParser(Options _options) : IDependencyParser
 {
     public async Task<IReadOnlyList<string>> ParseFileDependencies(string path, CancellationToken ct = default)
     {

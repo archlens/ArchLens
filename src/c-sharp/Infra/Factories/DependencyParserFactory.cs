@@ -4,13 +4,13 @@ using Archlens.Domain.Models.Enums;
 using Archlens.Domain.Models.Records;
 using Archlens.Infra.Parsers;
 
-namespace Archlens.Domain.Strategies;
+namespace Archlens.Infra.Factories;
 
-public sealed class DependencyParserStrategy
+public sealed class DependencyParserFactory
 {
     public static IDependencyParser SelectDependencyParser(Options o) => o.Language switch
     {
-        Language.CSharp => new CsharpSyntaxWalkerParser(o),
+        Language.CSharp => new CsharpDependencyParser(o),
         _ => throw new ArgumentOutOfRangeException(nameof(o.Language))
     };
 }

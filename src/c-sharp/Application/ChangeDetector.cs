@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Archlens.Domain;
+namespace Archlens.Application;
 
 public sealed class ChangeDetector
 {
@@ -23,7 +23,7 @@ public sealed class ChangeDetector
         DependencyGraph lastSavedGraph,
         CancellationToken ct = default)
     {
-        var projectRoot = String.IsNullOrEmpty(options.FullRootPath) ? Path.GetFullPath(options.ProjectRoot) : options.FullRootPath;
+        var projectRoot = string.IsNullOrEmpty(options.FullRootPath) ? Path.GetFullPath(options.ProjectRoot) : options.FullRootPath;
 
         var rules = CompileExclusions(options.Exclusions);
         var modules = EnumerateFiles(projectRoot, options.FileExtensions, rules);

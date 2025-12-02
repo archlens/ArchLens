@@ -4,9 +4,9 @@ using Archlens.Domain.Models.Records;
 using Archlens.Infra.SnapshotManagers;
 using System;
 
-namespace Archlens.Domain.Strategies;
+namespace Archlens.Infra.Factories;
 
-public sealed class SnapsnotManagerStrategy
+public sealed class SnapsnotManagerFactory
 {
     public static ISnapshotManager SelectSnapshotManager(Options o) => o.SnapshotManager switch
     {

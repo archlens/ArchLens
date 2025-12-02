@@ -3,9 +3,9 @@ using Archlens.Domain.Interfaces;
 using Archlens.Domain.Models.Enums;
 using Archlens.Infra.Renderers;
 
-namespace Archlens.Domain.Strategies;
+namespace Archlens.Infra.Factories;
 
-public sealed class RendererStrategy
+public sealed class RendererFactory
 {
     public static IRenderer SelectRenderer(RenderFormat f) => f switch
     {
