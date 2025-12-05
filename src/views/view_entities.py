@@ -196,7 +196,11 @@ class ViewDependancy:
                 f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
             )
         else:
-            return f'"{self.render_diff["from_package"].name}"-->"{self.render_diff["to_package"].name}" {self.render_diff["color"].value} : {self.render_diff["label"]}'
+            color = self.render_diff["color"].value
+            from_name = self.render_diff["from_package"].name
+            to_name = self.render_diff["to_package"].name
+            label = self.render_diff["label"]
+            return f'"{from_name}" -[{color},thickness=2]-> "{to_name}" : {label}'
 
     def render_json(self) -> dict:
         config_manager = ConfigManagerSingleton()

@@ -96,7 +96,7 @@ def render_diff_views(
                         "from_package": remote_value.from_package,
                         "to_package": remote_value.to_package,
                         "color": color,
-                        "label": f"0 ({dependency_count})",
+                        "label": f"0\\n<size:10><b><color:red>(▼{abs(dependency_count)})</color></b></size>",
                     }
                     view_has_changes = True
                     continue
@@ -106,10 +106,13 @@ def render_diff_views(
                 # Check if dependency counts are different
                 if remote_value.dependency_count != local_value.dependency_count:
                     diff = local_value.dependency_count - remote_value.dependency_count
-                    sign = "+" if diff > 0 else ""
                     color = EntityState.CREATED if diff > 0 else EntityState.DELETED
+                    if diff > 0:
+                        diff_indicator = f"<size:10><b><color:green>(▲{diff})</color></b></size>"
+                    else:
+                        diff_indicator = f"<size:10><b><color:red>(▼{abs(diff)})</color></b></size>"
                     dependency_count = (
-                        f"{local_value.dependency_count} ({sign}{diff})"
+                        f"{local_value.dependency_count}\\n{diff_indicator}"
                         if diff != 0
                         else f"{local_value.dependency_count}"
                     )
@@ -132,7 +135,7 @@ def render_diff_views(
                         "from_package": dependency.from_package,
                         "to_package": dependency.to_package,
                         "color": color,
-                        "label": f"{dependency_count} (+{dependency_count})",
+                        "label": f"{dependency_count}\\n<size:10><b><color:green>(▲{dependency_count})</color></b></size>",
                     }
                     view_has_changes = True
 
