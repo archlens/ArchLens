@@ -104,6 +104,16 @@ class BTGraph:
     def get_all_bt_modules_map(self) -> dict[str, BTModule]:
         return {btm.path: btm for btm in self.root_module.get_submodules_recursive()}
 
+    def get_all_bt_files_as_nodes_map(self) -> dict[str, BTFile]:
+        """Get all files as potential graph nodes, keyed by their path (without .py extension)"""
+        result = {}
+        for btf in self.root_module.get_files_recursive():
+            if btf.file:
+                # Key is file path without .py extension (e.g., "core/llm_services/anthropic_service")
+                key = btf.file.replace(".py", "")
+                result[key] = btf
+        return result
+
     def _get_files_recursive(self, path: str) -> list[str]:
         file_list = []
         t = list(os.walk(path))
