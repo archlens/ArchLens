@@ -186,23 +186,47 @@ def _handle_duplicate_name(view_graph: list[ViewPackage]):
             package.name = package_name_split[-1]
 
 
+def _get_requested_files(view: dict) -> list[str]:
+    """
+    Extract file patterns from view config's "files" key.
+    Returns list of file path patterns (with dots replaced by /).
+    """
+    file_patterns = []
+    for file_def in view.get("files", []):
+        if isinstance(file_def, str):
+            # Convert "core.llm_services.anthropic_service" to "core/llm_services/anthropic_service"
+            file_patterns.append(file_def.replace(".", "/"))
+    return file_patterns
+
+
 def _create_view_graphs(
     graph: BTGraph, config: dict
 ) -> dict[str, dict[str, ViewPackage]]:
 
-    # all the nodes at all kinds of lelves
+    # all the nodes at all kinds of levels
     bt_packages = graph.get_all_bt_modules_map()
+    bt_files = graph.get_all_bt_files_as_nodes_map()
     views = {}
 
     for view_name, view in config["views"].items():
 
         viewpackages_by_name: dict[str, ViewPackage] = {}
 
+        # Create view nodes for modules (always)
         for bt_package in bt_packages.values():
-
-            # create a view package node for each of the nodes in the AST
             view_package = ViewPackage(bt_package)
             viewpackages_by_name[view_package.path] = view_package
+
+        # Create view nodes for files ONLY if explicitly requested in "files" key
+        requested_files = _get_requested_files(view)
+        if requested_files:
+            for file_path, bt_file in bt_files.items():
+                # Check if this file matches any requested pattern
+                for pattern in requested_files:
+                    if file_path.endswith(pattern):
+                        view_file = ViewPackage(bt_file)
+                        viewpackages_by_name[view_file.path] = view_file
+                        break
 
         for view_package in viewpackages_by_name.values():
             view_package.setup_dependencies(viewpackages_by_name)
@@ -231,58 +255,48 @@ def _filter_packages(
     all_viewpackages = list(packages_map.values())
     filtered_packages_set: set[ViewPackage] = set()
 
-    # packages
-    for package_definition_from_config in view["packages"]:
+    # packages (modules only)
+    for package_definition_from_config in view.get("packages", []):
         for view_package in all_viewpackages:
-            filter_path = package_definition_from_config
-
-            # e.g.
-            # "packages": [
-            #      "api",
-            # ],
+            # e.g. "packages": ["api", "core.llm_services"]
             if isinstance(package_definition_from_config, str):
-                if view_package.path.startswith(filter_path.replace(".", "/")):
+                filter_path = package_definition_from_config.replace(".", "/")
+                if view_package.path.startswith(filter_path):
                     filtered_packages_set.add(view_package)
 
-            # e.g.
-            # "packages": [
-            #     {
-            #         "path": "api",
-            #         "depth": 1
-            #     }
-            # ],
+            # e.g. "packages": [{"path": "api", "depth": 1}]
             if isinstance(package_definition_from_config, dict):
                 filter_path = package_definition_from_config["path"].replace(".", "/")
-
-                # TODO: why are we ignoring the star - it's a regex?
                 filter_path = filter_path.replace("*", "")
                 view_depth = package_definition_from_config["depth"]
 
                 if filter_path == "" and view_package.is_root_package():
-                    # This happens when config specifies {"path": "", "depth": N}
-                    # to include all root packages up to depth N
                     filtered_packages_set.add(view_package)
-
                     depth_filter_packages = _find_packages_with_depth(
                         view_package, view_depth - 1, packages_map
                     )
                     filtered_packages_set.update(depth_filter_packages)
                 elif view_package.path == filter_path:
-
                     if view_depth == 0:
-                        # if view depth is greater, that means we want to expand this path
-                        # and this path should not be part of the view
                         filtered_packages_set.add(view_package)
-
                     depth_filter_packages = _find_packages_with_depth(
                         view_package, view_depth, packages_map
                     )
                     filtered_packages_set.update(depth_filter_packages)
 
-    if len(view["packages"]) == 0:
-        # If no packages specified, only include root packages (those without a parent)
+    # files (explicit file nodes)
+    for file_definition in view.get("files", []):
+        for view_package in all_viewpackages:
+            if isinstance(file_definition, str):
+                file_path = file_definition.replace(".", "/")
+                # Use endswith for flexibility - allows specifying just "app" or full "api.app"
+                if view_package.path == file_path or view_package.path.endswith("/" + file_path):
+                    filtered_packages_set.add(view_package)
+
+    if len(view.get("packages", [])) == 0 and len(view.get("files", [])) == 0:
+        # If no packages or files specified, only include root packages (those without a parent)
         filtered_packages_set = set(
-            package for package in packages_map.values() 
+            package for package in packages_map.values()
             if package.is_root_package()
         )
 

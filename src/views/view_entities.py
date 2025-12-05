@@ -1,4 +1,5 @@
-from src.core.bt_module import BTModule, BTFile
+from src.core.bt_module import BTModule
+from src.core.bt_file import BTFile
 from src.views.utils import get_view_package_path_from_bt_package
 from enum import Enum
 
@@ -16,19 +17,26 @@ PACKAGE_NAME_SPLITTER = "."
 
 class ViewPackage:
     name = ""
+    display_name = ""  # Name with common prefix stripped (set during rendering)
     parent: "ViewPackage" = None
     sub_modules: list["ViewPackage"] = None
     state: EntityState = EntityState.NEUTRAL
     view_dependency_list: list["ViewDependancy"] = None
-    bt_package: BTModule = None
+    bt_package: BTModule | BTFile = None
 
-    def __init__(self, bt_package: BTModule) -> None:
+    def __init__(self, bt_package: BTModule | BTFile) -> None:
         self.view_dependency_list = []
         self.name = PACKAGE_NAME_SPLITTER.join(
             get_view_package_path_from_bt_package(bt_package).split("/")
         )
+        self.display_name = self.name  # Default to full name
         self.bt_package = bt_package
         self.sub_modules = []
+
+    @property
+    def is_file(self) -> bool:
+        """Check if this ViewPackage wraps a file (not a module)"""
+        return isinstance(self.bt_package, BTFile)
 
     @property
     def path(self):
@@ -51,8 +59,23 @@ class ViewPackage:
             view_path = get_view_package_path_from_bt_package(bt_package_dependency)
             if view_path == self.path:
                 continue
-            try:
-                view_package_dependency = view_package_map[view_path]
+
+            # Try to find the dependency in the view map
+            # If not found, try parent paths (e.g., prompts/__init__ -> prompts)
+            view_package_dependency = None
+            search_path = view_path
+            while search_path and "/" in search_path:
+                if search_path in view_package_map:
+                    view_package_dependency = view_package_map[search_path]
+                    break
+                # Try parent path (strip last component)
+                search_path = "/".join(search_path.split("/")[:-1])
+
+            # Also try exact match for leaf (handles case where search_path has no more /)
+            if not view_package_dependency and search_path in view_package_map:
+                view_package_dependency = view_package_map[search_path]
+
+            if view_package_dependency and view_package_dependency.path != self.path:
                 self.view_dependency_list.append(
                     ViewDependancy(
                         self,
@@ -61,8 +84,6 @@ class ViewPackage:
                         bt_package_dependency,
                     )
                 )
-            except Exception:
-                pass
 
     def get_parent_list(self):
         res = []
@@ -78,7 +99,13 @@ class ViewPackage:
         if self.state == EntityState.NEUTRAL:
             state_str = config_manager.package_color
 
-        return f'package "{self.name}" {state_str}'
+        # Use display_name (with common prefix stripped) for cleaner diagrams
+        label = self.display_name or self.name
+
+        if self.is_file:
+            # Use rectangle with white background for files, add .py suffix
+            return f'rectangle "{label}.py" #White'
+        return f'package "{label}" {state_str}'
 
     def render_dependency_pu(self) -> str:
         return "\n".join(
@@ -152,8 +179,8 @@ class ViewDependancy:
     from_package: ViewPackage = None
     to_package: ViewPackage = None
 
-    from_bt_package: BTModule = None
-    to_bt_package: BTModule = None
+    from_bt_package: BTModule | BTFile = None
+    to_bt_package: BTModule | BTFile = None
 
     edge_files: list[tuple[BTFile, BTFile]] = []
 
@@ -165,8 +192,8 @@ class ViewDependancy:
         self,
         from_package: ViewPackage,
         to_package: ViewPackage,
-        from_bt_package: BTModule,
-        to_bt_package: BTModule,
+        from_bt_package: BTModule | BTFile,
+        to_bt_package: BTModule | BTFile,
     ) -> None:
         self.from_package = from_package
         self.to_package = to_package
@@ -183,6 +210,13 @@ class ViewDependancy:
     def id(self):
         return f"{self.from_package.name}-->{self.to_package.name}"
 
+    def _get_display_label(self, package: "ViewPackage") -> str:
+        """Get display label for a package, adding .py suffix for files."""
+        label = package.display_name or package.name
+        if package.is_file:
+            return f"{label}.py"
+        return label
+
     def render_pu(self) -> str:
         config_manager = ConfigManagerSingleton()
 
@@ -190,15 +224,18 @@ class ViewDependancy:
             dependency_count_str = ""
             if config_manager.show_dependency_count:
                 dependency_count_str = f": {self.dependency_count}"
-            from_name = self.from_package.name
-            to_name = self.to_package.name
+            # Use display_name for cleaner diagrams (with common prefix stripped)
+            from_name = self._get_display_label(self.from_package)
+            to_name = self._get_display_label(self.to_package)
             return (
                 f'"{from_name}"-->"{to_name}" {self.state.value} {dependency_count_str}'
             )
         else:
             color = self.render_diff["color"].value
-            from_name = self.render_diff["from_package"].name
-            to_name = self.render_diff["to_package"].name
+            from_pkg = self.render_diff["from_package"]
+            to_pkg = self.render_diff["to_package"]
+            from_name = self._get_display_label(from_pkg)
+            to_name = self._get_display_label(to_pkg)
             label = self.render_diff["label"]
             return f'"{from_name}" -[{color},thickness=2]-> "{to_name}" : {label}'
 
