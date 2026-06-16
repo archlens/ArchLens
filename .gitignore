@@ -237,3 +237,4 @@ pip-selfcheck.json
 .dotnet
 .archlens
 src/c-sharp/.archlens/snapshot
+src/c-sharp/.DS_Store
