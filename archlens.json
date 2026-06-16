@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/python/src/config.schema.json",
-    "name": "ArchLens",
-    "rootFolder": "src/python/src",
+    "name": "Archlens",
+    "rootFolder": "src/c-sharp/",
     "github": {
         "url": "https://github.com/archlens/ArchLens",
         "branch": "master"
@@ -18,17 +18,15 @@
         ".archlens"
     ],
     "fileExtensions": [
-        ".py"
+        ".cs"
     ],
     "views": {
         "completeView": {
-            "packages": [
-                {
-                    "path": "*",
-                    "depth": 3
-                }
-            ],
-            "ignorePackages": []
+            "packages": [],
+            "ignorePackages": [
+                "diagrams",
+                "venv"
+            ]
         }
     }
 }

@@ -1,0 +1,20 @@
+{
+    "$schema": "https://raw.githubusercontent.com/archlens/ArchLens/master/src/python/src/config.schema.json",
+    "name": "Archlens",
+    "rootFolder": "./",
+    "github": {
+        "url": "",
+        "branch": "main"
+    },
+    "fileExtensions": [
+        ".cs"
+    ],
+    "exclusions": [],
+    "saveLocation": "/diagrams/",
+    "views": {
+        "completeView": {
+            "packages": [],
+            "ignorePackages": []
+        }
+    }
+}

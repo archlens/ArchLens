@@ -235,3 +235,5 @@ pip-selfcheck.json
 **/.dotnet/
 .dotnet/
 .dotnet
+.archlens
+src/c-sharp/.archlens/snapshot
