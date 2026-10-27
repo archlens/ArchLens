@@ -27,6 +27,7 @@ func init() {
 type Entry struct {
 	Package      string   `json:"package"`
 	Dependencies []string `json:"dependencies"`
+	Path         string   `json:"path"`
 }
 
 type Cache struct {
@@ -108,7 +109,7 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 			Sugar.Errorf("%s: %v", r.File, r.Err)
 			continue
 		}
-		c.Files[r.File] = Entry{r.AST.Package, r.AST.Dependencies}
+		c.Files[r.File] = Entry{r.AST.Package, r.AST.Dependencies, r.File}
 	}
 
 	for f := range c.Files {
@@ -165,7 +166,7 @@ func (c *Cache) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	defer func(){
+	defer func() {
 		_ = os.Remove(tmp.Name())
 	}() // no-op after a successful rename
 	if _, err := tmp.Write(data); err != nil {
@@ -192,7 +193,7 @@ func (c *Cache) sameFile(files map[string]struct{}) bool {
 	if len(files) != len(c.Known) {
 		return false
 	}
-	for _, file  := range c.Known {
+	for _, file := range c.Known {
 		if _, ok := files[file]; !ok {
 			return false
 		}
