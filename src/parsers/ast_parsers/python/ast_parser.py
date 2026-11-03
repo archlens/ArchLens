@@ -4,7 +4,51 @@
 Reads a single .py file, finds its static imports, keeps only those that
 resolve to something inside the project root, and prints JSON to stdout:
 
-    {"package": str, "dependencies": [str, ...]}
+    {"package": str, "dependencies": [{"package": str, "file": str}, ...]}
+
+Naming (package-level nodes):
+  * A package is the directory containing a source file, written as its path
+    relative to the root with "/" as the separator on every platform.
+    The root directory itself is ".".
+  * `package` is the package of the parsed file. Each dependency's `package`
+    is the package of the file or directory the import resolved to.
+  * A dependency on the parsed file's own package is omitted.
+  * Names come from the resolved path, never from the import text, so the same
+    file always gets the same string however it was imported.
+
+The imported file (`file` of each dependency):
+  * `file` is the file the import resolved to, as a path relative to the root
+    with "/" as the separator: `import a.b` gives "a/b.py", and importing a
+    package gives its "__init__.py".
+  * `from pkg import name` gives "pkg/name.py" if `name` is a module, else
+    the file of `pkg` itself (so a package that re-exports `name` gives its
+    "__init__.py", not the file where `name` was defined).
+  * A directory without an `__init__.py` (a namespace package) has no entry
+    file, so `file` is the package path, the same string as `package`.
+  * Dependencies are unique by (package, file): two different files of one
+    package are two entries, the same file imported twice is one.
+
+Resolution follows Python's own lookup rules:
+  * absolute imports are searched in the directory of the parsed file (Python
+    puts a script's own directory on sys.path), the project root, and
+    <root>/src if it exists;
+  * relative imports are resolved against the location of the parsed file;
+  * regular modules/packages win over bare directories (namespace packages),
+    and bare directories never shadow a standard library module;
+  * `from pkg import name` checks whether `pkg.name` is a module first and
+    falls back to `pkg`;
+  * paths are resolved through symlinks before the "inside the root" check.
+
+All static imports count, wherever they appear in the file (inside functions,
+conditionals, TYPE_CHECKING blocks). Dynamic imports (importlib, __import__)
+are ignored. Dependencies are listed in the order first found, without
+duplicates. Errors go to stderr with a non-zero exit code.
+
+Usage:
+    python archlens_parser.py path/to/file.py [-r path/to/project]
+
+The file path is resolved against the working directory (not the root).
+Requires Python 3.10+ (sys.stdlib_module_names).
 """
 from __future__ import annotations
 
@@ -34,30 +78,24 @@ def package_name(target: Path, root: Path) -> str | None:
 
 def resolve_module(module: str, dirs: list[Path]) -> Path | None:
     """Resolve a dotted module name to a file or directory, or None."""
-    if not module:
-        return None
+    parts = module.split(".") if module else []
 
-    parts = module.split(".")
-
+    # 1. Regular modules and packages, in search order.
     for base in dirs:
-        # Try full module path first, then try stripping leading parts
-        # (e.g., if 'base' is already inside 'src/', strip leading 'src' from module)
-        for start_idx in range(len(parts)):
-            sub_parts = parts[start_idx:]
-            p = base.joinpath(*sub_parts)
+        p = base.joinpath(*parts)
+        candidates = [p / "__init__.py"]
+        if parts:
+            candidates.insert(0, p.parent / f"{p.name}.py")
+        for c in candidates:
+            if c.is_file():
+                return c.resolve()
 
-            candidates = [p / "__init__.py"]
-            if sub_parts:
-                candidates.insert(0, p.parent / f"{p.name}.py")
-
-            for c in candidates:
-                if c.is_file():
-                    return c.resolve()
-
-            # Bare directories (namespace packages)
-            if sub_parts and sub_parts[0] not in STDLIB and p.is_dir():
+    # 2. Bare directories (namespace packages), never shadowing the stdlib.
+    if parts and parts[0] not in STDLIB:
+        for base in dirs:
+            p = base.joinpath(*parts)
+            if p.is_dir():
                 return p.resolve()
-
     return None
 
 
@@ -72,35 +110,33 @@ def resolve_import(name: str, dirs: list[Path]) -> Path | None:
 
 
 class ImportCollector(ast.NodeVisitor):
-    """Collects internal packages in source order, without duplicates."""
+    """Collects internal (package, file) pairs in source order, without duplicates."""
 
     def __init__(self, root: Path, file_dir: Path):
         self.root = root
         self.file_dir = file_dir
-
-        # Build candidate root lookup directories
         dirs = [file_dir, root]
-
-        # Add root.parent to catch imports starting with the root directory name
-        dirs.append(root.parent)
-
-        # Walk up from file_dir to root
-        curr = file_dir
-        while within(curr, root):
-            dirs.append(curr)
-            if curr == root:
-                break
-            curr = curr.parent
-
-        self.abs_dirs = list(dict.fromkeys(dirs))  # dedupe, keep insertion order
-        self.deps: dict[str, None] = {}            # insertion-ordered set
+        if (root / "src").is_dir():
+            dirs.append(root / "src")
+        self.abs_dirs = list(dict.fromkeys(dirs))  # dedupe, keep order
+        self.deps: dict[tuple[str, str], None] = {}  # insertion-ordered set
 
     def add(self, hit: Path | None) -> None:
         if hit is None:
             return
-        name = package_name(hit, self.root)
-        if name is not None:  # None means it resolved outside the root
-            self.deps[name] = None
+        if hit.is_dir():
+            # A package is imported through its entry file, if it has one.
+            entry = hit / "__init__.py"
+            if entry.is_file():
+                hit = entry.resolve()
+        package = package_name(hit, self.root)
+        if package is None:  # None means it resolved outside the root
+            return
+        if hit.is_dir():
+            file = package  # namespace package: no entry file, so use the package path
+        else:
+            file = hit.relative_to(self.root).as_posix()
+        self.deps[(package, file)] = None
 
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
@@ -119,9 +155,11 @@ class ImportCollector(ast.NodeVisitor):
             if not within(base_dir, self.root):
                 return  # relative import climbs out of the project
             base, dirs = node.module or "", [base_dir]
+            # `from . import x`: the base is the directory itself
             base_hit = resolve_module(base, dirs) if base else base_dir
 
         for alias in node.names:
+            # `from pkg import name`: module first, fall back to the enclosing module
             sub = None
             if alias.name != "*":
                 sub = resolve_module(f"{base}.{alias.name}" if base else alias.name, dirs)
@@ -158,7 +196,7 @@ def main() -> int:
 
     collector = ImportCollector(root, path.parent)
     collector.visit(tree)
-    deps = [d for d in collector.deps if d != package]
+    deps = [{"package": p, "file": f} for (p, f) in collector.deps if p != package]
 
     json.dump({"package": package, "dependencies": deps}, sys.stdout)
     sys.stdout.write("\n")
