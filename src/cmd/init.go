@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/archlens/ArchLens/input"
@@ -136,6 +137,20 @@ func pickLanguage(language, location string) {
 			"**/generated-sources/**", "**/build/generated/**", "package-info.java", "**/package-info.java",
 			"module-info.java", "**/module-info.java"}
 		err = parsers.BundleJava(location)
+
+	case "csharp":
+        binaryName := "csharp-parser"
+        if runtime.GOOS == "windows" {
+            binaryName = "csharp-parser.exe"
+        }
+        path = filepath.Join(location, "dist", binaryName)
+        template.RunCommand = path
+        completeView.Include = []string{"**/*.cs", "*.cs"}
+        completeView.Exclude = []string{"bin", "obj", "packages", ".vs", ".git",
+            "generated", "**/generated/**", "Generated", "**/Generated/**"}
+		template.Views["completeView"] = completeView
+        err = parsers.BundleCSharp(location)
+
 	default:
 		Sugar.Errorf("Language is not supported out of the box yet please create your own AST-parser using the specification on the github repository")
 	}

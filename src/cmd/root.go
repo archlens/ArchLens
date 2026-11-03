@@ -16,6 +16,12 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+        v, _ := cmd.Flags().GetBool("verbose")
+        s, _ := cmd.Flags().GetBool("silence")
+
+        Sugar = utils.NewPrettySugaredLogger(v, s)
+    },
 }
 
 // Global logger for ease of use
@@ -26,11 +32,6 @@ var Version = "dev"
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	v, _ := rootCmd.Flags().GetBool("verbose")
-	s, _ := rootCmd.Flags().GetBool("verbose")
-
-	Sugar = utils.NewPrettySugaredLogger(v, s)
-
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

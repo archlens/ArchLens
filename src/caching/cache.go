@@ -106,7 +106,7 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 			list = append(list, f)
 		}
 	}
-	Sugar.Infof("parsed %d of %d files (full=%v)", len(list), len(files), full)
+	utils.Sugar.Infof("parsed %d of %d files (full=%v)", len(list), len(files), full)
 
 	if c.Files == nil || full {
 		c.Files = map[string]Entry{}
@@ -115,7 +115,7 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 		if r.Err != nil {
 			// TODO: Should abort instead of continuing
 			delete(c.Files, r.File) // not cached, so it's retried next run
-			Sugar.Errorf("%s: %v", r.File, r.Err)
+			utils.Sugar.Errorf("%s: %v", r.File, r.Err)
 			continue
 		}
 		c.Files[r.File] = Entry{Package: r.AST.Package, Dependencies: r.AST.Dependencies}
