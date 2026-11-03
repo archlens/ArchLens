@@ -11,9 +11,17 @@ import (
 	"sync"
 )
 
+// Dependency is one internal import reported by a parser. File is the
+// imported file, or the package path when the parser can't tell the file
+// (see the AST spec).
+type Dependency struct {
+	Package string `json:"package"`
+	File    string `json:"file"`
+}
+
 type ASTNode struct {
-	Package      string   `json:"package"`
-	Dependencies []string `json:"dependencies"`
+	Package      string       `json:"package"`
+	Dependencies []Dependency `json:"dependencies"`
 }
 
 type ASTResult struct {

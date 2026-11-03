@@ -9,7 +9,7 @@ func Test_Graph(t *testing.T) {
 	if len(graph.nodes) != 0 {
 		t.Errorf("Number of nodes in empty graph is not 0\nExpected:\t%d\nActual\t%d\n", 0, len(graph.nodes))
 	}
-	nodes := []NodeSpec{{"1", ""}, {"2", ""}, {"3", ""}, {"4", ""}, {"5", ""}, {"6", ""}}
+	nodes := []string{"1", "2", "3", "4", "5", "6"}
 	graph.AddNodes(nodes...)
 	if len(graph.nodes) != len(nodes) {
 		t.Errorf("Incorrect number of nodes in graph\nExpected:\t%d\nActual\t%d\n", len(nodes), len(graph.nodes))
@@ -18,7 +18,7 @@ func Test_Graph(t *testing.T) {
 		t.Errorf("TotalNodes is not the same as length of graph.nodes\nTotalNodes:\t%d\nActual:\t%d\n", graph.TotalNodes, len(graph.nodes))
 	}
 
-	oneSuccessors := []NodeSpec{{"2", ""}, {"3", ""}, {"7", ""}}
+	oneSuccessors := []string{"2", "3", "7"}
 	err := graph.AddSuccessors("1", oneSuccessors...)
 	if err != nil {
 		t.Fatal("Failed to find source node in graph")
@@ -30,7 +30,7 @@ func Test_Graph(t *testing.T) {
 		t.Errorf("Incorrect number of edges\nExpected:\t%d\nActual:\t%d\n", len(oneSuccessors), graph.TotalEdges)
 	}
 
-	fivePredecessors := []NodeSpec{{"2", ""}, {"3", ""}, {"8", ""}}
+	fivePredecessors := []string{"2", "3", "8"}
 	err = graph.AddPredecessors("5", fivePredecessors...)
 	if err != nil {
 		t.Fatal("Failed to find source node in graph")
@@ -62,9 +62,9 @@ func Test_Graph(t *testing.T) {
 		t.Errorf("Incorrect edge count after removing 5\nExpected:\t%d\nActual:\t%d\n", 3, graph.TotalEdges)
 	}
 	for _, node := range fivePredecessors {
-		parent := graph.nodes[node.Name]
+		parent := graph.nodes[node]
 		if _, ok := parent.successors["5"]; ok {
-			t.Errorf("Node %s still has a dangling successor pointer to removed node 5", node.Name)
+			t.Errorf("Node %s still has a dangling successor pointer to removed node 5", node)
 		}
 	}
 }

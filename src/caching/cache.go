@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/archlens/ArchLens/graph"
@@ -25,16 +26,23 @@ func init() {
 }
 
 type Entry struct {
-	Package      string   `json:"package"`
-	Dependencies []string `json:"dependencies"`
-	Path         string   `json:"path"`
+	Package      string               `json:"package"`
+	Dependencies []parsers.Dependency `json:"dependencies"`
 }
 
 type Cache struct {
-	Commit string           `json:"commit"`
-	Known  []string         `json:"known"` // files parsed at the last refresh (sorted)
-	Dirty  []string         `json:"dirty"` // files that differed from Commit at the last refresh
-	Files  map[string]Entry `json:"files"`
+	Commit      string           `json:"commit"`
+	Fingerprint string           `json:"fingerprint"`
+	Known       []string         `json:"known"` // files parsed at the last refresh (sorted)
+	Dirty       []string         `json:"dirty"` // files that differed from Commit at the last refresh
+	Files       map[string]Entry `json:"files"`
+}
+
+// RefCache keeps one Cache per commit as <Dir>/<sha>.json.
+type RefCache struct {
+	Dir         string
+	Keep        int    // newest files to keep; the rest are pruned on Save
+	Fingerprint string // changes when parse results could differ (ArchLens version, runCommand)
 }
 
 type Change struct {
@@ -109,7 +117,7 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 			Sugar.Errorf("%s: %v", r.File, r.Err)
 			continue
 		}
-		c.Files[r.File] = Entry{r.AST.Package, r.AST.Dependencies, r.File}
+		c.Files[r.File] = Entry{Package: r.AST.Package, Dependencies: r.AST.Dependencies}
 	}
 
 	for f := range c.Files {
@@ -133,9 +141,15 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 func (c *Cache) Graph(files []string) *graph.Graph {
 	g := graph.NewGraph()
 	for _, f := range files {
-		if e, ok := c.Files[f]; ok { // TODO: fails silently. Sould probably say something about file not being in cache
-			g.AddPackage(e.Package, e.Dependencies...)
+		e, ok := c.Files[f]
+		if !ok { // TODO: fails silently. Should probably say something about file not being in cache
+			continue
 		}
+		deps := make([]graph.FileDependency, len(e.Dependencies))
+		for i, d := range e.Dependencies {
+			deps[i] = graph.FileDependency{Package: d.Package, File: d.File}
+		}
+		g.AddFile(e.Package, f, deps...)
 	}
 	return g
 }
@@ -166,7 +180,7 @@ func (c *Cache) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
+	defer func(){
 		_ = os.Remove(tmp.Name())
 	}() // no-op after a successful rename
 	if _, err := tmp.Write(data); err != nil {
@@ -193,10 +207,64 @@ func (c *Cache) sameFile(files map[string]struct{}) bool {
 	if len(files) != len(c.Known) {
 		return false
 	}
-	for _, file := range c.Known {
+	for _, file  := range c.Known {
 		if _, ok := files[file]; !ok {
 			return false
 		}
 	}
 	return true
+}
+
+func (r *RefCache) path(sha string) string {
+	return filepath.Join(r.Dir, sha+".json")
+}
+
+// Load returns the cached parse closest to the checkout at root, or an empty Cache.
+func (r *RefCache) Load(root string) *Cache {
+	best, bestN := &Cache{}, -1
+	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
+	for _, f := range files {
+		cand := LoadCache(f)
+		if cand.Commit == "" || cand.Fingerprint != r.Fingerprint {
+			continue // empty, corrupt or from a different parser setup
+		}
+		changes, err := gitChanges(root, cand.Commit)
+		if err != nil {
+			continue // commit not in this repo
+		}
+		if bestN < 0 || len(changes) < bestN {
+			best, bestN = cand, len(changes)
+		}
+	}
+	return best
+}
+
+// Save stores c under its commit and prunes the oldest files beyond Keep.
+func (r *RefCache) Save(c *Cache) error {
+	if c.Commit == "" {
+		return nil // git couldn't tell us the commit, so there's nothing to key on
+	}
+	c.Fingerprint = r.Fingerprint
+	if err := c.Save(r.path(c.Commit)); err != nil {
+		return err
+	}
+	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
+	sort.Slice(files, func(i, j int) bool {
+		a, _ := os.Stat(files[i])
+		b, _ := os.Stat(files[j])
+		return a != nil && b != nil && a.ModTime().After(b.ModTime())
+	})
+	for _, f := range files[min(r.Keep, len(files)):] {
+		_ = os.Remove(f)
+	}
+	return nil
+}
+
+// cacheSchema changes when the shape of Entry changes, so cache files written
+// by an older shape are never loaded.
+const cacheSchema = "2"
+
+func Fingerprint(version, runCommand string) string {
+	sum := sha256.Sum256([]byte(cacheSchema + "\x00" + version + "\x00" + runCommand))
+	return hex.EncodeToString(sum[:8])
 }

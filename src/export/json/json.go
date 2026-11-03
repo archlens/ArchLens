@@ -3,16 +3,25 @@
 //
 //	{
 //	    "title": "...",
-//	    "packages": [{"name": "...", "state": "NEUTRAL|CREATED|DELETED"}],
+//	    "packages": [{"name": "...", "path": "...", "state": "NEUTRAL|CREATED|DELETED"}],
 //	    "edges": [{"state": "...", "fromPackage": "...", "toPackage": "...",
-//	               "label": "3 (+1)", "relations": [...]}]
+//	               "label": "3 (+1)",
+//	               "relations": [{"from_file": {"name": "...", "path": "..."},
+//	                              "to_file":   {"name": "...", "path": "..."}}]}]
 //	}
+//
+// A package's path is its directory relative to the project root. A file's
+// name is its base name and its path is relative to the project root. When a
+// parser can't tell which file is imported (Go), the to_file is the imported
+// package itself: its path is the package directory and its name the last
+// element of that path.
 package json
 
 import (
 	"cmp"
 	stdjson "encoding/json"
 	"fmt"
+	"path"
 	"slices"
 	"strconv"
 
@@ -36,6 +45,7 @@ type document struct {
 
 type packageJSON struct {
 	Name  string `json:"name"`
+	Path  string `json:"path,omitempty"` // empty when the path isn't known
 	State string `json:"state"`
 }
 
@@ -67,10 +77,8 @@ func (e Exporter) Extension() string {
 func (e Exporter) ExportGraph(g *graph.Graph, title string) []byte {
 	doc := newDocument(title)
 
-	names := g.GetNodeNames()
-	slices.Sort(names)
-	for _, n := range names {
-		doc.Packages = append(doc.Packages, packageJSON{Name: n, State: stateNeutral})
+	for _, p := range g.Packages() { // sorted by name
+		doc.Packages = append(doc.Packages, packageJSON{Name: p.Name, Path: p.Path, State: stateNeutral})
 	}
 
 	edges := g.Edges()
@@ -83,14 +91,28 @@ func (e Exporter) ExportGraph(g *graph.Graph, title string) []byte {
 			FromPackage: ed.From,
 			ToPackage:   ed.To,
 			Label:       strconv.FormatUint(uint64(ed.Count), 10),
-			Relations:   []relation{},
+			Relations:   relations(ed.Files),
 		})
 	}
 	return marshal(doc)
 }
 
+// relations converts an edge's file links to JSON. The links come sorted from
+// graph.Edges, and the result is never nil so it encodes as [] rather than null.
+func relations(links []graph.FileLink) []relation {
+	out := make([]relation, 0, len(links))
+	for _, l := range links {
+		out = append(out, relation{
+			FromFile: fileRef{Name: path.Base(l.FromFile), Path: l.FromFile},
+			ToFile:   fileRef{Name: path.Base(l.ToFile), Path: l.ToFile},
+		})
+	}
+	return out
+}
+
 // ExportDiff writes a diff: added packages are CREATED, removed ones DELETED, and
-// edges carry the state and label described on diffEdge.
+// edges carry the state and label described on diffEdge. graph.Diff carries no
+// package paths or file links, so packages have no path and relations are empty.
 func (e Exporter) ExportDiff(d *graph.Diff, title string) []byte {
 	doc := newDocument(title)
 

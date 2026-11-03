@@ -6,6 +6,8 @@ import (
 	"github.com/archlens/ArchLens/caching"
 	"github.com/archlens/ArchLens/export"
 	"github.com/archlens/ArchLens/export/mermaid"
+	"github.com/archlens/ArchLens/export/json"
+
 	"github.com/archlens/ArchLens/input"
 	"github.com/spf13/cobra"
 )
@@ -38,7 +40,8 @@ to quickly create a Cobra application.`,
 		case "mermaid":
 			exporter = mermaid.NewExporter(markdown)
 		case "json":
-			Sugar.Errorln("json export is not implemented yet")
+			exporter = json.Exporter{}
+			// Sugar.Errorln("json export is not implemented yet")
 		default:
 			Sugar.Errorf("'%s' is not a valid export format\n", format)
 			return

@@ -11,9 +11,16 @@ import (
 	"strings"
 )
 
+// Dependency is one internal import. Go imports a whole package and the
+// parser does not trace which file is used, so File is the package path.
+type Dependency struct {
+	Package string `json:"package"`
+	File    string `json:"file"`
+}
+
 type Output struct {
-	Package      string   `json:"package"`
-	Dependencies []string `json:"dependencies"`
+	Package      string       `json:"package"`
+	Dependencies []Dependency `json:"dependencies"`
 }
 
 func main() {
@@ -102,8 +109,8 @@ func main() {
 	}
 
 	// 6. Resolve Imports
-	seenDeps := make(map[string]bool)
-	var dependencies []string
+	seenDeps := make(map[Dependency]bool)
+	dependencies := []Dependency{} // never nil, so it encodes as [] and not null
 
 	for _, imp := range node.Imports {
 		if imp.Path == nil {
@@ -121,14 +128,12 @@ func main() {
 			continue
 		}
 
-		if !seenDeps[targetPkg] {
-			seenDeps[targetPkg] = true
-			dependencies = append(dependencies, targetPkg)
+		// The file is unknown for Go, so the package path stands in for it
+		dep := Dependency{Package: targetPkg, File: targetPkg}
+		if !seenDeps[dep] {
+			seenDeps[dep] = true
+			dependencies = append(dependencies, dep)
 		}
-	}
-
-	if dependencies == nil {
-		dependencies = []string{}
 	}
 
 	// 7. Output Result
