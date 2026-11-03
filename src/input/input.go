@@ -29,8 +29,6 @@ type Input struct {
 	RunCommand   string          `json:"runCommand"`
 }
 
-var logger = utils.Sugar
-
 func Load(path string) (*Input, error) {
 	input := &Input{}
 
@@ -86,12 +84,12 @@ func GetFiles(view *View, rootDir string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-	logger.Debugf("Included files: %v", include)
+	utils.Sugar.Debugf("Included files: %v", include)
 	exclude, err := matchFiles(view.Exclude)
 	if err != nil {
 		return []string{}, err
 	}
-	logger.Debugf("Excluded files: %v", exclude)
+	utils.Sugar.Debugf("Excluded files: %v", exclude)
 
 	for path := range exclude {
 		delete(include, path)

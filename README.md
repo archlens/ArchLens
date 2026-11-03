@@ -40,17 +40,17 @@ The Archlens tool comes with an install script hosted on this repository. You ca
 curl -L -o install.sh https://github.com/archlens/ArchLensGo/raw/refs/heads/main/installer/install.sh && chmod +x install.sh && ./install.sh
 ```
 
-### Binary Install
-
-The release page contains pre-packaged binaries built for MacOS, Linux and Windows (both for arm and x86 based systems). You can install these in your preferred bin location.
-
 ### Go Install
 
 *COMING SOON*
 
+### Binary Install
+
+The release page contains pre-packaged binaries built for MacOS, Linux and Windows (both for arm and x86 based systems). You can install these in your preferred bin location.
+
 ## Configuration
 
-ArchLens is configured through an `archlens.json` file in the root of your project. To generate a template use the `init` command outlined in the commands chapter. 
+ArchLens is configured through an `archlens.json` file in the root of your project. To generate a template use the `init` command outlined in the commands chapter.
 
 ### Configuration Reference
 
@@ -65,29 +65,27 @@ ArchLens is configured through an `archlens.json` file in the root of your proje
 | `views.<viewname>.include[]` | Yes | Which files to include in the named view `<viewname>` defined as a list of glob pattern strings |
 | `views.<viewname>.exclude[]` | Yes | Which files to exclude in the named view `<viewname>` defined as a list of glob pattern strings |
 
-Below is an example configuration for a Go project. It is however recommended to use absolute paths for the rootFolder and runCommand as to cause as few issues as possible.
+Below is an example configuration for a Go project.
 
 ```json
 {
     "name": "Archlens",
-    "rootFolder": "../src",
+    "rootFolder": "./src",
     "github": {
         "url": "https://github.com/archlens/ArchLens",
-        "branch": "master"
+        "branch": "main"
     },
     "saveLocation": "./diagrams/",
-    "runCommand": "go run ./ast_parsers/go/main.go",
+    "runCommand": "go run ../ast_parsers/go/ast_parser.go",
     "views": {
         "completeView": {
             "include": [
-                "**/*.*",
-                "*.*"
+                "**/*.go",
+                "*.go"
             ],
             "exclude": [
                 "go.sum",
-                "go.mod",
-                "**/.archlens/**",
-                "**/.archlens"
+                "go.mod"
             ]
         },
         "smallerView": {
@@ -95,10 +93,7 @@ Below is an example configuration for a Go project. It is however recommended to
                 "cmd/*.*",
                 "main.go"
             ],
-            "exclude": [
-                "**/.archlens/**",
-                "**/.archlens"
-            ]
+            "exclude": []
         }
     }
 }
@@ -111,14 +106,11 @@ Below is an example configuration for a Go project. It is however recommended to
 | `archlens init` | Creates the `archlens.json` config template |
 | `archlens init <language>` | Creates the aforementioned `archlens.json`, as well as creating the language specific ast_parser file |
 | `archlens render [/path/to/archlens.json]` | Renders all views defined in the config using the supplied `archlens.json` defaults to `.` |
-| `archlens render-diff [/path/to/archlens.json]` | Renders difference views comparing current branch to the base branch NOT SUPPORTED YET |
-| `archlens render-diff <base-branch> <compare-branch> | Renders difference views between base branch and compare branch |
+| `archlens render-diff <base-branch> <compare-branch>` | Renders difference views between base branch and compare branch |
 
 ## Defining Views
 
-Views control what is shown in each diagram. Each view is a named entry under `"views"` in your config as described in the table above.
-
-*EXAMPLE VIEWS COMING SOON*
+Views control what is shown in each diagram. Each view is a named entry under `"views"` in your config as described in the table above. You can see 2 different views described in the example config above. The completeView is supposed to grab everything where as the smaller view only looks at the cmd folder and main.go. Everything is defined as glob patterns so if you want certain folders or files included you can write a glob pattern that matches those constraints.
 
 ## Diff Views
 
@@ -127,7 +119,7 @@ Diff views highlight dependency changes between your current branch and the base
 Make sure you are on a feature branch (not the base branch), then run:
 
 ```console
-archlens render-diff
+archlens render-diff <compare-branch>
 ```
 
 If there are no differences, a diagram without highlights is still generated.
@@ -138,4 +130,3 @@ Diff output indicates:
 - **Red package/arrow** — removed in the current branch
 - Count additive changes on arrows **Green arrow** (e.g. `5 (+2)`)
 - Count subtractive changes on arrows **Red arrow** (e.g. `5 (-2)`)
-

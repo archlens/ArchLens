@@ -1,9 +1,11 @@
 package parsers
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -26,6 +28,12 @@ var goMod []byte
 
 //go:embed ast_parsers/java/AstParser.java
 var javaParser []byte
+
+//go:embed ast_parsers/csharp/ast_parser.cs
+var csharpParser []byte
+
+//go:embed ast_parsers/csharp/ast_parser.csproj
+var csharpProjFile []byte
 
 type bundledFile struct {
 	name string
@@ -66,6 +74,28 @@ func BundleJava(location string) error {
 	return nil
 }
 
+func BundleCSharp(location string) error {
+    err := writeBundle(location, []bundledFile{
+        {"ast_parser.cs", csharpParser},
+        {"ast_parser.csproj", csharpProjFile},
+    })
+    if err != nil {
+        return fmt.Errorf("bundle csharp parser and projfile: %w", err)
+    }
+
+    distDir := filepath.Join(location, "dist")
+    csprojPath := filepath.Join(location, "ast_parser.csproj")
+    
+    // Publish as self-contained so it embeds the runtime and doesn't depend on global dotnet location
+    cmd := exec.Command("dotnet", "publish", csprojPath, "-c", "Release", "-o", distDir, "--self-contained", "true", "--verbosity", "quiet")
+    var stderr bytes.Buffer
+    cmd.Stderr = &stderr
+    if err := cmd.Run(); err != nil {
+        return fmt.Errorf("failed to compile csharp parser: %w, stderr: %s", err, stderr.String())
+    }
+
+    return nil
+}
 
 // writeBundle creates location if needed and writes every file into it,
 // overwriting existing copies so the shipped parser always matches the binary.

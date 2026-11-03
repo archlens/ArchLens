@@ -36,3 +36,10 @@ go.work.sum
 .archlens.json
 .archlens/
 diagrams
+
+# C# ast parser folders
+ast_parsers/csharp/bin
+ast_parsers/csharp/obj
+src/parsers/ast_parsers/csharp/bin
+src/parsers/ast_parsers/csharp/dist
+src/parsers/ast_parsers/csharp/obj
