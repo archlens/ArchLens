@@ -60,7 +60,7 @@ func (m Exporter) labels(names []string, rootName string) map[string]string {
 	return out
 }
 
-// Generate standart mermaid diagram from graph
+// Generate standard mermaid diagram from graph
 func (m Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
 	fc := flowchart.NewFlowchart()
 	fc.Title = title
