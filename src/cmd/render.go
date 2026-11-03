@@ -25,7 +25,6 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// probably move this and make it a bit more generalized
 		p, _ := cmd.Flags().GetBool("parse-full")
-		markdown, _ := cmd.Flags().GetBool("markdown")
 		format, _ := cmd.Flags().GetString("format")
 
 		var configPath string
@@ -38,10 +37,11 @@ to quickly create a Cobra application.`,
 		var exporter export.Exporter
 		switch format {
 		case "mermaid":
-			exporter = mermaid.NewExporter(markdown)
+			exporter = mermaid.NewExporter(false)
+		case "mermaid-md":
+			exporter = mermaid.NewExporter(true)
 		case "json":
 			exporter = json.Exporter{}
-			// Sugar.Errorln("json export is not implemented yet")
 		default:
 			Sugar.Errorf("'%s' is not a valid export format\n", format)
 			return
@@ -106,6 +106,5 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 	renderCmd.Flags().BoolP("parse-full", "p", false, "A flag to fully parse any project again even if cache is present")
-	renderCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|json]. ")
-	renderCmd.Flags().BoolP("markdown", "m", false, "Export diagrams in markdown files")
+	renderCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|mermaid-md|json]. ")
 }

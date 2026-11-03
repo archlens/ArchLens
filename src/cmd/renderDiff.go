@@ -42,13 +42,14 @@ tree is never touched. No cache is read or written.`,
 		}
 
 		configPath, _ := cmd.Flags().GetString("config")
-		markdown, _ := cmd.Flags().GetBool("markdown")
 		format, _ := cmd.Flags().GetString("format")
 
 		var exporter export.Exporter
 		switch format {
 		case "mermaid":
-			exporter = mermaid.NewExporter(markdown)
+			exporter = mermaid.NewExporter(false)
+		case "mermaid-md":
+			exporter = mermaid.NewExporter(true)
 		case "json":
 			exporter = json.Exporter{}
 		default:
@@ -184,7 +185,6 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 func init() {
 	rootCmd.AddCommand(renderDiffCmd)
 	renderDiffCmd.Flags().StringP("config", "c", "archlens.json", "Path to the archlens.json configuration file")
-	renderDiffCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|json]. ")
-	renderDiffCmd.Flags().BoolP("markdown", "m",false, "Export diagrams in markdown files")
+	renderDiffCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|mermaid-md|json]")
 	renderDiffCmd.Flags().BoolP("no-cache", "n", false, "Runs the renderDiff without cache files thus allowing for full parsing")
 }
