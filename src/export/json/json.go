@@ -84,10 +84,6 @@ func (e Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
 		doc.Packages = append(doc.Packages, packageJSON{Name: p.Name, Path: p.Path, State: stateNeutral})
 	}
 
-	// edges := g.Edges()
-	// slices.SortFunc(edges, func(a, b graph.Edge) int {
-	// 	return cmp.Or(cmp.Compare(a.From, b.From), cmp.Compare(a.To, b.To))
-	// })
 	for _, ed := range g.Edges() {
 		doc.Edges = append(doc.Edges, edgeJSON{
 			State:       stateNeutral,
@@ -119,8 +115,6 @@ func relations(links []graph.FileLink) []relation {
 func (e Exporter) ExportDiff(d *graph.Diff, title, rootName string) []byte {
 	doc := newDocument(title)
 
-	// nodes := slices.Clone(d.Nodes)
-	// slices.Sort(nodes)
 	for _, n := range d.Nodes {
 		state := stateNeutral
 		if d.Added[n] {

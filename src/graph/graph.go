@@ -50,7 +50,7 @@ type Edge struct {
 	From  string
 	To    string
 	Count uint       // number of files in From that import To
-	Files []FileLink // the file pairs behind the edge, sorted and unique
+	Files []FileLink // the file pairs behind the edge, all unique
 }
 
 func NewGraph() *Graph {
@@ -149,9 +149,6 @@ func (g *Graph) Edges() []Edge {
 	for name, n := range g.nodes {
 		for succ := range n.successors {
 			links := slices.Collect(maps.Keys(n.fileLinks[succ]))
-			slices.SortFunc(links, func(a, b FileLink) int {
-				return cmp.Or(cmp.Compare(a.FromFile, b.FromFile), cmp.Compare(a.ToFile, b.ToFile))
-			})
 			edges = append(edges, Edge{From: name, To: succ, Count: n.weights[succ], Files: links})
 		}
 	}
