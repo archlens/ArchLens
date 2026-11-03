@@ -60,7 +60,7 @@ to quickly create a Cobra application.`,
 			return
 		}
 		cachePath := filepath.Join(absRoot, ".archlens", "cache.json")
-		cache := caching.LoadCache(cachePath)
+		cache := caching.LoadCache(cachePath, res.RunCommand)
 
 		viewFiles := make(map[string][]string)
 		union := make(map[string]struct{})

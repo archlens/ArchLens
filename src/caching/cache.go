@@ -19,7 +19,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// cacheSchema changes when the shape of Entry changes, so cache files written
+// by an older shape are never loaded.
+const cacheSchemaVersion = "2"
+
 var Sugar *zap.SugaredLogger
+
 
 func init() {
 	Sugar = utils.NewPrettySugaredLogger()
@@ -84,6 +89,7 @@ func gitHead(root string) (string, error) {
 func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
 	head, herr := gitHead(root)
 	changes, cerr := gitChanges(root, c.Commit)
+	c.Fingerprint = Fingerprint(runCommand)
 
 	// Reparse everything if git can't tell us what changed, or if the set of
 	// files changed (an added or removed file can change how imports resolve).
@@ -164,13 +170,14 @@ func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
 	return g
 }
 
-func LoadCache(path string) *Cache {
+func LoadCache(path, runCommand string) *Cache {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil {
+	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
+		Sugar.Debug("Failed to load cache or cache is invalid. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
 	}
 	return &c
@@ -230,11 +237,11 @@ func (r *RefCache) path(sha string) string {
 }
 
 // Load returns the cached parse closest to the checkout at root, or an empty Cache.
-func (r *RefCache) Load(root string) *Cache {
+func (r *RefCache) Load(root, runCommand string) *Cache {
 	best, bestN := &Cache{}, -1
 	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
 	for _, f := range files {
-		cand := LoadCache(f)
+		cand := LoadCache(f, runCommand)
 		if cand.Commit == "" || cand.Fingerprint != r.Fingerprint {
 			continue // empty, corrupt or from a different parser setup
 		}
@@ -270,11 +277,7 @@ func (r *RefCache) Save(c *Cache) error {
 	return nil
 }
 
-// cacheSchema changes when the shape of Entry changes, so cache files written
-// by an older shape are never loaded.
-const cacheSchema = "2"
-
-func Fingerprint(version, runCommand string) string {
-	sum := sha256.Sum256([]byte(cacheSchema + "\x00" + version + "\x00" + runCommand))
+func Fingerprint(runCommand string) string {
+	sum := sha256.Sum256([]byte(cacheSchemaVersion + "\x00" + runCommand))
 	return hex.EncodeToString(sum[:8])
 }
