@@ -24,6 +24,9 @@ var goParser []byte
 //go:embed ast_parsers/go/go.mod.txt
 var goMod []byte
 
+//go:embed ast_parsers/java/AstParser.java
+var javaParser []byte
+
 type bundledFile struct {
 	name string
 	data []byte
@@ -51,6 +54,18 @@ func BundleGo(location string) error {
 	}
 	return nil
 }
+
+// BundlePython writes the embedded Python parser (ast_parser.py) into location.
+func BundleJava(location string) error {
+	err := writeBundle(location, []bundledFile{
+		{"AstParser.java", javaParser},
+	})
+	if err != nil {
+		return fmt.Errorf("bundle java parser: %w", err)
+	}
+	return nil
+}
+
 
 // writeBundle creates location if needed and writes every file into it,
 // overwriting existing copies so the shipped parser always matches the binary.

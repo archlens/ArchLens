@@ -10,8 +10,8 @@
     "views": {
         "completeView": {
             "include": [
-                "**/*.*",
-                "*.*"
+                "**/*.go",
+                "*.go"
             ],
             "exclude": [
                 "go.sum",

@@ -7,6 +7,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var Sugar *zap.SugaredLogger
+
 func WithWorkingDirectory(path string) func() {
 	currentWd, err := os.Getwd()
 	if err != nil {
@@ -23,7 +25,16 @@ func WithWorkingDirectory(path string) func() {
 	}
 }
 
-func NewPrettySugaredLogger() *zap.SugaredLogger {
+func NewPrettySugaredLogger(verbose, silence bool) *zap.SugaredLogger {
+	// Default to Info; flags are mutually exclusive so at most one applies
+	level := zap.InfoLevel
+	switch {
+	case verbose:
+		level = zap.DebugLevel
+	case silence:
+		level = zap.ErrorLevel
+	}
+
 	// Customize the encoder config for terminal output
 	encoderConfig := zap.NewDevelopmentEncoderConfig()
 	
@@ -40,11 +51,13 @@ func NewPrettySugaredLogger() *zap.SugaredLogger {
 	core := zapcore.NewCore(
 		zapcore.NewConsoleEncoder(encoderConfig),
 		zapcore.AddSync(os.Stdout),
-		zap.DebugLevel, // Or zap.InfoLevel
+		level,
 	)
 
 	// Build logger with caller & stacktrace options enabled
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 	
-	return logger.Sugar()
+	Sugar = logger.Sugar()
+
+	return Sugar
 }

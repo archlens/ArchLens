@@ -4,6 +4,7 @@ go 1.26.5
 
 require (
 	github.com/TyphonHill/go-mermaid v1.0.0
+	github.com/bmatcuk/doublestar/v4 v4.10.4
 	github.com/spf13/cobra v1.10.2
 )
 

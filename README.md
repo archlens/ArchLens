@@ -25,7 +25,20 @@ ArchLensGo generates customizable visual internal dependency diagrams of your co
 
 ### Homebrew
 
-*COMING SOON*
+Arhclens has it's own homebrew tap which you can use to install the Archlens tool by using the below command.
+
+```console
+brew tap archlens/tap
+brew install archlens/tap/archlens
+```
+
+### Install Script
+
+The Archlens tool comes with an install script hosted on this repository. You can run it using this command. *!Please always look at scripts before running them on your machine!*
+
+```console
+curl -L -o install.sh https://github.com/archlens/ArchLensGo/raw/refs/heads/main/installer/install.sh && chmod +x install.sh && ./install.sh
+```
 
 ### Binary Install
 

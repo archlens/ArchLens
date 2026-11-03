@@ -16,19 +16,14 @@ import (
 	"github.com/archlens/ArchLens/graph"
 	"github.com/archlens/ArchLens/parsers"
 	"github.com/archlens/ArchLens/utils"
-	"go.uber.org/zap"
 )
 
 // cacheSchema changes when the shape of Entry changes, so cache files written
 // by an older shape are never loaded.
 const cacheSchemaVersion = "2"
 
-var Sugar *zap.SugaredLogger
+var Sugar = utils.Sugar
 
-
-func init() {
-	Sugar = utils.NewPrettySugaredLogger()
-}
 
 type Entry struct {
 	Package      string               `json:"package"`
@@ -197,7 +192,7 @@ func (c *Cache) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	defer func(){
+	defer func() {
 		_ = os.Remove(tmp.Name())
 	}() // no-op after a successful rename
 	if _, err := tmp.Write(data); err != nil {
@@ -224,7 +219,7 @@ func (c *Cache) sameFile(files map[string]struct{}) bool {
 	if len(files) != len(c.Known) {
 		return false
 	}
-	for _, file  := range c.Known {
+	for _, file := range c.Known {
 		if _, ok := files[file]; !ok {
 			return false
 		}

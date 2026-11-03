@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"maps"
 	"os"
-	"path/filepath"
 	"slices"
 
 	"github.com/archlens/ArchLens/utils"
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 type View struct {
@@ -26,8 +26,10 @@ type Input struct {
 	RootFolder   string          `json:"rootFolder"`
 	Views        map[string]View `json:"views"`
 	SaveLocation string          `json:"saveLocation"`
-	RunCommand 	 string 		 `json:"runCommand"`
+	RunCommand   string          `json:"runCommand"`
 }
+
+var logger = utils.Sugar
 
 func Load(path string) (*Input, error) {
 	input := &Input{}
@@ -44,7 +46,7 @@ func Load(path string) (*Input, error) {
 	// Add exlusion pattern for cache directory
 	for name, view := range input.Views {
 		input.Views[name] = View{
-			Include: view.Include, 
+			Include: view.Include,
 			Exclude: append(view.Exclude, ".archlens/*"),
 		}
 	}
@@ -55,7 +57,7 @@ func Load(path string) (*Input, error) {
 func matchFiles(patterns []string) (map[string]struct{}, error) {
 	files := make(map[string]struct{})
 	for _, pattern := range patterns {
-		matches, err := filepath.Glob(pattern)
+		matches, err := doublestar.FilepathGlob(pattern, doublestar.WithFailOnIOErrors())
 		if err != nil {
 			return files, err
 		}
@@ -84,10 +86,12 @@ func GetFiles(view *View, rootDir string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
+	logger.Debugf("Included files: %v", include)
 	exclude, err := matchFiles(view.Exclude)
 	if err != nil {
 		return []string{}, err
 	}
+	logger.Debugf("Excluded files: %v", exclude)
 
 	for path := range exclude {
 		delete(include, path)
