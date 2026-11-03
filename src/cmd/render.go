@@ -89,7 +89,7 @@ to quickly create a Cobra application.`,
 				continue
 			}
 			g := cache.Graph(files, absRoot)
-			output := exporter.ExportGraph(g, name)
+			output := exporter.ExportGraph(g, name, res.Name)
 			path, err := export.Save(exporter, res.SaveLocation, name, output)
 			if err != nil {
 				Sugar.Errorf("Failed to save export: %v\n", err)

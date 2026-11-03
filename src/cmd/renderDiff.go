@@ -105,7 +105,7 @@ tree is never touched. No cache is read or written.`,
 		for name := range cfg.Views {
 			diff := graph.Compare(baseGraphs[name], headGraphs[name])
 			title := fmt.Sprintf("%s (%s vs %s)", name, baseRef, headRef)
-			output := exporter.ExportDiff(diff, title)
+			output := exporter.ExportDiff(diff, title, cfg.Name)
 			path, err := export.Save(exporter, cfg.SaveLocation, name+"_diff", output)
 			if err != nil {
 				return fmt.Errorf("saving diagram for %s: %w", name, err)

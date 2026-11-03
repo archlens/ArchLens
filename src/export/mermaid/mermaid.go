@@ -43,34 +43,32 @@ func (e Exporter) wrap(diagram string) []byte {
 
 // labels maps each package to its display label: the last path segment, or the
 // full path when two packages would otherwise look the same.
-func (m Exporter) labels(names []string) map[string]string {
+func (m Exporter) labels(names []string, rootName string) map[string]string {
 	count := make(map[string]int, len(names))
 	for _, n := range names {
 		count[path.Base(n)]++
 	}
 	out := make(map[string]string, len(names))
 	for _, n := range names {
-		switch {
-		case n == ".":
-			out[n] = "(root)"
-		case count[path.Base(n)] > 1:
-			out[n] = n // ambiguous, keep the full path
+		switch n {
+		case ".":
+			out[n] = rootName
 		default:
-			out[n] = path.Base(n)
+			out[n] = n
 		}
 	}
 	return out
 }
 
 // Generate standart mermaid diagram from graph
-func (m Exporter) ExportGraph(g *graph.Graph, title string) []byte {
+func (m Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
 	fc := flowchart.NewFlowchart()
 	fc.Title = title
 	fc.SetDirection(flowchart.FlowchartDirectionLeftRight)
 
 	names := g.GetNodeNames()
 	slices.Sort(names)
-	lbl := m.labels(names)
+	lbl := m.labels(names, rootName)
 
 	nodes := make(map[string]*flowchart.Node, len(names))
 	for _, name := range names {
@@ -121,12 +119,12 @@ func diffLabel(e graph.EdgeDiff) string {
 // green and packages that were removed are red. Links whose dependency count
 // went up are green, links where it went down are red, unchanged links keep the
 // default style.
-func (m Exporter) ExportDiff(d *graph.Diff, title string) []byte {
+func (m Exporter) ExportDiff(d *graph.Diff, title, rootName string) []byte {
 	fc := flowchart.NewFlowchart()
 	fc.Title = title
 	fc.SetDirection(flowchart.FlowchartDirectionLeftRight)
 
-	lbl := m.labels(d.Nodes)
+	lbl := m.labels(d.Nodes, rootName)
 	nodes := make(map[string]*flowchart.Node, len(d.Nodes))
 	graphNodes := d.Nodes
 	slices.Sort(graphNodes)

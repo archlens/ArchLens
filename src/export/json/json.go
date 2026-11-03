@@ -74,10 +74,13 @@ func (e Exporter) Extension() string {
 
 // ExportGraph writes a plain graph: every package and edge is NEUTRAL and an
 // edge's label is its dependency count.
-func (e Exporter) ExportGraph(g *graph.Graph, title string) []byte {
+func (e Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
 	doc := newDocument(title)
 
 	for _, p := range g.Packages() { // sorted by name
+		if p.Name == "." {
+			p.Name = rootName
+		}
 		doc.Packages = append(doc.Packages, packageJSON{Name: p.Name, Path: p.Path, State: stateNeutral})
 	}
 
@@ -113,7 +116,7 @@ func relations(links []graph.FileLink) []relation {
 // ExportDiff writes a diff: added packages are CREATED, removed ones DELETED, and
 // edges carry the state and label described on diffEdge. graph.Diff carries no
 // package paths or file links, so packages have no path and relations are empty.
-func (e Exporter) ExportDiff(d *graph.Diff, title string) []byte {
+func (e Exporter) ExportDiff(d *graph.Diff, title, rootName string) []byte {
 	doc := newDocument(title)
 
 	nodes := slices.Clone(d.Nodes)
@@ -124,6 +127,9 @@ func (e Exporter) ExportDiff(d *graph.Diff, title string) []byte {
 			state = stateCreated
 		} else if d.Removed[n] {
 			state = stateDeleted
+		}
+		if n == "." {
+			n = rootName
 		}
 		doc.Packages = append(doc.Packages, packageJSON{Name: n, State: state})
 	}

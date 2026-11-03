@@ -9,8 +9,8 @@ import (
 
 type Exporter interface {
 	Extension() string
-	ExportGraph(g *graph.Graph, title string) []byte
-	ExportDiff(d *graph.Diff, title string) []byte
+	ExportGraph(g *graph.Graph, title, rootName string) []byte
+	ExportDiff(d *graph.Diff, title, rootName	 string) []byte
 }
 
 func Save(e Exporter, dir, name string, data []byte) (string, error) {
