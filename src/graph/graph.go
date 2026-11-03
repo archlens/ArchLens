@@ -173,16 +173,16 @@ func (g *Graph) AddFile(pkg, file string, deps ...FileDependency) {
 	}
 	g.AddPackage(pkg, pkgs...)
 
-	g.setPath(pkg, path.Dir(file))
+	g.setPath(pkg, path.Dir(file)+"/")
 	n := g.nodes[pkg]
 	for _, d := range deps {
 		if d.Package == pkg {
 			continue // No loops
 		}
 		if d.File == d.Package {
-			g.setPath(d.Package, d.Package)
+			g.setPath(d.Package, d.Package+"/")
 		} else {
-			g.setPath(d.Package, path.Dir(d.File))
+			g.setPath(d.Package, path.Dir(d.File)+"/")
 		}
 		set := n.fileLinks[d.Package]
 		if set == nil {

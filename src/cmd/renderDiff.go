@@ -7,8 +7,8 @@ import (
 
 	"github.com/archlens/ArchLens/caching"
 	"github.com/archlens/ArchLens/export"
-	"github.com/archlens/ArchLens/export/mermaid"
 	"github.com/archlens/ArchLens/export/json"
+	"github.com/archlens/ArchLens/export/mermaid"
 	"github.com/archlens/ArchLens/gitutils"
 	"github.com/archlens/ArchLens/graph"
 	"github.com/archlens/ArchLens/input"
@@ -149,7 +149,7 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input) (map[string]*gra
 		return nil, fmt.Errorf("parsing %s: %w", ref, err)
 	}
 	for name, files := range viewFiles {
-		graphs[name] = c.Graph(files)
+		graphs[name] = c.Graph(files, repoDir)
 	}
 	return graphs, nil
 }

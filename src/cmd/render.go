@@ -88,7 +88,7 @@ to quickly create a Cobra application.`,
 			if len(files) == 0 {
 				continue
 			}
-			g := cache.Graph(files)
+			g := cache.Graph(files, absRoot)
 			output := exporter.ExportGraph(g, name)
 			path, err := export.Save(exporter, res.SaveLocation, name, output)
 			if err != nil {

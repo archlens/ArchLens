@@ -138,7 +138,10 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string) *graph.Graph {
+func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
+	restore := utils.WithWorkingDirectory(rootFolder)
+	defer restore()
+
 	g := graph.NewGraph()
 	for _, f := range files {
 		e, ok := c.Files[f]
@@ -147,6 +150,13 @@ func (c *Cache) Graph(files []string) *graph.Graph {
 		}
 		deps := make([]graph.FileDependency, len(e.Dependencies))
 		for i, d := range e.Dependencies {
+			info, err := os.Stat(d.File)
+			if err != nil {
+				Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
+			}
+			if info.IsDir() {
+				d.File += "/"
+			}
 			deps[i] = graph.FileDependency{Package: d.Package, File: d.File}
 		}
 		g.AddFile(e.Package, f, deps...)
