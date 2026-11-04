@@ -22,10 +22,12 @@ import (
 	stdjson "encoding/json"
 	"fmt"
 	"path"
+	"path/filepath"
 	"slices"
 	"strconv"
 
 	"github.com/archlens/ArchLens/graph"
+	"github.com/archlens/ArchLens/utils"
 )
 
 // Entity states. The names match the Python EntityState enum.
@@ -101,9 +103,18 @@ func (e Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
 func relations(links []graph.FileLink) []relation {
 	out := make([]relation, 0, len(links))
 	for _, l := range links {
+		fromFileAbs, err := filepath.Abs(l.FromFile)
+		if err != nil {
+			utils.Sugar.Errorf("Couldn't absolute path fromFile field: ", err.Error())
+		}
+		toFileAbs, err := filepath.Abs(l.ToFile)
+		if err != nil {
+			utils.Sugar.Errorf("Couldn't absolute path toFile field: ", err.Error())
+		}
+
 		out = append(out, relation{
-			FromFile: fileRef{Name: path.Base(l.FromFile), Path: l.FromFile},
-			ToFile:   fileRef{Name: path.Base(l.ToFile), Path: l.ToFile},
+			FromFile: fileRef{Name: path.Base(l.FromFile), Path: fromFileAbs},
+			ToFile:   fileRef{Name: path.Base(l.ToFile), Path: toFileAbs},
 		})
 	}
 	return out
