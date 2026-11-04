@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: archlens-action
-        uses: archlens/ArchLens-Action@v0.4.0
+        uses: archlens/ArchLens-Action@v0.4.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           preset: "go"
