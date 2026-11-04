@@ -22,9 +22,6 @@ import (
 // by an older shape are never loaded.
 const cacheSchemaVersion = "2"
 
-var Sugar = utils.Sugar
-
-
 type Entry struct {
 	Package      string               `json:"package"`
 	Dependencies []parsers.Dependency `json:"dependencies"`
@@ -153,7 +150,7 @@ func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
 		for i, d := range e.Dependencies {
 			info, err := os.Stat(d.File)
 			if err != nil {
-				Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
+				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
 			}
 			if info.IsDir() {
 				d.File += "/"
@@ -171,13 +168,9 @@ func LoadCache(path, runCommand string) *Cache {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil {
-		Sugar.Debug("Failed to load cache. Returned empty cache")
+	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
+		utils.Sugar.Debug("Failed to load cache or cache invalid. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
-	}
-	if c.Fingerprint != Fingerprint(runCommand) {
-		Sugar.Debug("Cache is invalid. Returned empty cache")
-		return &Cache{}
 	}
 
 	return &c
