@@ -171,10 +171,15 @@ func LoadCache(path, runCommand string) *Cache {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
-		Sugar.Debug("Failed to load cache or cache is invalid. Returned empty cache")
+	if json.Unmarshal(data, &c) != nil {
+		Sugar.Debug("Failed to load cache. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
 	}
+	if c.Fingerprint != Fingerprint(runCommand) {
+		Sugar.Debug("Cache is invalid. Returned empty cache")
+		return &Cache{}
+	}
+
 	return &c
 }
 
