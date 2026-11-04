@@ -6,10 +6,13 @@ import (
 	"path/filepath"
 
 	"github.com/archlens/ArchLens/caching"
+	"github.com/archlens/ArchLens/export"
+	"github.com/archlens/ArchLens/export/json"
+	"github.com/archlens/ArchLens/export/mermaid"
 	"github.com/archlens/ArchLens/utils/gitutils"
 	"github.com/archlens/ArchLens/graph"
 	"github.com/archlens/ArchLens/input"
-	"github.com/archlens/ArchLens/mermaid"
+	
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +42,19 @@ tree is never touched. No cache is read or written.`,
 		}
 
 		configPath, _ := cmd.Flags().GetString("config")
-		markdown, _ := cmd.Flags().GetBool("markdown")
+		format, _ := cmd.Flags().GetString("format")
+
+		var exporter export.Exporter
+		switch format {
+		case "mermaid":
+			exporter = mermaid.NewExporter(false)
+		case "mermaid-md":
+			exporter = mermaid.NewExporter(true)
+		case "json":
+			exporter = json.Exporter{}
+		default:
+			Sugar.Panicf("'%s' is not a valid export format\n", format)
+		}
 		noCache, _ := cmd.Flags().GetBool("no-cache")
 
 		cfg, err := input.Load(configPath)
@@ -74,7 +89,7 @@ tree is never touched. No cache is read or written.`,
 			rc = &caching.RefCache{
 				Dir:         filepath.Join(filepath.Dir(absCfg), ".archlens", "diff-cache"),
 				Keep:        6,
-				Fingerprint: caching.Fingerprint(Version, cfg.RunCommand),
+				Fingerprint: caching.Fingerprint(cfg.RunCommand),
 			}
 		}
 
@@ -90,10 +105,12 @@ tree is never touched. No cache is read or written.`,
 		for name := range cfg.Views {
 			diff := graph.Compare(baseGraphs[name], headGraphs[name])
 			title := fmt.Sprintf("%s (%s vs %s)", name, baseRef, headRef)
-			if err := mermaid.RenderDiff(diff, title, cfg.SaveLocation, name+"_diff", markdown, cfg.Name); err != nil {
+			output := exporter.ExportDiff(diff, title, cfg.Name)
+			path, err := export.Save(exporter, cfg.SaveLocation, name+"_diff", output)
+			if err != nil {
 				return fmt.Errorf("saving diagram for %s: %w", name, err)
 			}
-
+			Sugar.Infof("Saved view %s to file %s\n", name+"_diff", path)
 			var up, down int
 			for _, e := range diff.Edges {
 				if d := e.Delta(); d > 0 {
@@ -149,7 +166,7 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 	c := &caching.Cache{}
 	reparse := true
 	if rc != nil {
-		c, reparse = rc.Load(root), false
+		c, reparse = rc.Load(root, cfg.RunCommand), false
 	}
 	if err := c.Refresh(root, union, cfg.RunCommand, reparse); err != nil {
 		return nil, fmt.Errorf("parsing %s: %w", ref, err)
@@ -160,7 +177,7 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 		}
 	}
 	for name, files := range viewFiles {
-		graphs[name] = c.Graph(files)
+		graphs[name] = c.Graph(files, repoDir)
 	}
 	return graphs, nil
 }
@@ -168,6 +185,6 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 func init() {
 	rootCmd.AddCommand(renderDiffCmd)
 	renderDiffCmd.Flags().StringP("config", "c", "archlens.json", "Path to the archlens.json configuration file")
-	renderDiffCmd.Flags().BoolP("markdown", "m",false, "Export diagrams in markdown files")
+	renderDiffCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|mermaid-md|json]")
 	renderDiffCmd.Flags().BoolP("no-cache", "n", false, "Runs the renderDiff without cache files thus allowing for full parsing")
 }

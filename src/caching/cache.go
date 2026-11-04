@@ -18,9 +18,16 @@ import (
 	"github.com/archlens/ArchLens/utils"
 )
 
+// cacheSchema changes when the shape of Entry changes, so cache files written
+// by an older shape are never loaded.
+const cacheSchemaVersion = "2"
+
+var Sugar = utils.Sugar
+
+
 type Entry struct {
-	Package      string   `json:"package"`
-	Dependencies []string `json:"dependencies"`
+	Package      string               `json:"package"`
+	Dependencies []parsers.Dependency `json:"dependencies"`
 }
 
 type Cache struct {
@@ -77,6 +84,7 @@ func gitHead(root string) (string, error) {
 func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
 	head, herr := gitHead(root)
 	changes, cerr := gitChanges(root, c.Commit)
+	c.Fingerprint = Fingerprint(runCommand)
 
 	// Reparse everything if git can't tell us what changed, or if the set of
 	// files changed (an added or removed file can change how imports resolve).
@@ -110,7 +118,7 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 			utils.Sugar.Errorf("%s: %v", r.File, r.Err)
 			continue
 		}
-		c.Files[r.File] = Entry{r.AST.Package, r.AST.Dependencies}
+		c.Files[r.File] = Entry{Package: r.AST.Package, Dependencies: r.AST.Dependencies}
 	}
 
 	for f := range c.Files {
@@ -131,23 +139,40 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string) *graph.Graph {
+func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
+	restore := utils.WithWorkingDirectory(rootFolder)
+	defer restore()
+
 	g := graph.NewGraph()
 	for _, f := range files {
-		if e, ok := c.Files[f]; ok { // TODO: fails silently. Sould probably say something about file not being in cache
-			g.AddPackage(e.Package, e.Dependencies...)
+		e, ok := c.Files[f]
+		if !ok { // TODO: fails silently. Should probably say something about file not being in cache
+			continue
 		}
+		deps := make([]graph.FileDependency, len(e.Dependencies))
+		for i, d := range e.Dependencies {
+			info, err := os.Stat(d.File)
+			if err != nil {
+				Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
+			}
+			if info.IsDir() {
+				d.File += "/"
+			}
+			deps[i] = graph.FileDependency{Package: d.Package, File: d.File}
+		}
+		g.AddFile(e.Package, f, deps...)
 	}
 	return g
 }
 
-func LoadCache(path string) *Cache {
+func LoadCache(path, runCommand string) *Cache {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil {
+	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
+		Sugar.Debug("Failed to load cache or cache is invalid. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
 	}
 	return &c
@@ -207,11 +232,11 @@ func (r *RefCache) path(sha string) string {
 }
 
 // Load returns the cached parse closest to the checkout at root, or an empty Cache.
-func (r *RefCache) Load(root string) *Cache {
+func (r *RefCache) Load(root, runCommand string) *Cache {
 	best, bestN := &Cache{}, -1
 	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
 	for _, f := range files {
-		cand := LoadCache(f)
+		cand := LoadCache(f, runCommand)
 		if cand.Commit == "" || cand.Fingerprint != r.Fingerprint {
 			continue // empty, corrupt or from a different parser setup
 		}
@@ -247,7 +272,7 @@ func (r *RefCache) Save(c *Cache) error {
 	return nil
 }
 
-func Fingerprint(version, runCommand string) string {
-	sum := sha256.Sum256([]byte(version + "\x00" + runCommand))
+func Fingerprint(runCommand string) string {
+	sum := sha256.Sum256([]byte(cacheSchemaVersion + "\x00" + runCommand))
 	return hex.EncodeToString(sum[:8])
 }

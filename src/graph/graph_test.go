@@ -61,10 +61,10 @@ func Test_Graph(t *testing.T) {
 	if graph.TotalEdges != 3 {
 		t.Errorf("Incorrect edge count after removing 5\nExpected:\t%d\nActual:\t%d\n", 3, graph.TotalEdges)
 	}
-	for _, name := range fivePredecessors {
-		parent := graph.nodes[name]
+	for _, node := range fivePredecessors {
+		parent := graph.nodes[node]
 		if _, ok := parent.successors["5"]; ok {
-			t.Errorf("Node %s still has a dangling successor pointer to removed node 5", name)
+			t.Errorf("Node %s still has a dangling successor pointer to removed node 5", node)
 		}
 	}
 }

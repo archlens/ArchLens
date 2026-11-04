@@ -30,6 +30,8 @@ import java.util.stream.Stream;
  *
  * <pre>java -jar javaparser.jar &lt;file&gt; [-r DIR | --root DIR]</pre>
  *
+ * Output: {"package": "...", "dependencies": [{"package": "...", "file": "..."}, ...]}
+ *
  * The file is parsed with javac's own parser through the Compiler Tree API
  * (com.sun.source), so imports come from a real AST and syntax errors are
  * javac's. Only parsing is done (no attribution), so no classpath is needed.
@@ -40,10 +42,15 @@ import java.util.stream.Stream;
  *  2. for the file's directory and every ancestor up to the project root:
  *     the directory itself plus its src/main/java, src/test/java and src.
  *
+ * The "file" of a dependency is the .java file the import resolves to, as a
+ * path relative to the root with "/" separators. An import that names a
+ * package rather than a type has no single file, so "file" is the package path,
+ * the same string as "package":
+ *
  *   import a.b.C;          -> a/b/C.java, else enclosing type (a.b.C.D -> a/b/C.java)
- *   import a.b.*;          -> directory a/b holding .java files, else the type a.b
- *   import static a.b.C.m; -> type a.b.C
- *   import static a.b.C.*; -> type a.b.C
+ *   import a.b.*;          -> directory a/b holding .java files (file = "a/b"), else the type a.b
+ *   import static a.b.C.m; -> type a.b.C (a/b/C.java)
+ *   import static a.b.C.*; -> type a.b.C (a/b/C.java)
  *
  * Directories named node_modules, vendor, .m2, .gradle, site-packages or .git
  * inside the root are third-party, and so is anything reached through a symlink
@@ -59,6 +66,9 @@ public final class AstParser {
 
     static final Set<String> THIRD_PARTY =
             Set.of("node_modules", "vendor", ".m2", ".gradle", "site-packages", ".git");
+
+    /** An internal dependency: the package it is in and the file imported (the package path if unknown). */
+    record Dep(String pkg, String file) {}
 
     public static void main(String[] args) {
         String out;
@@ -134,23 +144,23 @@ public final class AstParser {
 
         Resolver resolver = new Resolver(root, searchRoots(root, fileDir, parsed.packageSegments));
         String own = packageName(root, fileDir);
-        Set<String> deps = new LinkedHashSet<>();
+        Set<Dep> deps = new LinkedHashSet<>();
         for (Import imp : parsed.imports) {
-            String pkg = null;
+            Dep dep;
             if (imp.isStatic) {
                 List<String> segs = imp.segments;
                 if (!imp.star) {
                     if (segs.size() < 2) continue;
                     segs = segs.subList(0, segs.size() - 1); // drop member name
                 }
-                pkg = resolver.resolveType(segs);
+                dep = resolver.resolveType(segs);
             } else if (imp.star) {
-                pkg = resolver.resolvePackage(imp.segments);
-                if (pkg == null) pkg = resolver.resolveType(imp.segments);
+                dep = resolver.resolvePackage(imp.segments);
+                if (dep == null) dep = resolver.resolveType(imp.segments);
             } else {
-                pkg = resolver.resolveType(imp.segments);
+                dep = resolver.resolveType(imp.segments);
             }
-            if (pkg != null && !pkg.equals(own)) deps.add(pkg);
+            if (dep != null && !dep.pkg().equals(own)) deps.add(dep);
         }
         return toJson(own, deps);
     }
@@ -212,12 +222,17 @@ public final class AstParser {
 
     // ------------------------------------------------------------ resolving
 
-    static String packageName(Path root, Path dir) {
-        Path rel = root.relativize(dir);
+    /** A path inside the root as "/"-separated text; "." for the root itself. */
+    static String slashPath(Path root, Path p) {
+        Path rel = root.relativize(p);
         if (rel.toString().isEmpty()) return ".";
         List<String> parts = new ArrayList<>();
-        for (Path p : rel) parts.add(p.toString());
+        for (Path part : rel) parts.add(part.toString());
         return String.join("/", parts);
+    }
+
+    static String packageName(Path root, Path dir) {
+        return slashPath(root, dir);
     }
 
     static List<Path> searchRoots(Path root, Path fileDir, List<String> pkg) {
@@ -272,16 +287,20 @@ public final class AstParser {
             return packageName(root, real);
         }
 
-        /** Dotted type name, possibly nested: longest prefix first (module, then enclosing module). */
-        String resolveType(List<String> segs) {
+        /**
+         * Dotted type name, possibly nested: longest prefix first (module, then enclosing module).
+         * The result carries the .java file the type is declared in.
+         */
+        Dep resolveType(List<String> segs) {
             for (int n = segs.size(); n >= 1; n--) {
                 String rel = String.join("/", segs.subList(0, n)) + ".java";
                 for (Path sr : roots) {
                     Path p = sr.resolve(rel);
                     if (!Files.isRegularFile(p)) continue;
                     try {
-                        String pkg = internalPackage(p.toRealPath().getParent());
-                        if (pkg != null) return pkg;
+                        Path real = p.toRealPath();
+                        String pkg = internalPackage(real.getParent());
+                        if (pkg != null) return new Dep(pkg, slashPath(root, real));
                     } catch (IOException ignored) {
                         // unreadable candidate: keep searching
                     }
@@ -290,13 +309,16 @@ public final class AstParser {
             return null;
         }
 
-        /** On-demand import: a directory that directly holds at least one .java file. */
-        String resolvePackage(List<String> segs) {
+        /**
+         * On-demand import: a directory that directly holds at least one .java file.
+         * A package has no single file, so the file is the package path.
+         */
+        Dep resolvePackage(List<String> segs) {
             for (Path sr : roots) {
                 Path d = sr.resolve(String.join("/", segs));
                 if (!Files.isDirectory(d) || !hasJava(d)) continue;
                 String pkg = internalPackage(d);
-                if (pkg != null) return pkg;
+                if (pkg != null) return new Dep(pkg, pkg);
             }
             return null;
         }
@@ -312,15 +334,19 @@ public final class AstParser {
 
     // ----------------------------------------------------------------- JSON
 
-    static String toJson(String pkg, Set<String> deps) {
+    static String toJson(String pkg, Set<Dep> deps) {
         StringBuilder sb = new StringBuilder("{\"package\":");
         quote(sb, pkg);
         sb.append(",\"dependencies\":[");
         boolean first = true;
-        for (String d : deps) {
+        for (Dep d : deps) {
             if (!first) sb.append(',');
             first = false;
-            quote(sb, d);
+            sb.append("{\"package\":");
+            quote(sb, d.pkg());
+            sb.append(",\"file\":");
+            quote(sb, d.file());
+            sb.append('}');
         }
         return sb.append("]}\n").toString();
     }

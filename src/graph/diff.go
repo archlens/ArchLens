@@ -8,10 +8,12 @@ import (
 // EdgeDiff is one dependency edge (From depends on To) in two versions of a graph.
 // Before or After is 0 when the edge only exists in one of them.
 type EdgeDiff struct {
-	From   string
-	To     string
-	Before uint
-	After  uint
+	From     string
+	To       string
+	FromPath string
+	ToPath   string
+	Before   uint
+	After    uint
 }
 
 // Delta is the change in the number of dependencies (positive = more).
@@ -50,14 +52,26 @@ func Compare(base, head *Graph) *Diff {
 	type key struct{ from, to string }
 	byKey := map[key]*EdgeDiff{}
 	for _, e := range base.Edges() {
-		byKey[key{e.From, e.To}] = &EdgeDiff{From: e.From, To: e.To, Before: e.Count}
+		byKey[key{e.From, e.To}] = &EdgeDiff{
+			From:     e.From,
+			To:       e.To,
+			FromPath: base.nodes[e.From].path,
+			ToPath:   base.nodes[e.To].path,
+			Before:   e.Count,
+		}
 	}
 	for _, e := range head.Edges() {
 		k := key{e.From, e.To}
 		if d, ok := byKey[k]; ok {
 			d.After = e.Count
 		} else {
-			byKey[k] = &EdgeDiff{From: e.From, To: e.To, After: e.Count}
+			byKey[k] = &EdgeDiff{
+				From:     e.From,
+				To:       e.To,
+				FromPath: head.nodes[e.From].path,
+				ToPath:   head.nodes[e.To].path,
+				After:    e.Count,
+			}
 		}
 	}
 

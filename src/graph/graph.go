@@ -1,8 +1,10 @@
 package graph
 
 import (
+	"cmp"
 	"errors"
 	"maps"
+	"path"
 	"slices"
 )
 
@@ -14,17 +16,41 @@ type Graph struct {
 
 type node struct {
 	name       string
+	path       string // directory of the package, relative to the root (empty if unknown)
 	incoming   uint
 	outgoing   uint
 	successors map[string]*node // Name of node to node pointer
 	weights    map[string]uint
+	fileLinks  map[string]map[FileLink]struct{} // Name of successor to the file pairs behind the edge
+}
+
+// Package is a node of the graph: its name and the directory it lives in.
+type Package struct {
+	Name string
+	Path string
+}
+
+// FileLink says that FromFile (in the source package) imports ToFile (in the
+// target package). ToFile is the target package path when the parser can't
+// tell which file is imported.
+type FileLink struct {
+	FromFile string
+	ToFile   string
+}
+
+// FileDependency is one import found in a file: the package it points to and
+// the file within that package.
+type FileDependency struct {
+	Package string
+	File    string
 }
 
 // Edge is a directed edge: From depends on To.
 type Edge struct {
 	From  string
 	To    string
-	Count uint
+	Count uint       // number of files in From that import To
+	Files []FileLink // the file pairs behind the edge, all unique
 }
 
 func NewGraph() *Graph {
@@ -42,6 +68,7 @@ func newNode(name string) *node {
 		outgoing:   0,
 		successors: map[string]*node{},
 		weights:    map[string]uint{},
+		fileLinks:  map[string]map[FileLink]struct{}{},
 	}
 }
 
@@ -84,6 +111,7 @@ func (g *Graph) RemoveNodes(nodes ...string) {
 			if _, ok := parent.successors[nodeName]; ok {
 				delete(parent.successors, nodeName)
 				delete(parent.weights, nodeName)
+				delete(parent.fileLinks, nodeName)
 				parent.outgoing--
 				g.TotalEdges--
 			}
@@ -94,19 +122,84 @@ func (g *Graph) RemoveNodes(nodes ...string) {
 	}
 }
 
+// PackagePath returns the directory of a package, relative to the root. The
+// bool is false if the package isn't in the graph. The path is empty for
+// packages added with AddPackage, which carries no file information.
+func (g *Graph) PackagePath(name string) (string, bool) {
+	n, ok := g.nodes[name]
+	if !ok {
+		return "", false
+	}
+	return n.path, true
+}
+
+// Packages returns every package with its name and path, sorted by name.
+func (g *Graph) Packages() []Package {
+	pkgs := make([]Package, 0, len(g.nodes))
+	for name, n := range g.nodes {
+		pkgs = append(pkgs, Package{Name: name, Path: n.path})
+	}
+	slices.SortFunc(pkgs, func(a, b Package) int { return cmp.Compare(a.Name, b.Name) })
+	return pkgs
+}
+
 // Edges returns every edge in the graph.
 func (g *Graph) Edges() []Edge {
 	edges := make([]Edge, 0, g.TotalEdges)
 	for name, n := range g.nodes {
 		for succ := range n.successors {
-			edges = append(edges, Edge{From: name, To: succ, Count: n.weights[succ]})
+			links := slices.Collect(maps.Keys(n.fileLinks[succ]))
+			edges = append(edges, Edge{From: name, To: succ, Count: n.weights[succ], Files: links})
 		}
 	}
 	return edges
 }
 
+// AddFile records that file (in package pkg) imports deps. Call it once per
+// parsed file. It does what AddPackage does for the packages, and also keeps
+// the (file, imported file) pairs on each edge and the path of every package
+// it sees: pkg's path is the directory of file, and a dependency's path is the
+// directory of its File (or File itself when File is the package path, which
+// is what a parser reports when it can't tell the file). Edge weights still count files
+// per package pair, so a file importing two files of the same package adds 1
+// to the weight and 2 file links.
+func (g *Graph) AddFile(pkg, file string, deps ...FileDependency) {
+	pkgs := make([]string, 0, len(deps))
+	for _, d := range deps {
+		pkgs = append(pkgs, d.Package)
+	}
+	g.AddPackage(pkg, pkgs...)
+
+	g.setPath(pkg, path.Dir(file)+"/")
+	n := g.nodes[pkg]
+	for _, d := range deps {
+		if d.Package == pkg {
+			continue // No loops
+		}
+		if d.File == d.Package {
+			g.setPath(d.Package, d.Package+"/")
+		} else {
+			g.setPath(d.Package, path.Dir(d.File)+"/")
+		}
+		set := n.fileLinks[d.Package]
+		if set == nil {
+			set = map[FileLink]struct{}{}
+			n.fileLinks[d.Package] = set
+		}
+		set[FileLink{FromFile: file, ToFile: d.File}] = struct{}{}
+	}
+}
+
+// setPath sets a package's path unless it already has one.
+func (g *Graph) setPath(name, p string) {
+	if n, ok := g.nodes[name]; ok && n.path == "" {
+		n.path = p
+	}
+}
+
 // AddPackage records that one file in pkg imports deps. Call it once per parsed
 // file: nodes are created as needed and each pkg -> dep edge weight goes up by 1.
+// It keeps no file information; use AddFile for that.
 func (g *Graph) AddPackage(pkg string, deps ...string) {
 	g.AddNodes(pkg)
 

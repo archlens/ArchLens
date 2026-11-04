@@ -4,8 +4,11 @@ import (
 	"path/filepath"
 
 	"github.com/archlens/ArchLens/caching"
+	"github.com/archlens/ArchLens/export"
+	"github.com/archlens/ArchLens/export/mermaid"
+	"github.com/archlens/ArchLens/export/json"
+
 	"github.com/archlens/ArchLens/input"
-	"github.com/archlens/ArchLens/mermaid"
 	"github.com/spf13/cobra"
 )
 
@@ -22,13 +25,26 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// probably move this and make it a bit more generalized
 		p, _ := cmd.Flags().GetBool("parse-full")
-		markdown, _ := cmd.Flags().GetBool("markdown")
+		format, _ := cmd.Flags().GetString("format")
 
 		var configPath string
 		if len(args) == 0 {
 			configPath = "archlens.json"
 		} else {
 			configPath = args[0]
+		}
+
+		var exporter export.Exporter
+		switch format {
+		case "mermaid":
+			exporter = mermaid.NewExporter(false)
+		case "mermaid-md":
+			exporter = mermaid.NewExporter(true)
+		case "json":
+			exporter = json.Exporter{}
+		default:
+			Sugar.Errorf("'%s' is not a valid export format\n", format)
+			return
 		}
 
 		res, err := input.Load(configPath)
@@ -44,7 +60,7 @@ to quickly create a Cobra application.`,
 			return
 		}
 		cachePath := filepath.Join(absRoot, ".archlens", "cache.json")
-		cache := caching.LoadCache(cachePath)
+		cache := caching.LoadCache(cachePath, res.RunCommand)
 
 		viewFiles := make(map[string][]string)
 		union := make(map[string]struct{})
@@ -72,9 +88,13 @@ to quickly create a Cobra application.`,
 			if len(files) == 0 {
 				continue
 			}
-			g := cache.Graph(files)
-			mermaid.Render(g, name, res.SaveLocation, markdown, res.Name)
-			Sugar.Infof("%s: %d nodes, %d edges", name, g.TotalNodes, g.TotalEdges)
+			g := cache.Graph(files, absRoot)
+			output := exporter.ExportGraph(g, name, res.Name)
+			path, err := export.Save(exporter, res.SaveLocation, name, output)
+			if err != nil {
+				Sugar.Errorf("Failed to save export: %v\n", err)
+			}
+			Sugar.Infof("%s: %d nodes, %d edges, location: %s", name, g.TotalNodes, g.TotalEdges, path)
 		}
 
 		if err := cache.Save(cachePath); err != nil {
@@ -86,5 +106,5 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 	renderCmd.Flags().BoolP("parse-full", "p", false, "A flag to fully parse any project again even if cache is present")
-	renderCmd.Flags().BoolP("markdown", "m", false, "Export diagrams in markdown files")
+	renderCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|mermaid-md|json]. ")
 }
