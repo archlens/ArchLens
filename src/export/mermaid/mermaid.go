@@ -31,7 +31,7 @@ func (e Exporter) Extension() string {
 	if e.markdown {
 		return ".md"
 	}
-	return ""
+	return ".mmd"
 }
 
 func (e Exporter) wrap(diagram string) []byte {
