@@ -1,12 +1,12 @@
 {
     "name": "Archlens",
-    "rootFolder": "./src",
+    "rootFolder": ".",
     "github": {
         "url": "https://github.com/archlens/ArchLens",
         "branch": "main"
     },
     "saveLocation": "./diagrams/",
-    "runCommand": "go run ../ast_parsers/go/ast_parser.go",
+    "runCommand": "go run ./ast_parsers/go/ast_parser.go",
     "views": {
         "completeView": {
             "include": [
