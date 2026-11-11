@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/archlens/ArchLens/utils"
+	"github.com/archlens/archlens/utils"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

@@ -6,7 +6,7 @@ import (
 	"os"
 	"slices"
 
-	"github.com/archlens/ArchLens/utils"
+	"github.com/archlens/archlens/utils"
 	"github.com/bmatcuk/doublestar/v4"
 )
 

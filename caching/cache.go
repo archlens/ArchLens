@@ -13,9 +13,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/archlens/ArchLens/graph"
-	"github.com/archlens/ArchLens/parsers"
-	"github.com/archlens/ArchLens/utils"
+	"github.com/archlens/archlens/graph"
+	"github.com/archlens/archlens/parsers"
+	"github.com/archlens/archlens/utils"
 )
 
 // cacheSchema changes when the shape of Entry changes, so cache files written

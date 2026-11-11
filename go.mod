@@ -1,4 +1,4 @@
-module github.com/archlens/ArchLens
+module github.com/archlens/archlens
 
 go 1.26.5
 

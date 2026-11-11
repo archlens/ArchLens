@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/TyphonHill/go-mermaid/diagrams/flowchart"
-	"github.com/archlens/ArchLens/graph"
+	"github.com/archlens/archlens/graph"
 )
 
 type Exporter struct{ markdown bool }

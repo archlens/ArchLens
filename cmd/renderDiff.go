@@ -5,13 +5,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/archlens/ArchLens/caching"
-	"github.com/archlens/ArchLens/export"
-	"github.com/archlens/ArchLens/export/json"
-	"github.com/archlens/ArchLens/export/mermaid"
-	"github.com/archlens/ArchLens/utils/gitutils"
-	"github.com/archlens/ArchLens/graph"
-	"github.com/archlens/ArchLens/input"
+	"github.com/archlens/archlens/caching"
+	"github.com/archlens/archlens/export"
+	"github.com/archlens/archlens/export/json"
+	"github.com/archlens/archlens/export/mermaid"
+	"github.com/archlens/archlens/utils/gitutils"
+	"github.com/archlens/archlens/graph"
+	"github.com/archlens/archlens/input"
 	
 	"github.com/spf13/cobra"
 )

@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/archlens/ArchLens/graph"
+	"github.com/archlens/archlens/graph"
 )
 
 type Exporter interface {

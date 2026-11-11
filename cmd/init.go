@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/archlens/ArchLens/input"
-	"github.com/archlens/ArchLens/parsers"
-	"github.com/archlens/ArchLens/utils/gitutils"
+	"github.com/archlens/archlens/input"
+	"github.com/archlens/archlens/parsers"
+	"github.com/archlens/archlens/utils/gitutils"
 	"github.com/spf13/cobra"
 )
 
