@@ -1,14 +1,11 @@
 package cmd
 
 import (
-	"path/filepath"
-
-	"github.com/archlens/archlens/caching"
 	"github.com/archlens/archlens/export"
-	"github.com/archlens/archlens/export/mermaid"
+	"github.com/archlens/archlens/export/html"
 	"github.com/archlens/archlens/export/json"
+	"github.com/archlens/archlens/export/mermaid"
 
-	"github.com/archlens/archlens/input"
 	"github.com/spf13/cobra"
 )
 
@@ -23,15 +20,28 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// probably move this and make it a bit more generalized
-		p, _ := cmd.Flags().GetBool("parse-full")
+		full, _ := cmd.Flags().GetBool("parse-full")
 		format, _ := cmd.Flags().GetString("format")
+		watch, _ := cmd.Flags().GetBool("watch")
 
-		var configPath string
-		if len(args) == 0 {
-			configPath = "archlens.json"
-		} else {
+		configPath := "archlens.json"
+		if len(args) > 0 {
 			configPath = args[0]
+		}
+
+		proj, err := loadProject(configPath)
+		if err != nil {
+			Sugar.Error(err)
+			return
+		}
+
+		if watch {
+			port, _ := cmd.Flags().GetInt("port")
+			view, _ := cmd.Flags().GetString("view")
+			if err := runWatch(cmd.Context(), proj, view, port, full); err != nil {
+				Sugar.Error(err)
+			}
+			return
 		}
 
 		var exporter export.Exporter
@@ -42,63 +52,31 @@ to quickly create a Cobra application.`,
 			exporter = mermaid.NewExporter(true)
 		case "json":
 			exporter = json.Exporter{}
+		case "html":
+			exporter = html.Exporter{Inner: mermaid.NewExporter(false)}
 		default:
 			Sugar.Errorf("'%s' is not a valid export format\n", format)
 			return
 		}
 
-		res, err := input.Load(configPath)
+		viewFiles, err := proj.refresh(full)
 		if err != nil {
-			Sugar.Errorf("Error when trying to load configuration: %v", err)
+			Sugar.Error(err)
 			return
 		}
-		Sugar.Infof("Config: %+v", *res)
-
-		absRoot, err := filepath.Abs(res.RootFolder)
-		if err != nil {
-			Sugar.Errorf("Error resolving root folder: %v", err)
-			return
-		}
-		cachePath := filepath.Join(absRoot, ".archlens", "cache.json")
-		cache := caching.LoadCache(cachePath, res.RunCommand)
-
-		viewFiles := make(map[string][]string)
-		union := make(map[string]struct{})
-		for name, view := range res.Views {
-			files, err := input.GetFiles(&view, res.RootFolder)
-			if err != nil {
-				Sugar.Errorf("Error when trying to get files for %s: %v", name, err)
-				continue
-			}
-			for i, f := range files {
-				files[i] = filepath.ToSlash(filepath.Clean(f))
-				union[files[i]] = struct{}{}
-			}
-			viewFiles[name] = files
-		}
-
-		if err := cache.Refresh(absRoot, union, res.RunCommand, p); err != nil {
-			Sugar.Errorf("Error refreshing cache: %v", err)
-			return
-		}
-
-		// Graphs are cheap to build from cached results, so rebuild one per view.
 		for name, files := range viewFiles {
 			Sugar.Debugf("%s: %d files: %v", name, len(files), files)
 			if len(files) == 0 {
 				continue
 			}
-			g := cache.Graph(files, absRoot)
-			output := exporter.ExportGraph(g, name, res.Name)
-			path, err := export.Save(exporter, res.SaveLocation, name, output)
+			g := proj.graph(files)
+			output := exporter.ExportGraph(g, name, proj.cfg.Name)
+			path, err := export.Save(exporter, proj.cfg.SaveLocation, name, output)
 			if err != nil {
 				Sugar.Errorf("Failed to save export: %v\n", err)
+				continue
 			}
 			Sugar.Infof("%s: %d nodes, %d edges, location: %s", name, g.TotalNodes, g.TotalEdges, path)
-		}
-
-		if err := cache.Save(cachePath); err != nil {
-			Sugar.Errorf("Error saving cache: %v", err)
 		}
 	},
 }
@@ -106,5 +84,8 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(renderCmd)
 	renderCmd.Flags().BoolP("parse-full", "p", false, "A flag to fully parse any project again even if cache is present")
-	renderCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|mermaid-md|json]. ")
+	renderCmd.Flags().StringP("format", "f", "mermaid", formatHelp)
+	renderCmd.Flags().BoolP("watch", "w", false, "serve the diagram on localhost and reload on file changes")
+	renderCmd.Flags().Int("port", 8080, "port used with --watch")
+	renderCmd.Flags().String("view", "", "view to show with --watch (required if several are configured)")
 }
