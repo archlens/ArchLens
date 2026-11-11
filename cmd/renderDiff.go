@@ -7,12 +7,10 @@ import (
 
 	"github.com/archlens/archlens/caching"
 	"github.com/archlens/archlens/export"
-	"github.com/archlens/archlens/export/json"
-	"github.com/archlens/archlens/export/mermaid"
-	"github.com/archlens/archlens/utils/gitutils"
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/input"
-	
+	"github.com/archlens/archlens/utils/gitutils"
+
 	"github.com/spf13/cobra"
 )
 
@@ -32,39 +30,32 @@ tree is never touched. No cache is read or written.`,
 	Args: cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true // usage text is noise for runtime errors
+
 		var baseRef, headRef string
 		if len(args) == 2 {
 			baseRef, headRef = args[0], args[1]
-		} else if len(args) == 1 {
-			headRef = args[0]
 		} else {
-			Sugar.Panicf("Too few args need minimum 1 arg: compare-branch")
+			headRef = args[0]
 		}
 
 		configPath, _ := cmd.Flags().GetString("config")
 		format, _ := cmd.Flags().GetString("format")
-
-		var exporter export.Exporter
-		switch format {
-		case "mermaid":
-			exporter = mermaid.NewExporter(false)
-		case "mermaid-md":
-			exporter = mermaid.NewExporter(true)
-		case "json":
-			exporter = json.Exporter{}
-		default:
-			Sugar.Panicf("'%s' is not a valid export format\n", format)
-		}
 		noCache, _ := cmd.Flags().GetBool("no-cache")
+
+		exporter, err := newExporter(format)
+		if err != nil {
+			return err
+		}
 
 		cfg, err := input.Load(configPath)
 		if err != nil {
 			return fmt.Errorf("loading configuration: %w", err)
 		}
 
-		if baseRef == "" && cfg.Github.Branch == "" {
-			Sugar.Panicf("No baseRef defined in archlens.json and no base-branch given as input argument")
-		} else if baseRef == "" {
+		if baseRef == "" {
+			if cfg.Github.Branch == "" {
+				return fmt.Errorf("no base branch: set github.branch in archlens.json or pass [base-branch]")
+			}
 			baseRef = cfg.Github.Branch
 		}
 
@@ -111,6 +102,7 @@ tree is never touched. No cache is read or written.`,
 				return fmt.Errorf("saving diagram for %s: %w", name, err)
 			}
 			Sugar.Infof("Saved view %s to file %s\n", name+"_diff", path)
+
 			var up, down int
 			for _, e := range diff.Edges {
 				if d := e.Delta(); d > 0 {
@@ -126,8 +118,9 @@ tree is never touched. No cache is read or written.`,
 }
 
 // graphsAtRef checks ref out into a temporary worktree, parses every view's files
-// there and returns one graph per view. It uses a throwaway in-memory cache purely
-// for its parse-and-build logic; nothing is loaded from or saved to disk.
+// there and returns one graph per view. With rc == nil it uses a throwaway
+// in-memory cache purely for its parse-and-build logic; nothing is loaded from
+// or saved to disk.
 func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefCache) (map[string]*graph.Graph, error) {
 	wt, cleanup, err := gitutils.AddWorktree(repoDir, ref)
 	if err != nil {
@@ -147,18 +140,9 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 		return graphs, nil
 	}
 
-	viewFiles := make(map[string][]string, len(cfg.Views))
-	union := make(map[string]struct{})
-	for name, view := range cfg.Views {
-		files, err := input.GetFiles(&view, root)
-		if err != nil {
-			return nil, fmt.Errorf("getting files for %s on %s: %w", name, ref, err)
-		}
-		for i, f := range files {
-			files[i] = filepath.ToSlash(filepath.Clean(f))
-			union[files[i]] = struct{}{}
-		}
-		viewFiles[name] = files
+	viewFiles, union, err := resolveViewFiles(cfg, root)
+	if err != nil {
+		return nil, fmt.Errorf("%w (on %s)", err, ref)
 	}
 
 	Sugar.Infof("parsing %s", ref)
@@ -185,6 +169,6 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 func init() {
 	rootCmd.AddCommand(renderDiffCmd)
 	renderDiffCmd.Flags().StringP("config", "c", "archlens.json", "Path to the archlens.json configuration file")
-	renderDiffCmd.Flags().StringP("format", "f", "mermaid", "Set the output format for archlens [mermaid|mermaid-md|json]")
+	renderDiffCmd.Flags().StringP("format", "f", "mermaid", formatHelp)
 	renderDiffCmd.Flags().BoolP("no-cache", "n", false, "Runs the renderDiff without cache files thus allowing for full parsing")
 }
