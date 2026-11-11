@@ -25,7 +25,8 @@ type ArchLensGo struct {
 }
 
 func New(
-	// +defaultPath="./src"
+	// +defaultPath="."
+	// +ignore=[".github", ".gitignore", ".git", ".archlens", ".vscode", ".dagger", "docs", "diagrams", "ast_parsers", "*.md"]
 	src *dagger.Directory,
 ) *ArchLensGo {
 	return &ArchLensGo{
