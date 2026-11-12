@@ -15,7 +15,9 @@
             ],
             "exclude": [
                 "go.sum",
-                "go.mod"
+                "go.mod", 
+                ".dagger/*",
+                "ast_parsers/go/*"
             ]
         },
         "smallerView": {
