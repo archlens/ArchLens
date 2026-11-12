@@ -1,4 +1,4 @@
-// Package gitutil holds small helpers around the git CLI.
+// Package gitutils holds small helpers around the git CLI.
 package gitutils
 
 import (
