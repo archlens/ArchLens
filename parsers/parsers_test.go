@@ -63,15 +63,15 @@ func runFakeParser(args []string) {
 		fmt.Print(`{"package":"pkg/warn","dependencies":[]}`)
 	case "echo":
 		cwd, _ := os.Getwd()
-		out, _ := json.Marshal(ASTNode{Package: cwd, Dependencies: args})
+		out, _ := json.Marshal(ASTNode{Package: cwd, Dependencies: deps(args...)})
 		fmt.Print(string(out))
 	case "nodeps":
 		fmt.Print(`{"package":"pkg/nodeps"}`)
 	case "extrafields":
-		fmt.Print(`{"package":"pkg/extra","dependencies":["x"],"version":2}`)
+		fmt.Print(`{"package":"pkg/extra","dependencies":[{"package":"x","file":"x.go"}],"version":2}`)
 	default:
 		name := strings.TrimSuffix(base, filepath.Ext(base))
-		out, _ := json.Marshal(ASTNode{Package: "pkg/" + name, Dependencies: []string{"dep/a", "dep/b"}})
+		out, _ := json.Marshal(ASTNode{Package: "pkg/" + name, Dependencies: deps("dep/a", "dep/b")})
 		fmt.Print(string(out))
 	}
 }
@@ -114,6 +114,24 @@ func resolve(t *testing.T, p string) string {
 	return r
 }
 
+// deps builds Dependencies that only have a Package set.
+func deps(pkgs ...string) []Dependency {
+	out := make([]Dependency, len(pkgs))
+	for i, p := range pkgs {
+		out[i] = Dependency{Package: p}
+	}
+	return out
+}
+
+// depPackages returns just the Package of each Dependency, for comparing against []string.
+func depPackages(ds []Dependency) []string {
+	out := make([]string, len(ds))
+	for i, d := range ds {
+		out[i] = d.Package
+	}
+	return out
+}
+
 // ---------- GetAST ----------
 
 func Test_GetAST_ParsesParserOutput(t *testing.T) {
@@ -124,7 +142,7 @@ func Test_GetAST_ParsesParserOutput(t *testing.T) {
 	if got.Package != "pkg/a" {
 		t.Errorf("Package = %q, want %q", got.Package, "pkg/a")
 	}
-	if want := []string{"dep/a", "dep/b"}; !slices.Equal(got.Dependencies, want) {
+	if want := []string{"dep/a", "dep/b"}; !slices.Equal(depPackages(got.Dependencies), want) {
 		t.Errorf("Dependencies = %v, want %v", got.Dependencies, want)
 	}
 }
@@ -139,7 +157,7 @@ func Test_GetAST_PassesArgumentsInSpecOrder(t *testing.T) {
 
 	// The command's own arguments come first, then -r <rootDir> <file>
 	want := []string{"--flag", "value", "-r", root, "echo"}
-	if !slices.Equal(got.Dependencies, want) {
+	if !slices.Equal(depPackages(got.Dependencies), want) {
 		t.Errorf("parser received args %v, want %v", got.Dependencies, want)
 	}
 }
@@ -165,7 +183,7 @@ func Test_GetAST_QuotedArgumentsStayOneArgument(t *testing.T) {
 	}
 
 	want := []string{"--name=two words", "single quoted", "-r", root, "echo"}
-	if !slices.Equal(got.Dependencies, want) {
+	if !slices.Equal(depPackages(got.Dependencies), want) {
 		t.Errorf("parser received args %q, want %q", got.Dependencies, want)
 	}
 }
@@ -299,9 +317,9 @@ func Test_GetAST_ToleratesMissingAndUnknownFields(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GetAST returned error: %v", err)
 		}
-		if got.Package != "pkg/extra" || !slices.Equal(got.Dependencies, []string{"x"}) {
-			t.Errorf("got %+v", got)
-		}
+		if got.Package != "pkg/extra" || !slices.Equal(got.Dependencies, []Dependency{{Package: "x", File: "x.go"}}) {
+	t.Errorf("got %+v", got)
+}
 	})
 }
 
