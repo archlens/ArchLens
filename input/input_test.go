@@ -7,18 +7,11 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/archlens/ArchLens/utils"
-	"go.uber.org/zap"
+	"github.com/archlens/archlens/utils"
 )
 
 // NOTE: these tests change the working directory (GetFiles does it itself and
 // matchFiles needs it), so none of them may use t.Parallel().
-
-func TestMain(m *testing.M) {
-	// logger is captured from utils.Sugar at package init; make sure it is usable
-	logger = zap.NewNop().Sugar()
-	os.Exit(m.Run())
-}
 
 // ---------- helpers ----------
 
