@@ -60,11 +60,7 @@ func matchFiles(patterns []string) (map[string]struct{}, error) {
 			return files, err
 		}
 		for _, match := range matches {
-			file, err := os.Open(match)
-			if err != nil {
-				return files, err
-			}
-			fileInfo, err := file.Stat()
+			fileInfo, err := os.Stat(match)
 			if err != nil {
 				return files, err
 			}
