@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
-	"sort"
 
 	"github.com/archlens/archlens/caching"
 	"github.com/archlens/archlens/export"
@@ -104,6 +103,6 @@ func (p *project) viewNames() []string {
 	for n := range p.cfg.Views {
 		names = append(names, n)
 	}
-	sort.Strings(names)
+
 	return names
 }
