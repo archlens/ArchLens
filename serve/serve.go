@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/archlens/archlens/utils"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -85,7 +86,10 @@ func (s *server) handler() http.Handler {
 		for {
 			select {
 			case <-c:
-				fmt.Fprint(w, "event: reload\ndata: 1\n\n")
+				_, err := fmt.Fprint(w, "event: reload\ndata: 1\n\n")
+				if err != nil {
+					utils.Sugar.Errorf("Reloading of diagram file failed: ", err.Error())
+				}
 				fl.Flush()
 			case <-r.Context().Done():
 				return
@@ -105,7 +109,7 @@ func Run(ctx context.Context, addr, root string, ignore map[string]bool, build B
 	if err != nil {
 		return err
 	}
-	defer w.Close()
+	defer func(){_ = w.Close()}()
 
 	// fsnotify is not recursive, so add every directory ourselves.
 	err = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
