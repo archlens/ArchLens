@@ -18,6 +18,7 @@ import (
 	"context"
 	"dagger/arch-lens-go/internal/dagger"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
@@ -106,6 +107,28 @@ var defaultRepos = []string{
 	"zeeguu/api",
 }
 
+type repoSpec struct{ name, repo, ref string }
+
+func parseRepo(s string) repoSpec {
+	repo, ref, _ := strings.Cut(s, "@")
+	if ref == "" {
+		ref = "HEAD"
+	}
+	return repoSpec{name: strings.ReplaceAll(repo, "/", "__"), repo: repo, ref: ref}
+}
+
+func fetchRepo(spec repoSpec) *dagger.Directory {
+	dir := "/repo"
+	return dag.Container().
+		From("alpine:3.20").
+		WithExec([]string{"apk", "add", "--no-cache", "curl", "tar"}).
+		WithExec([]string{"sh", "-c", fmt.Sprintf(
+			"mkdir -p %s && curl -fsSL https://codeload.github.com/%s/tar.gz/%s | tar -xz --strip-components=1 -C %s",
+			dir, spec.repo, spec.ref, dir,
+		)}).
+		Directory(dir)
+}
+
 // Python container with an (empty) venv named archlens, already on PATH.
 func (m *ArchLensGo) OldArchLensEnv() *dagger.Container {
 	return dag.Container().
@@ -141,64 +164,103 @@ func (m *ArchLensGo) FetchRepos(
 	return out
 }
 
-// Runs old and new ArchLens on every repo in parallel, then diffs the JSON.
+// New ArchLens built from the current source and put on PATH.
+func (m *ArchLensGo) newArchLensEnv() *dagger.Container {
+	return m.BuildEnv().
+		WithExec([]string{"go", "build", "-o", "/usr/local/bin/archlens", "."}).
+		WithExec([]string{"./archlens", "init", "python"})
+}
+
+// TODO(you): ctr has the repo mounted and workdir set to the repo root.
+// Install/run the OLD ArchLens here and return the JSON it produced.
+func oldJSON(ctr *dagger.Container) *dagger.File {
+	return ctr.
+		WithExec([]string{"mkdir", "-p", "/out"}).
+		// WithExec([]string{...}).
+		File("/out/old.json")
+}
+
+// TODO(you): same for the NEW ArchLens (binary is already on PATH).
+func newJSON(ctr *dagger.Container) *dagger.File {
+	return ctr.
+		WithExec([]string{"mkdir", "-p", "/out"}).
+		WithExec([]string{"./archlens", "render"}).
+		File("/out/new.json")
+}
+
+// Runs old and new ArchLens on each repo in parallel, then compares the JSON.
 func (m *ArchLensGo) TestJsonOutput(
 	ctx context.Context,
 	// +optional
 	repos []string,
+	// Require exact equality instead of ignoring packages the old output lacks
+	// +optional
+	strict bool,
 ) (string, error) {
-	repoDir := m.FetchRepos(repos)
-
-	entries, err := repoDir.Entries(ctx)
-	if err != nil {
-		return "", err
-	}
-	names := make([]string, len(entries))
-	for i, e := range entries {
-		names[i] = strings.TrimSuffix(e, "/")
+	if len(repos) == 0 {
+		repos = defaultRepos
 	}
 
-	oldCtr := m.OldArchLensEnv().WithDirectory("/repos", repoDir)
-	newCtr := m.BuildEnv().WithDirectory("/repos", repoDir)
+	oldEnv := m.OldArchLensEnv()
+	newEnv := m.newArchLensEnv()
 
-	oldFiles := make([]*dagger.File, len(names))
-	newFiles := make([]*dagger.File, len(names))
+	outputs := make([]string, len(repos))
+	failed := make([]bool, len(repos))
 
 	g, gctx := errgroup.WithContext(ctx)
-	for i, name := range names {
+	for i, r := range repos {
 		g.Go(func() error {
-			f, err := oldCtr.
-				WithWorkdir("/repos/" + name).
-				// TODO: WithExec(old archlens cmd, writing /out/old.json)
-				File("/out/old.json").Sync(gctx)
-			oldFiles[i] = f
-			return err
-		})
-		g.Go(func() error {
-			f, err := newCtr.
-				WithWorkdir("/repos/" + name).
-				// TODO: WithExec(new archlens cmd, writing /out/new.json)
-				File("/out/new.json").Sync(gctx)
-			newFiles[i] = f
-			return err
+			spec := parseRepo(r)
+			src := fetchRepo(spec)
+			root := "/repos/" + spec.name
+
+			oldF := oldJSON(oldEnv.WithDirectory(root, src).WithWorkdir(root))
+			newF := newJSON(newEnv.WithDirectory(root, src).WithWorkdir(root))
+
+			// Return type "any" so a failing test doesn't abort the other repos.
+			ctr := m.BuildEnv().
+				WithFile("/work/old.json", oldF).
+				WithFile("/work/new.json", newF).
+				WithEnvVariable("OLD_JSON", "/work/old.json").
+				WithEnvVariable("NEW_JSON", "/work/new.json").
+				WithEnvVariable("ROOT", root).
+				WithEnvVariable("STRICT_JSON", strconv.FormatBool(strict)).
+				WithExec([]string{"go", "test", "-tags", "local", "-v", "-count=1",
+					"-run", "TestCompareJSONOutputs", "./export/json/"},
+					dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny})
+
+			code, err := ctr.ExitCode(gctx)
+			if err != nil {
+				return err
+			}
+			stdout, err := ctr.Stdout(gctx)
+			if err != nil {
+				return err
+			}
+			stderr, err := ctr.Stderr(gctx)
+			if err != nil {
+				return err
+			}
+			outputs[i] = stdout + stderr
+			failed[i] = code != 0
+			return nil
 		})
 	}
 	if err := g.Wait(); err != nil {
 		return "", err
 	}
 
-	oldOut, newOut := dag.Directory(), dag.Directory()
-	for i, name := range names {
-		oldOut = oldOut.WithFile(name+".json", oldFiles[i])
-		newOut = newOut.WithFile(name+".json", newFiles[i])
+	var report strings.Builder
+	anyFailed := false
+	for i, r := range repos {
+		status := "PASS"
+		if failed[i] {
+			status, anyFailed = "FAIL", true
+		}
+		fmt.Fprintf(&report, "===== %s: %s =====\n%s\n", r, status, outputs[i])
 	}
-
-	return m.BuildEnv().
-		WithDirectory("/json/old", oldOut).
-		WithDirectory("/json/new", newOut).
-		WithEnvVariable("OLD_JSON_DIR", "/json/old").
-		WithEnvVariable("NEW_JSON_DIR", "/json/new").
-		WithExec([]string{"go", "test", "-tags", "local", "-v",
-			"-run", "TestCompareJSONOutputs", "./export/json/..."}).
-		Stdout(ctx)
+	if anyFailed {
+		return "", fmt.Errorf("JSON outputs differ:\n%s", report.String())
+	}
+	return report.String(), nil
 }
