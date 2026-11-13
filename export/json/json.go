@@ -22,6 +22,7 @@ import (
 	stdjson "encoding/json"
 	"fmt"
 	"path"
+	"path/filepath"
 	"slices"
 	"strconv"
 
@@ -101,9 +102,17 @@ func (e Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
 func relations(links []graph.FileLink) []relation {
 	out := make([]relation, 0, len(links))
 	for _, l := range links {
+		absFromFile, err := filepath.Abs(l.FromFile)
+		if err != nil {
+			utils.Sugar.Errorf("Failed conversion of abs path of fromFile: ", err.Error())
+		}
+		absToFile, err := filepath.Abs(l.ToFile)
+		if err != nil {
+			utils.Sugar.Errorf("Failed conversion of abs path of toFile: ", err.Error())
+		}
 		out = append(out, relation{
-			FromFile: fileRef{Name: path.Base(l.FromFile), Path: l.FromFile},
-			ToFile:   fileRef{Name: path.Base(l.ToFile), Path: l.ToFile},
+			FromFile: fileRef{Name: path.Base(l.FromFile), Path: absFromFile},
+			ToFile:   fileRef{Name: path.Base(l.ToFile), Path: absToFile},
 		})
 	}
 	return out
