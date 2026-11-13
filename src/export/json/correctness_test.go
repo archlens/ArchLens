@@ -64,20 +64,16 @@ var opts = cmp.Options{
 
 func normName(s string) string { return strings.ReplaceAll(s, ".", "/") }
 
-// normalizeOld maps the old exporter's format onto the new one.
-// root is the absolute project root the old tool ran in, with a trailing "/".
-func normalizeOld(d document, root string) document {
+// trimRoot makes absolute file paths relative to root (trailing "/").
+func trimRoot(d document, root string) document {
+	if root == "" {
+		return d
+	}
 	rel := func(f fileRef) fileRef {
 		return fileRef{Name: f.Name, Path: strings.TrimPrefix(f.Path, root)}
 	}
-	out := document{Title: d.Title}
-	for _, p := range d.Packages {
-		p.Name = normName(p.Name)
-		out.Packages = append(out.Packages, p)
-	}
+	out := document{Title: d.Title, Packages: d.Packages}
 	for _, e := range d.Edges {
-		e.FromPackage = normName(e.FromPackage)
-		e.ToPackage = normName(e.ToPackage)
 		rels := make([]relation, len(e.Relations))
 		for i, r := range e.Relations {
 			rels[i] = relation{FromFile: rel(r.FromFile), ToFile: rel(r.ToFile)}
@@ -86,6 +82,31 @@ func normalizeOld(d document, root string) document {
 		out.Edges = append(out.Edges, e)
 	}
 	return out
+}
+
+// oldNames converts the old exporter's dotted package names ("src.views")
+// to the new slash form ("src/views").
+func oldNames(d document) document {
+	out := document{Title: d.Title}
+	for _, p := range d.Packages {
+		p.Name = normName(p.Name)
+		out.Packages = append(out.Packages, p)
+	}
+	for _, e := range d.Edges {
+		e.FromPackage = normName(e.FromPackage)
+		e.ToPackage = normName(e.ToPackage)
+		out.Edges = append(out.Edges, e)
+	}
+	return out
+}
+
+// root returns an env var as a directory prefix with exactly one trailing "/".
+func rootFromEnv(key string) string {
+	r := os.Getenv(key)
+	if r == "" {
+		return ""
+	}
+	return strings.TrimSuffix(r, "/") + "/"
 }
 
 // restrictTo drops packages (and edges touching them) that ref doesn't have.
@@ -257,26 +278,26 @@ func report(log *zap.SugaredLogger, oldDoc, newDoc document) int {
 func TestCompareJSONOutputs(t *testing.T) {
 	skipInCI(t)
 
-	log := newTestLogger(t)
-
 	oldP := envOr("OLD_JSON", "old.json")
 	newP := envOr("NEW_JSON", "new.json")
-	root := os.Getenv("ROOT") // project root the old tool ran in
-	if root != "" {
-		root = strings.TrimSuffix(root, "/") + "/"
+	oldRoot := rootFromEnv("ROOT")
+	newRoot := oldRoot
+	if os.Getenv("NEW_ROOT") != "" {
+		newRoot = rootFromEnv("NEW_ROOT")
 	}
 	strict := envBool("STRICT_JSON")
 	t.Logf("strict=%v old=%s new=%s", strict, oldP, newP)
 
-	oldDoc := normalizeOld(loadDoc(t, oldP), root)
-	newDoc := loadDoc(t, newP)
+	oldDoc := oldNames(trimRoot(loadDoc(t, oldP), oldRoot))
+	newDoc := trimRoot(loadDoc(t, newP), newRoot)
 	if !strict {
 		newDoc = restrictTo(newDoc, oldDoc)
 	}
 
+	log := newTestLogger(t)
 	if !cmp.Equal(oldDoc, newDoc, opts) {
 		if report(log, oldDoc, newDoc) == 0 {
-			t.Log(cmp.Diff(oldDoc, newDoc, opts)) // summary missed it, show raw diff
+			t.Log(cmp.Diff(oldDoc, newDoc, opts))
 		}
 		t.Fail()
 	}
