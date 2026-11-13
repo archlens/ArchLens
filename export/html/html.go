@@ -26,14 +26,14 @@ type Exporter struct {
 func (e Exporter) Extension() string { return ".html" }
 
 func (e Exporter) ExportGraph(g *graph.Graph, title, rootName string) []byte {
-	return e.Wrap(title, e.Inner.ExportGraph(g, title, rootName))
+	return e.wrap(title, e.Inner.ExportGraph(g, title, rootName))
 }
 
 func (e Exporter) ExportDiff(d *graph.Diff, title, rootName string) []byte {
-	return e.Wrap(title, e.Inner.ExportDiff(d, title, rootName))
+	return e.wrap(title, e.Inner.ExportDiff(d, title, rootName))
 }
 
-func (e Exporter) Wrap(title string, mermaid []byte) []byte {
+func (e Exporter) wrap(title string, mermaid []byte) []byte {
 	var buf bytes.Buffer
 	_ = tmpl.Execute(&buf, struct {
 		Title, Mermaid string
