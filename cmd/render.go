@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"github.com/archlens/archlens/export"
-	"github.com/archlens/archlens/export/html"
-	"github.com/archlens/archlens/export/json"
-	"github.com/archlens/archlens/export/mermaid"
+	"github.com/archlens/archlens/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -44,18 +42,9 @@ to quickly create a Cobra application.`,
 			return
 		}
 
-		var exporter export.Exporter
-		switch format {
-		case "mermaid":
-			exporter = mermaid.NewExporter(false)
-		case "mermaid-md":
-			exporter = mermaid.NewExporter(true)
-		case "json":
-			exporter = json.Exporter{}
-		case "html":
-			exporter = html.Exporter{Inner: mermaid.NewExporter(false)}
-		default:
-			Sugar.Errorf("'%s' is not a valid export format\n", format)
+		exporter, err := newExporter(format)
+		if err != nil {
+			utils.Sugar.Errorf("Failed to create exporter: ", err.Error())
 			return
 		}
 
