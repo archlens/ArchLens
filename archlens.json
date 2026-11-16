@@ -10,14 +10,13 @@
     "views": {
         "completeView": {
             "include": [
-                "**/*.go",
-                "*.go"
+                "**/*.go"
             ],
             "exclude": [
                 "go.sum",
                 "go.mod", 
-                ".dagger/*",
-                "ast_parsers/go/*"
+                ".dagger/**",
+                "ast_parsers/go/**"
             ]
         },
         "smallerView": {
@@ -25,7 +24,10 @@
                 "cmd/*.*",
                 "main.go"
             ],
-            "exclude": []
+            "exclude": [
+                ".dagger/**",
+                "ast_parsers/go/**"
+            ]
         }
     }
 }
