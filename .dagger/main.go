@@ -57,7 +57,6 @@ func (m *ArchLensGo) Build() *dagger.Directory {
 
 	golang := m.BuildEnv()
 
-
 	for _, goos := range gooses {
 		for _, goarch := range goarches {
 			// create directory for each OS and architecture
@@ -65,8 +64,8 @@ func (m *ArchLensGo) Build() *dagger.Directory {
 			buildDir := "build/" + target + "/"
 
 			bin := "archlens"
-				if goos == "windows" {
-					bin += ".exe"
+			if goos == "windows" {
+				bin += ".exe"
 			}
 
 			// build artifact
@@ -97,3 +96,4 @@ func (m *ArchLensGo) Lint(ctx context.Context) (string, error) {
 		WithWorkdir("./src").
 		WithExec([]string{"golangci-lint", "run"}).Stdout(ctx)
 }
+

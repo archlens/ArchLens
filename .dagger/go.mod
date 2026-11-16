@@ -12,6 +12,12 @@ require (
 )
 
 require (
+	github.com/adrg/xdg v0.5.3 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+)
+
+require (
+	dagger.io/dagger v0.21.11
 	github.com/99designs/gqlgen v0.17.89 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -35,7 +41,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.43.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171 // indirect
