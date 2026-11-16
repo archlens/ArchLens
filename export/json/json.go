@@ -27,6 +27,7 @@ import (
 	"strconv"
 
 	"github.com/archlens/archlens/graph"
+	"github.com/archlens/archlens/utils"
 )
 
 // Entity states. The names match the Python EntityState enum.

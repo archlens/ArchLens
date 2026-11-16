@@ -18,10 +18,6 @@ import (
 	"context"
 	"dagger/arch-lens-go/internal/dagger"
 	"fmt"
-	"strconv"
-	"strings"
-
-	"golang.org/x/sync/errgroup"
 )
 
 type ArchLensGo struct {
