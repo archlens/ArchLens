@@ -45,7 +45,7 @@ curl -L -o install.sh https://github.com/archlens/ArchLensGo/raw/refs/heads/main
 ArchLens is hosted as a package on [https://pkg.go.dev/](https://pkg.go.dev/) meaning you can use go install to install the tool as a binary. Please keep in mind that the go bin folder is usually not auto included in `$PATH` so you might need to add that folder to your path env variable.
 
 ```console
-go install github.com/archlens/archlens
+go install github.com/archlens/archlens@latest
 ```
 
 ### Binary Install
