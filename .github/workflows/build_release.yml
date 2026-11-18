@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Run checks
         uses: dagger/dagger-for-github@27b130bf0f79a7f6fbbbe0fbca6760dc9bb40a77
         with:
@@ -52,7 +52,7 @@ jobs:
           done
           ls -la "$dist"
       - name: Auto Changelog
-        uses: ardalanamini/auto-changelog@v4.0.1
+        uses: ardalanamini/auto-changelog@506d604cdb8ec964c260a43c4e2f594ba30bfecc
         id  : changelog
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
               style: Code Style
               revert: Reverts
       - name: Create release
-        uses: softprops/action-gh-release@v2.5.0
+        uses: softprops/action-gh-release@v8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           body: ${{steps.changelog.outputs.changelog}}
           files: |

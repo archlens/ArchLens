@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: archlens-action
-        uses: archlens/ArchLens-Action@v0.4.1
+        uses: archlens/ArchLens-Action@4f690f028055f6b225044860ccbc00bfee6de1fa
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           preset: "go"
