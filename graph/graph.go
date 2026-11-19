@@ -53,6 +53,10 @@ type Edge struct {
 	Files []FileLink // the file pairs behind the edge, all unique
 }
 
+// Mapper maps a package to the node it is shown as. ok is false for packages
+// that must not appear at all.
+type Mapper func(pkg string) (node string, ok bool)
+
 func NewGraph() *Graph {
 	return &Graph{
 		nodes:      map[string]*node{},
@@ -71,6 +75,7 @@ func newNode(name string) *node {
 		fileLinks:  map[string]map[FileLink]struct{}{},
 	}
 }
+
 
 func (g *Graph) GetNodeNames() []string {
 	return slices.Collect(maps.Keys(g.nodes))
@@ -278,4 +283,89 @@ func (g *Graph) AddSuccessors(source string, successors ...string) error {
 		sourceNode.weights[successorNode]++
 	}
 	return nil
+}
+
+
+// Project returns a new graph in which every package is replaced by the node
+// the mapper assigns to it. Packages mapped to the same node are merged,
+// packages the mapper rejects disappear with their edges, and dependencies
+// between packages that end up in the same node are dropped.
+//
+// An edge's weight is the number of distinct files in the source node that
+// import the target node, taken from the file links (see AddFile). Edges
+// without file links (AddPackage) fall back to summing the merged weights.
+func (g *Graph) Project(m Mapper) *Graph {
+	out := NewGraph()
+
+	mapped := make(map[string]string, len(g.nodes))
+	merged := make(map[string]bool) // nodes that absorbed a differently named package
+	for name := range g.nodes {
+		to, ok := m(name)
+		if !ok {
+			continue
+		}
+		mapped[name] = to
+		if name != to {
+			merged[to] = true
+		}
+	}
+
+	// A node keeps the path of the package that carries its name. If only
+	// sub-packages exist, its path is its own name (a package is its directory).
+	for name, to := range mapped {
+		out.AddNodes(to)
+		if name == to {
+			out.setPath(to, g.nodes[name].path)
+		}
+	}
+	for to := range merged {
+		out.setPath(to, to+"/") // no-op if the node already has a path
+	}
+
+	type pair struct{ from, to string }
+	type agg struct {
+		files  map[string]struct{}
+		links  map[FileLink]struct{}
+		weight uint
+	}
+	edges := map[pair]*agg{}
+	for name, n := range g.nodes {
+		from, ok := mapped[name]
+		if !ok {
+			continue
+		}
+		for succ := range n.successors {
+			to, ok := mapped[succ]
+			if !ok || to == from {
+				continue
+			}
+			a := edges[pair{from, to}]
+			if a == nil {
+				a = &agg{files: map[string]struct{}{}, links: map[FileLink]struct{}{}}
+				edges[pair{from, to}] = a
+			}
+			a.weight += n.weights[succ]
+			for l := range n.fileLinks[succ] {
+				a.links[l] = struct{}{}
+				a.files[l.FromFile] = struct{}{}
+			}
+		}
+	}
+
+	for p, a := range edges {
+		from, to := out.nodes[p.from], out.nodes[p.to]
+		from.successors[p.to] = to
+		from.outgoing++
+		to.incoming++
+		out.TotalEdges++
+		if len(a.files) > 0 {
+			from.weights[p.to] = uint(len(a.files))
+		} else {
+			from.weights[p.to] = a.weight
+		}
+		if len(a.links) > 0 {
+			from.fileLinks[p.to] = a.links
+		}
+	}
+	return out
 }

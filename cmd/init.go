@@ -25,41 +25,37 @@ const parserDir = "ast_parser"
 // language describes how to set up one of the bundled parsers.
 type language struct {
 	runCommand string
-	include    []string
-	exclude    []string
+	files      []string
+	exclude    []string // package patterns
 	bundle     func(location string) error
 }
 
 var languages = map[string]language{
 	"python": {
 		runCommand: "python3 " + path.Join(parserDir, "ast_parser.py"),
-		include:    []string{"**/*.py", "*.py"},
-		exclude: []string{"__pycache__", "**/__pycache__/**", "**/__init__.py", "__init__.py",
-			"venv", ".venv", "env", ".env", "virtualenv", "site-packages", "**/site-packages/**"},
-		bundle: parsers.BundlePython,
+		files:      []string{"*.py", "!__init__.py"},
+		exclude:    []string{"**/__pycache__", "venv", ".venv", "env", "**/site-packages"},
+		bundle:     parsers.BundlePython,
 	},
 	"go": {
 		runCommand: "go run " + path.Join(parserDir, "ast_parser.go"),
-		include:    []string{"**/*.go", "*.go"},
-		exclude: []string{"vendor", "**/vendor/**", "testdata", "**/testdata/**", "*.pb.go", "*.pb.gw.go",
-			"*_gen.go", "*.gen.go", "mock_*.go", "*_mock.go", "go.mod", "go.sum"},
-		bundle: parsers.BundleGo,
+		files: []string{"*.go", "!*.pb.go", "!*.pb.gw.go", "!*_gen.go", "!*.gen.go",
+			"!mock_*.go", "!*_mock.go"},
+		exclude: []string{"**/vendor", "**/testdata"},
+		bundle:  parsers.BundleGo,
 	},
 	"java": {
 		runCommand: "java " + path.Join(parserDir, "AstParser.java"),
-		include:    []string{"**/*.java", "*.java"},
-		exclude: []string{"target", "build", "out", "bin", "classes",
-			".gradle", ".mvn", "generated", "generated-sources", "**/generated/**",
-			"**/generated-sources/**", "**/build/generated/**", "package-info.java", "**/package-info.java",
-			"module-info.java", "**/module-info.java"},
+		files:      []string{"*.java", "!package-info.java", "!module-info.java"},
+		exclude: []string{"**/target", "**/build", "**/out", "**/bin", "**/classes",
+			"**/.gradle", "**/.mvn", "**/generated", "**/generated-sources"},
 		bundle: parsers.BundleJava,
 	},
 	"csharp": {
 		runCommand: path.Join(parserDir, "dist", csharpBinary()),
-		include:    []string{"**/*.cs", "*.cs"},
-		exclude: []string{"bin", "obj", "packages", ".vs", ".git",
-			"generated", "**/generated/**", "Generated", "**/Generated/**"},
-		bundle: parsers.BundleCSharp,
+		files:      []string{"*.cs"},
+		exclude:    []string{"**/bin", "**/obj", "**/packages", "**/.vs", "**/generated", "**/Generated"},
+		bundle:     parsers.BundleCSharp,
 	},
 }
 
@@ -199,8 +195,9 @@ func applyLanguage(cfg *input.Input, name, location string) error {
 	}
 
 	cfg.RunCommand = lang.runCommand
+	cfg.Files = lang.files
 	view := cfg.Views["completeView"]
-	view.Include, view.Exclude = lang.include, lang.exclude
+	view.Exclude = lang.exclude
 	cfg.Views["completeView"] = view
 
 	Sugar.Infof("Wrote parser to %s", location)

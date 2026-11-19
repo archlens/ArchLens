@@ -14,10 +14,11 @@ import (
 )
 
 type project struct {
-	cfg     *input.Input
-	cfgDir  string         // directory of archlens.json; runCommand runs here
-	absRoot string         // project root; source files, git and package names are relative to it
-	cache   *caching.Cache // working-tree cache, loaded on first refresh
+	cfg       *input.Input
+	cfgDir    string
+	absRoot   string
+	selectors map[string]*input.Selector // one per view
+	cache     *caching.Cache
 }
 
 const formatHelp = "Set the output format for archlens [mermaid|mermaid-md|json|html]"
@@ -36,25 +37,6 @@ func newExporter(format string) (export.Exporter, error) {
 	default:
 		return nil, fmt.Errorf("'%s' is not a valid export format", format)
 	}
-}
-
-// resolveViewFiles expands every view's include/exclude patterns under root.
-// It returns the normalized files per view and the union of all of them.
-func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[string]struct{}, error) {
-	viewFiles := make(map[string][]string, len(cfg.Views))
-	union := make(map[string]struct{})
-	for name, view := range cfg.Views {
-		files, err := input.GetFiles(&view, root)
-		if err != nil {
-			return nil, nil, fmt.Errorf("getting files for view %s: %w", name, err)
-		}
-		for i, f := range files {
-			files[i] = filepath.ToSlash(filepath.Clean(f))
-			union[files[i]] = struct{}{}
-		}
-		viewFiles[name] = files
-	}
-	return viewFiles, union, nil
 }
 
 // refresh updates the working-tree cache on disk. Used by render and watch.
@@ -86,25 +68,38 @@ func loadProject(configPath string) (*project, error) {
 	}
 	cfgDir := filepath.Dir(absCfg)
 
+	sels, err := cfg.Selectors()
+	if err != nil {
+		return nil, err
+	}
+
 	return &project{
 		cfg:     cfg,
 		cfgDir:  cfgDir,
+		selectors: sels,
 		absRoot: resolveRoot(cfgDir, cfg.RootFolder),
 	}, nil
 }
 
 // graph builds the dependency graph for one view's files from cached parse
 // results. Call refresh first, since that is what loads the cache.
-func (p *project) graph(files []string) *graph.Graph {
-	return p.cache.Graph(files, p.absRoot)
+// graph builds a view's graph from cached parse results.
+func (p *project) graph(view string, files []string) *graph.Graph {
+	return p.project(view, p.cache.Graph(files, p.absRoot))
+}
+
+// project shapes a full graph into what a view shows: sub-packages merged into
+// the include entries, everything else dropped.
+func (p *project) project(view string, g *graph.Graph) *graph.Graph {
+	return g.Project(p.selectors[view].Node)
 }
 
 // parse resolves every view's files under root and brings c up to date for them.
 // It works on any tree (the working tree or a git worktree) and any cache.
 func (p *project) parse(c *caching.Cache, root string, full bool) (map[string][]string, error) {
-	viewFiles, union, err := resolveViewFiles(p.cfg, root)
+	viewFiles, union, err := input.Discover(root, p.selectors)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("finding files: %w", err)
 	}
 	if err := c.Refresh(root, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
 		return nil, fmt.Errorf("parsing: %w", err)
