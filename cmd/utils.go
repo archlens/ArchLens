@@ -14,11 +14,10 @@ import (
 )
 
 type project struct {
-	cfg       *input.Input // whatever input.Load returns
-	absRoot   string
-	cfgDir   string
-	cachePath string
-	cache     *caching.Cache // whatever caching.LoadCache returns
+	cfg     *input.Input
+	cfgDir  string         // directory of archlens.json; runCommand runs here
+	absRoot string         // project root; source files, git and package names are relative to it
+	cache   *caching.Cache // working-tree cache, loaded on first refresh
 }
 
 const formatHelp = "Set the output format for archlens [mermaid|mermaid-md|json|html]"
@@ -58,21 +57,22 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 	return viewFiles, union, nil
 }
 
+// refresh updates the working-tree cache on disk. Used by render and watch.
 func (p *project) refresh(full bool) (map[string][]string, error) {
-	viewFiles, union, err := resolveViewFiles(p.cfg, p.absRoot)
+	if p.cache == nil {
+		p.cache = caching.LoadCache(p.cachePath(), p.cfg.RunCommand)
+	}
+	viewFiles, err := p.parse(p.cache, p.absRoot, full)
 	if err != nil {
 		return nil, err
 	}
-	if err := p.cache.Refresh(p.absRoot, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
-		return nil, fmt.Errorf("refreshing cache: %w", err)
-	}
-	if err := p.cache.Save(p.cachePath); err != nil {
+	if err := p.cache.Save(p.cachePath()); err != nil {
 		Sugar.Errorf("Error saving cache: %v", err)
 	}
 	return viewFiles, nil
 }
 
-// loadProject loads the config and the on-disk parse cache next to it.
+// loadProject loads the config and resolves its directories. It touches no cache.
 func loadProject(configPath string) (*project, error) {
 	cfg, err := input.Load(configPath)
 	if err != nil {
@@ -80,30 +80,36 @@ func loadProject(configPath string) (*project, error) {
 	}
 	Sugar.Infof("Config: %+v", *cfg)
 
-	cfgRoot, err := filepath.Abs(configPath)
+	absCfg, err := filepath.Abs(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("resolving cfg location: %w", err)
+		return nil, fmt.Errorf("resolving config location: %w", err)
 	}
-
-	absRoot, err := filepath.Abs(cfg.RootFolder)
-	if err != nil {
-		return nil, fmt.Errorf("resolving root folder: %w", err)
-	}
-
-	cachePath := filepath.Join(absRoot, ".archlens", "cache.json")
+	cfgDir := filepath.Dir(absCfg)
 
 	return &project{
-		cfg:       cfg,
-		absRoot:   absRoot,
-		cfgDir:   cfgRoot,
-		cachePath: cachePath,
-		cache:     caching.LoadCache(cachePath, cfg.RunCommand),
+		cfg:     cfg,
+		cfgDir:  cfgDir,
+		absRoot: resolveRoot(cfgDir, cfg.RootFolder),
 	}, nil
 }
 
-// graph builds the dependency graph for one view's files from cached parse results.
+// graph builds the dependency graph for one view's files from cached parse
+// results. Call refresh first, since that is what loads the cache.
 func (p *project) graph(files []string) *graph.Graph {
 	return p.cache.Graph(files, p.absRoot)
+}
+
+// parse resolves every view's files under root and brings c up to date for them.
+// It works on any tree (the working tree or a git worktree) and any cache.
+func (p *project) parse(c *caching.Cache, root string, full bool) (map[string][]string, error) {
+	viewFiles, union, err := resolveViewFiles(p.cfg, root)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Refresh(root, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
+		return nil, fmt.Errorf("parsing: %w", err)
+	}
+	return viewFiles, nil
 }
 
 // viewNames returns the configured view names, sorted.
@@ -123,4 +129,8 @@ func resolveRoot(cfgDir, rootFolder string) string {
 		rootFolder = filepath.Join(cfgDir, rootFolder)
 	}
 	return filepath.Clean(rootFolder)
+}
+
+func (p *project) cachePath() string {
+	return filepath.Join(p.absRoot, ".archlens", "cache.json")
 }

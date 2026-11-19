@@ -34,6 +34,7 @@ var Version = "dev"
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		Sugar.Error(err)
 		os.Exit(1)
 	}
 }
