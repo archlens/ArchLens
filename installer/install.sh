@@ -36,7 +36,7 @@ URL="https://github.com/archlens/ArchLensGo/releases/latest/download/archlens-${
 
 # Download and extract
 echo "Downloading $URL"
-if ! curl -fsSL -o "$tmp/archlens.tar.gz" "$URL"; then
+if ! curl --proto "=https" -fsSL -o "$tmp/archlens.tar.gz" "$URL"; then
     echo "Failed to download $URL"
     exit 1
 fi
