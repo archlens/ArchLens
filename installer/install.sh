@@ -50,7 +50,7 @@ fi
 echo "Finding binary file"
 # The binary may sit at the archive root or in a folder, so locate it
 bin=$(find "$tmp" -type f -name archlens | head -n1)
-if [ -z "$bin" ]; then
+if [[ -z "$bin" ]]; then
     echo "Could not find the archlens binary in the archive"
     exit 1
 fi
@@ -72,22 +72,22 @@ fi
 target=${input:-$target}
 
 # A directory means "put archlens in there"
-if [ -d "$target" ]; then
+if [[ -d "$target" ]]; then
     target="${target%/}/archlens"
 fi
 
-if [ ! -d "$(dirname "$target")" ]; then
+if [[ ! -d "$(dirname "$target")" ]]; then
     echo "Directory does not exist: $(dirname "$target")"
     exit 1
 fi
 
 # Only ask for sudo when the destination isn't writable
-if [ -w "$(dirname "$target")" ]; then
+if [[ -w "$(dirname "$target")" ]]; then
     install -m 0755 "$bin" "$target"
 else
     sudo install -m 0755 "$bin" "$target"
 fi
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
     echo "Failed to move the binary to $target"
     exit 1
 fi
