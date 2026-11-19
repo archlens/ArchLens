@@ -59,15 +59,18 @@ tree is never touched. No cache is read or written.`,
 			baseRef = cfg.Github.Branch
 		}
 
-		absRoot, err := filepath.Abs(cfg.RootFolder)
+		absCfg, err := filepath.Abs(configPath)
 		if err != nil {
-			return fmt.Errorf("resolving root folder: %w", err)
+			return fmt.Errorf("resolving config path: %w", err)
 		}
+		cfgDir := filepath.Dir(absCfg) // runCommand runs here
+		absRoot := resolveRoot(cfgDir, cfg.RootFolder)
 		// The root folder may be a subdirectory of the repo; remember where.
 		prefix, err := gitutils.Prefix(absRoot)
 		if err != nil {
 			return fmt.Errorf("%s is not inside a git repository: %w", absRoot, err)
 		}
+
 
 		// The cache lives next to archlens.json, so running from a subfolder
 		// still finds the same cache. A nil RefCache means caching is off.
@@ -84,11 +87,11 @@ tree is never touched. No cache is read or written.`,
 			}
 		}
 
-		baseGraphs, err := graphsAtRef(absRoot, prefix, baseRef, cfg, rc)
+		baseGraphs, err := graphsAtRef(absRoot, cfgDir, prefix, baseRef, cfg, rc)
 		if err != nil {
 			return err
 		}
-		headGraphs, err := graphsAtRef(absRoot, prefix, headRef, cfg, rc)
+		headGraphs, err := graphsAtRef(absRoot, cfgDir, prefix, headRef, cfg, rc)
 		if err != nil {
 			return err
 		}
@@ -121,7 +124,7 @@ tree is never touched. No cache is read or written.`,
 // there and returns one graph per view. With rc == nil it uses a throwaway
 // in-memory cache purely for its parse-and-build logic; nothing is loaded from
 // or saved to disk.
-func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefCache) (map[string]*graph.Graph, error) {
+func graphsAtRef(repoDir, cfgDir, prefix, ref string, cfg *input.Input, rc *caching.RefCache) (map[string]*graph.Graph, error) {
 	wt, cleanup, err := gitutils.AddWorktree(repoDir, ref)
 	if err != nil {
 		return nil, fmt.Errorf("checking out %s: %w", ref, err)
@@ -152,7 +155,7 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 	if rc != nil {
 		c, reparse = rc.Load(root, cfg.RunCommand), false
 	}
-	if err := c.Refresh(root, union, cfg.RunCommand, reparse); err != nil {
+	if err := c.Refresh(root, cfgDir, union, cfg.RunCommand, reparse); err != nil {
 		return nil, fmt.Errorf("parsing %s: %w", ref, err)
 	}
 	if rc != nil {
@@ -161,7 +164,7 @@ func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefC
 		}
 	}
 	for name, files := range viewFiles {
-		graphs[name] = c.Graph(files, repoDir)
+		graphs[name] = c.Graph(files, root)
 	}
 	return graphs, nil
 }

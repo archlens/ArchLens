@@ -16,6 +16,7 @@ import (
 type project struct {
 	cfg       *input.Input // whatever input.Load returns
 	absRoot   string
+	cfgDir   string
 	cachePath string
 	cache     *caching.Cache // whatever caching.LoadCache returns
 }
@@ -58,11 +59,11 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 }
 
 func (p *project) refresh(full bool) (map[string][]string, error) {
-	viewFiles, union, err := resolveViewFiles(p.cfg, p.cfg.RootFolder)
+	viewFiles, union, err := resolveViewFiles(p.cfg, p.absRoot)
 	if err != nil {
 		return nil, err
 	}
-	if err := p.cache.Refresh(p.absRoot, union, p.cfg.RunCommand, full); err != nil {
+	if err := p.cache.Refresh(p.absRoot, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
 		return nil, fmt.Errorf("refreshing cache: %w", err)
 	}
 	if err := p.cache.Save(p.cachePath); err != nil {
@@ -79,14 +80,22 @@ func loadProject(configPath string) (*project, error) {
 	}
 	Sugar.Infof("Config: %+v", *cfg)
 
+	cfgRoot, err := filepath.Abs(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolving cfg location: %w", err)
+	}
+
 	absRoot, err := filepath.Abs(cfg.RootFolder)
 	if err != nil {
 		return nil, fmt.Errorf("resolving root folder: %w", err)
 	}
+
 	cachePath := filepath.Join(absRoot, ".archlens", "cache.json")
+
 	return &project{
 		cfg:       cfg,
 		absRoot:   absRoot,
+		cfgDir:   cfgRoot,
 		cachePath: cachePath,
 		cache:     caching.LoadCache(cachePath, cfg.RunCommand),
 	}, nil
@@ -105,4 +114,13 @@ func (p *project) viewNames() []string {
 	}
 
 	return names
+}
+
+// resolveRoot returns the absolute project root. A relative rootFolder is
+// relative to the config file's directory, not the shell's working directory.
+func resolveRoot(cfgDir, rootFolder string) string {
+	if !filepath.IsAbs(rootFolder) {
+		rootFolder = filepath.Join(cfgDir, rootFolder)
+	}
+	return filepath.Clean(rootFolder)
 }
