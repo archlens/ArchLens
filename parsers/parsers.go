@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -90,7 +91,7 @@ func workerCount(jobs int) int {
 // GetASTs concurrently parses each file in `files` (relative to rootDir)
 // and returns the collected results. Errors are captured per-file rather
 // than aborting the whole batch.
-func GetASTs(files []string, rootDir string, runCommand string) []ASTResult {
+func GetASTs(files []string, rootDir, cfgDir string, runCommand string) []ASTResult {
 	numWorkers := workerCount(len(files))
 	jobs := make(chan string, len(files))
 	resultsCh := make(chan ASTResult, len(files))
@@ -108,7 +109,7 @@ func GetASTs(files []string, rootDir string, runCommand string) []ASTResult {
 		go func() {
 			defer wg.Done()
 			for f := range jobs {
-				ast, err := GetAST(f, rootDir, runCommand)
+				ast, err := GetAST(f, rootDir, cfgDir, runCommand)
 				resultsCh <- ASTResult{File: f, AST: ast, Err: err}
 			}
 		}()
@@ -126,7 +127,7 @@ func GetASTs(files []string, rootDir string, runCommand string) []ASTResult {
 	return results
 }
 
-func GetAST(filePath string, rootDir string, runCommand string) (*ASTNode, error) {
+func GetAST(filePath string, rootDir, cfgDir string, runCommand string) (*ASTNode, error) {
 	parts, err := splitCommand(runCommand)
 	if err != nil {
 		return nil, err
@@ -134,11 +135,13 @@ func GetAST(filePath string, rootDir string, runCommand string) (*ASTNode, error
 	if len(parts) == 0 {
 		return nil, errors.New("runCommand is empty")
 	}
-	// program + its own arguments, then the parser flags from the spec
-	args := slices.Concat(parts[1:], []string{"-r", rootDir, filePath})
+
+	// The parser runs in cfgDir, so it needs an absolute path to find the file.
+	absFile := filepath.Join(rootDir, filepath.FromSlash(filePath))
+	args := slices.Concat(parts[1:], []string{"-r", rootDir, absFile})
 
 	cmd := exec.Command(parts[0], args...)
-	cmd.Dir = rootDir
+	cmd.Dir = cfgDir
 
 	out, err := cmd.Output()
 	if err != nil {

@@ -78,7 +78,7 @@ func gitHead(root string) (string, error) {
 }
 
 // Refresh brings the cache up to date for files, which must be sorted and unique.
-func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
+func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
 	head, herr := gitHead(root)
 	changes, cerr := gitChanges(root, c.Commit)
 	c.Fingerprint = Fingerprint(runCommand)
@@ -108,7 +108,7 @@ func (c *Cache) Refresh(root string, files map[string]struct{}, runCommand strin
 	if c.Files == nil || full {
 		c.Files = map[string]Entry{}
 	}
-	for _, r := range parsers.GetASTs(list, root, runCommand) {
+	for _, r := range parsers.GetASTs(list, root, cfgAbs, runCommand) {
 		if r.Err != nil {
 			// TODO: Should abort instead of continuing
 			delete(c.Files, r.File) // not cached, so it's retried next run
