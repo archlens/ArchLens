@@ -71,7 +71,7 @@ jobs:
               style: Code Style
               revert: Reverts
       - name: Create release
-        uses: softprops/action-gh-release@v8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
         with:
           body: ${{steps.changelog.outputs.changelog}}
           files: |
