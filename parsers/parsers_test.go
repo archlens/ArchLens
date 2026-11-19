@@ -135,7 +135,7 @@ func depPackages(ds []Dependency) []string {
 // ---------- GetAST ----------
 
 func Test_GetAST_ParsesParserOutput(t *testing.T) {
-	got, err := GetAST("pkg/a.py", t.TempDir(), fakeParser(t))
+	got, err := GetAST("pkg/a.py", t.TempDir(), t.TempDir(), fakeParser(t))
 	if err != nil {
 		t.Fatalf("GetAST returned error: %v", err)
 	}
@@ -148,43 +148,46 @@ func Test_GetAST_ParsesParserOutput(t *testing.T) {
 }
 
 func Test_GetAST_PassesArgumentsInSpecOrder(t *testing.T) {
-	root := t.TempDir()
+	root, cfg := t.TempDir(), t.TempDir()
 
-	got, err := GetAST("echo", root, fakeParser(t, "--flag", "value"))
+	got, err := GetAST("echo", root, cfg, fakeParser(t, "--flag", "value"))
 	if err != nil {
 		t.Fatalf("GetAST returned error: %v", err)
 	}
 
-	// The command's own arguments come first, then -r <rootDir> <file>
-	want := []string{"--flag", "value", "-r", root, "echo"}
+	// The command's own arguments come first, then -r <rootDir> <rootDir/file>
+	want := []string{"--flag", "value", "-r", root, filepath.Join(root, "echo")}
 	if !slices.Equal(depPackages(got.Dependencies), want) {
-		t.Errorf("parser received args %v, want %v", got.Dependencies, want)
+		t.Errorf("parser received args %v, want %v", depPackages(got.Dependencies), want)
 	}
 }
 
-func Test_GetAST_RunsInRootDir(t *testing.T) {
-	root := t.TempDir()
+func Test_GetAST_RunsInCfgDir(t *testing.T) {
+	root, cfg := t.TempDir(), t.TempDir()
 
-	got, err := GetAST("echo", root, fakeParser(t))
+	got, err := GetAST("echo", root, cfg, fakeParser(t))
 	if err != nil {
 		t.Fatalf("GetAST returned error: %v", err)
 	}
-	if resolve(t, got.Package) != resolve(t, root) {
-		t.Errorf("parser ran in %q, want %q", got.Package, root)
+	if resolve(t, got.Package) != resolve(t, cfg) {
+		t.Errorf("parser ran in %q, want the config dir %q", got.Package, cfg)
+	}
+	if resolve(t, got.Package) == resolve(t, root) {
+		t.Errorf("parser must not run in the project root %q", root)
 	}
 }
 
 func Test_GetAST_QuotedArgumentsStayOneArgument(t *testing.T) {
-	root := t.TempDir()
+	root, cfg := t.TempDir(), t.TempDir()
 
-	got, err := GetAST("echo", root, fakeParser(t, `--name="two words"`, `'single quoted'`))
+	got, err := GetAST("echo", root, cfg, fakeParser(t, `--name="two words"`, `'single quoted'`))
 	if err != nil {
 		t.Fatalf("GetAST returned error: %v", err)
 	}
 
-	want := []string{"--name=two words", "single quoted", "-r", root, "echo"}
+	want := []string{"--name=two words", "single quoted", "-r", root, filepath.Join(root, "echo")}
 	if !slices.Equal(depPackages(got.Dependencies), want) {
-		t.Errorf("parser received args %q, want %q", got.Dependencies, want)
+		t.Errorf("parser received args %q, want %q", depPackages(got.Dependencies), want)
 	}
 }
 
@@ -214,7 +217,7 @@ func Test_GetAST_ProgramPathWithSpaces(t *testing.T) {
 		"single quotes": `'` + program + `'`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			got, err := GetAST("a.py", t.TempDir(), runCommand)
+			got, err := GetAST("a.py", t.TempDir(), t.TempDir(), runCommand)
 			if err != nil {
 				t.Fatalf("GetAST returned error: %v", err)
 			}
@@ -226,7 +229,7 @@ func Test_GetAST_ProgramPathWithSpaces(t *testing.T) {
 }
 
 func Test_GetAST_UnterminatedQuote(t *testing.T) {
-	got, err := GetAST("a.py", t.TempDir(), `python3 "my dir/arch.py`)
+	got, err := GetAST("a.py", t.TempDir(), t.TempDir(), `python3 "my dir/arch.py`)
 	if err == nil {
 		t.Fatal("expected an error")
 	}
@@ -241,7 +244,7 @@ func Test_GetAST_UnterminatedQuote(t *testing.T) {
 func Test_GetAST_EmptyRunCommand(t *testing.T) {
 	for _, rc := range []string{"", "   ", "\t\n"} {
 		t.Run(fmt.Sprintf("%q", rc), func(t *testing.T) {
-			got, err := GetAST("a.py", t.TempDir(), rc)
+			got, err := GetAST("a.py", t.TempDir(), t.TempDir(), rc)
 			if err == nil {
 				t.Fatal("expected an error")
 			}
@@ -256,7 +259,7 @@ func Test_GetAST_EmptyRunCommand(t *testing.T) {
 }
 
 func Test_GetAST_CommandFailureIncludesStderr(t *testing.T) {
-	got, err := GetAST("fail", t.TempDir(), fakeParser(t))
+	got, err := GetAST("fail", t.TempDir(), t.TempDir(), fakeParser(t))
 	if err == nil {
 		t.Fatal("expected an error")
 	}
@@ -273,7 +276,7 @@ func Test_GetAST_CommandFailureIncludesStderr(t *testing.T) {
 func Test_GetAST_InvalidOutput(t *testing.T) {
 	for _, file := range []string{"badjson", "empty"} {
 		t.Run(file, func(t *testing.T) {
-			got, err := GetAST(file, t.TempDir(), fakeParser(t))
+			got, err := GetAST(file, t.TempDir(), t.TempDir(), fakeParser(t))
 			if err == nil {
 				t.Fatal("expected an error")
 			}
@@ -292,7 +295,7 @@ func Test_GetAST_InvalidOutput(t *testing.T) {
 }
 
 func Test_GetAST_IgnoresStderrOnSuccess(t *testing.T) {
-	got, err := GetAST("warn", t.TempDir(), fakeParser(t))
+	got, err := GetAST("warn", t.TempDir(), t.TempDir(), fakeParser(t))
 	if err != nil {
 		t.Fatalf("warnings on stderr must not fail the parse, got: %v", err)
 	}
@@ -303,7 +306,7 @@ func Test_GetAST_IgnoresStderrOnSuccess(t *testing.T) {
 
 func Test_GetAST_ToleratesMissingAndUnknownFields(t *testing.T) {
 	t.Run("missing dependencies", func(t *testing.T) {
-		got, err := GetAST("nodeps", t.TempDir(), fakeParser(t))
+		got, err := GetAST("nodeps", t.TempDir(), t.TempDir(), fakeParser(t))
 		if err != nil {
 			t.Fatalf("GetAST returned error: %v", err)
 		}
@@ -313,18 +316,18 @@ func Test_GetAST_ToleratesMissingAndUnknownFields(t *testing.T) {
 	})
 
 	t.Run("unknown fields are ignored", func(t *testing.T) {
-		got, err := GetAST("extrafields", t.TempDir(), fakeParser(t))
+		got, err := GetAST("extrafields", t.TempDir(), t.TempDir(), fakeParser(t))
 		if err != nil {
 			t.Fatalf("GetAST returned error: %v", err)
 		}
 		if got.Package != "pkg/extra" || !slices.Equal(got.Dependencies, []Dependency{{Package: "x", File: "x.go"}}) {
-	t.Errorf("got %+v", got)
-}
+			t.Errorf("got %+v", got)
+		}
 	})
 }
 
 func Test_GetAST_ProgramNotFound(t *testing.T) {
-	got, err := GetAST("a.py", t.TempDir(), "archlens-no-such-binary --flag")
+	got, err := GetAST("a.py", t.TempDir(), t.TempDir(), "archlens-no-such-binary --flag")
 	if err == nil {
 		t.Fatal("expected an error")
 	}
@@ -336,12 +339,12 @@ func Test_GetAST_ProgramNotFound(t *testing.T) {
 	}
 }
 
-func Test_GetAST_MissingRootDir(t *testing.T) {
+func Test_GetAST_MissingCfgDir(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "does-not-exist")
 
-	got, err := GetAST("a.py", missing, fakeParser(t))
+	got, err := GetAST("a.py", t.TempDir(), missing, fakeParser(t))
 	if err == nil {
-		t.Fatal("expected an error when the root directory does not exist")
+		t.Fatal("expected an error when the config directory does not exist")
 	}
 	if got != nil {
 		t.Errorf("got %+v, want nil", got)
@@ -358,7 +361,7 @@ func Test_GetASTs_ParsesEveryFileOnce(t *testing.T) {
 		files[i] = fmt.Sprintf("src/f%03d.py", i)
 	}
 
-	results := GetASTs(files, t.TempDir(), fakeParser(t))
+	results := GetASTs(files, t.TempDir(), t.TempDir(), fakeParser(t))
 
 	if len(results) != n {
 		t.Fatalf("got %d results, want %d", len(results), n)
@@ -383,7 +386,7 @@ func Test_GetASTs_ParsesEveryFileOnce(t *testing.T) {
 func Test_GetASTs_KeepsFileNamesAsGiven(t *testing.T) {
 	files := []string{"./a.py", "dir/b.py", "dir/sub/c.py"}
 
-	got := byFile(t, GetASTs(files, t.TempDir(), fakeParser(t)))
+	got := byFile(t, GetASTs(files, t.TempDir(), t.TempDir(), fakeParser(t)))
 
 	for _, f := range files {
 		if r, ok := got[f]; !ok || r.Err != nil {
@@ -393,7 +396,7 @@ func Test_GetASTs_KeepsFileNamesAsGiven(t *testing.T) {
 }
 
 func Test_GetASTs_SingleFile(t *testing.T) {
-	results := GetASTs([]string{"only.py"}, t.TempDir(), fakeParser(t))
+	results := GetASTs([]string{"only.py"}, t.TempDir(), t.TempDir(), fakeParser(t))
 
 	if len(results) != 1 {
 		t.Fatalf("got %d results, want 1", len(results))
@@ -406,7 +409,7 @@ func Test_GetASTs_SingleFile(t *testing.T) {
 func Test_GetASTs_NoFiles(t *testing.T) {
 	for name, files := range map[string][]string{"nil": nil, "empty": {}} {
 		t.Run(name, func(t *testing.T) {
-			if results := GetASTs(files, t.TempDir(), fakeParser(t)); len(results) != 0 {
+			if results := GetASTs(files, t.TempDir(), t.TempDir(), fakeParser(t)); len(results) != 0 {
 				t.Errorf("got %d results, want 0", len(results))
 			}
 		})
@@ -417,7 +420,7 @@ func Test_GetASTs_CapturesErrorsPerFile(t *testing.T) {
 	files := []string{"ok1.py", "fail", "ok2.py", "badjson", "empty", "ok3.py"}
 	wantOK := map[string]bool{"ok1.py": true, "ok2.py": true, "ok3.py": true}
 
-	results := GetASTs(files, t.TempDir(), fakeParser(t))
+	results := GetASTs(files, t.TempDir(), t.TempDir(), fakeParser(t))
 
 	// A failing file must not abort the batch
 	if len(results) != len(files) {
@@ -443,7 +446,7 @@ func Test_GetASTs_CapturesErrorsPerFile(t *testing.T) {
 func Test_GetASTs_EmptyRunCommandFailsEveryFile(t *testing.T) {
 	files := []string{"a.py", "b.py", "c.py"}
 
-	results := GetASTs(files, t.TempDir(), "")
+	results := GetASTs(files, t.TempDir(), t.TempDir(), "")
 
 	if len(results) != len(files) {
 		t.Fatalf("got %d results, want %d", len(results), len(files))
