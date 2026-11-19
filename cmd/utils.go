@@ -124,11 +124,12 @@ func (p *project) viewNames() []string {
 
 // resolveRoot returns the absolute project root. A relative rootFolder is
 // relative to the config file's directory, not the shell's working directory.
-func resolveRoot(cfgDir, rootFolder string) string {
-	if !filepath.IsAbs(rootFolder) {
-		rootFolder = filepath.Join(cfgDir, rootFolder)
+func resolveRoot(_, rootFolder string) string {
+	abs, err := filepath.Abs(rootFolder) // relative to cwd, as before
+	if err != nil {
+		return filepath.Clean(rootFolder)
 	}
-	return filepath.Clean(rootFolder)
+	return abs
 }
 
 func (p *project) cachePath() string {
