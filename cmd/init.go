@@ -2,9 +2,13 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
+	"maps"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/archlens/archlens/input"
@@ -13,21 +17,70 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var template input.Input = input.Input{
-	Name:       "ProjectName",
-	RootFolder: ".",
-	RunCommand: "",
-	Github: input.Github{
-		Url:    "https://github.com/archlens/ArchLens",
-		Branch: "master",
+// parserDir is the folder next to archlens.json that init bundles the parser
+// into. runCommand runs from the directory of archlens.json, so the paths in it
+// are relative to that, always with forward slashes so the file is portable.
+const parserDir = "ast_parser"
+
+// language describes how to set up one of the bundled parsers.
+type language struct {
+	runCommand string
+	files      []string
+	exclude    []string // package patterns
+	bundle     func(location string) error
+}
+
+var languages = map[string]language{
+	"python": {
+		runCommand: "python3 " + path.Join(parserDir, "ast_parser.py"),
+		files:      []string{"*.py", "!__init__.py"},
+		exclude:    []string{"**/__pycache__", "venv", ".venv", "env", "**/site-packages"},
+		bundle:     parsers.BundlePython,
 	},
-	SaveLocation: "./diagrams/",
-	Views: map[string]input.View{
-		"completeView": input.View{
-			Include: []string{},
-			Exclude: []string{},
+	"go": {
+		runCommand: "go run " + path.Join(parserDir, "ast_parser.go"),
+		files: []string{"*.go", "!*.pb.go", "!*.pb.gw.go", "!*_gen.go", "!*.gen.go",
+			"!mock_*.go", "!*_mock.go"},
+		exclude: []string{"**/vendor", "**/testdata"},
+		bundle:  parsers.BundleGo,
+	},
+	"java": {
+		runCommand: "java " + path.Join(parserDir, "AstParser.java"),
+		files:      []string{"*.java", "!package-info.java", "!module-info.java"},
+		exclude: []string{"**/target", "**/build", "**/out", "**/bin", "**/classes",
+			"**/.gradle", "**/.mvn", "**/generated", "**/generated-sources"},
+		bundle: parsers.BundleJava,
+	},
+	"csharp": {
+		runCommand: path.Join(parserDir, "dist", csharpBinary()),
+		files:      []string{"*.cs"},
+		exclude:    []string{"**/bin", "**/obj", "**/packages", "**/.vs", "**/generated", "**/Generated"},
+		bundle:     parsers.BundleCSharp,
+	},
+}
+
+func csharpBinary() string {
+	if runtime.GOOS == "windows" {
+		return "csharp-parser.exe"
+	}
+	return "csharp-parser"
+}
+
+// newTemplate returns a fresh base config, so nothing is shared between calls.
+func newTemplate() input.Input {
+	return input.Input{
+		Name:       "ProjectName",
+		RootFolder: ".",
+		RunCommand: "",
+		Github: input.Github{
+			Url:    "https://github.com/archlens/ArchLens",
+			Branch: "master",
 		},
-	},
+		SaveLocation: "./diagrams/",
+		Views: map[string]input.View{
+			"completeView": {Include: []string{}, Exclude: []string{}},
+		},
+	}
 }
 
 // initCmd represents the init command
@@ -41,124 +94,114 @@ var initCmd = &cobra.Command{
 	The location for the archlens.json file as well as the ast_parsers can be specified using the -l flag the parser folder is always initialized next to
 	the archlens.json file.`,
 	Args: cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true // usage text is noise for runtime errors
+
 		l, _ := cmd.Flags().GetString("location")
 
-		var language string
+		var lang string
 		if len(args) > 0 {
-			language = args[0]
+			lang = strings.ToLower(args[0])
 		}
 
-		path := "./archlens.json"
+		configPath := "./archlens.json"
 		if l != "" {
-			path = l
+			configPath = l
 		}
 
-		info, err := os.Stat(path)
+		info, err := os.Stat(configPath)
 		switch {
 		case err == nil && info.IsDir():
 			// Existing directory: put archlens.json inside it.
-			path = filepath.Join(path, "archlens.json")
-		case filepath.Ext(path) == "":
+			configPath = filepath.Join(configPath, "archlens.json")
+		case filepath.Ext(configPath) == "":
 			// No extension: treat it as a directory path.
-			path = filepath.Join(path, "archlens.json")
-		case !strings.EqualFold(filepath.Ext(path), ".json"):
-			Sugar.Errorf("config path %q must be a .json file or a directory", path)
-			return
+			configPath = filepath.Join(configPath, "archlens.json")
+		case !strings.EqualFold(filepath.Ext(configPath), ".json"):
+			return fmt.Errorf("config path %q must be a .json file or a directory", configPath)
 		}
 
-		dir := filepath.Dir(path)
+		dir := filepath.Dir(configPath)
 		if err := os.MkdirAll(dir, 0o755); err != nil {
-			Sugar.Errorf("Could not create %s: %s", dir, err)
-			return
+			return fmt.Errorf("could not create %s: %w", dir, err)
 		}
 
-		if language != "" {
-			pickLanguage(language, filepath.Join(dir, "ast_parser"))
+		cfg := newTemplate()
+		cfg.RootFolder = rootRelativeTo(dir)
+
+		if lang != "" {
+			if err := applyLanguage(&cfg, lang, filepath.Join(dir, parserDir)); err != nil {
+				return err
+			}
 		}
 
-		data, err := json.MarshalIndent(template, "", "  ")
+		data, err := json.MarshalIndent(cfg, "", "  ")
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("encoding archlens.json: %w", err)
 		}
-		data = append(data, '\n')
+		if err := os.WriteFile(configPath, append(data, '\n'), 0o644); err != nil {
+			return fmt.Errorf("could not write %s: %w", configPath, err)
+		}
+		Sugar.Infof("Wrote %s", configPath)
 
-		err = os.WriteFile(path, data, 0644)
+		// The caches live in .archlens/ next to the config and the root.
+		repoRoot, err := gitutils.FindRoot(dir)
 		if err != nil {
-			Sugar.Errorf("Could not write archlens.json: %s", err.Error())
-			return
+			Sugar.Warnf("Skipping .gitignore update: %s", err)
+			return nil
 		}
-		Sugar.Info("Wrote archlens.json to current location")
-
-		root, err := gitutils.FindRoot(".")
+		changed, err := gitutils.EnsureCacheIgnored(repoRoot)
 		if err != nil {
-			Sugar.Warnf("Skipping .gitignore update: %s", err.Error())
-			return
+			Sugar.Warnf("Could not update .gitignore: %s", err)
+			return nil
 		}
-
-		changed, err := gitutils.EnsureCacheIgnored(root)
-		if err != nil {
-			Sugar.Warnf("Could not update .gitignore: %s", err.Error())
-			return
-		}
-
 		if changed {
 			Sugar.Info("Added .archlens/ cache folder to .gitignore")
 		}
+		return nil
 	},
 }
 
-func pickLanguage(language, location string) {
-	language = strings.ToLower(language)
-	var err error
-	var path string
-	completeView := template.Views["completeView"]
-
-	switch language {
-	case "python":
-		path = filepath.Join(location, "ast_parser.py")
-		template.RunCommand = "python3 " + path
-		completeView.Include = []string{"**/*.py", "*.py"}
-		completeView.Exclude = []string{"__pycache__", "**/__pycache__/**", "**/__init__.py", "__init__.py",
-			"venv", ".venv", "env", ".env", "virtualenv", "site-packages", "**/site-packages/**"}
-		err = parsers.BundlePython(location)
-	case "go":
-		path = filepath.Join(location, "ast_parser.go")
-		template.RunCommand = "go run " + path
-		completeView.Include = []string{"**/*.go", "*.go"}
-		completeView.Exclude = []string{"vendor", "**/vendor/**", "testdata", "**/testdata/**", "*.pb.go", "*.pb.gw.go", "*_gen.go", "*.gen.go", "mock_*.go", "*_mock.go", "go.mod", "go.sum"}
-		err = parsers.BundleGo(location)
-	case "java":
-		path = filepath.Join(location, "AstParser.java")
-		template.RunCommand = "java " + path
-		completeView.Include = []string{"**/*.java", "*.java"}
-		completeView.Exclude = []string{"target", "build", "out", "bin", "classes",
-			".gradle", ".mvn", "generated", "generated-sources", "**/generated/**",
-			"**/generated-sources/**", "**/build/generated/**", "package-info.java", "**/package-info.java",
-			"module-info.java", "**/module-info.java"}
-		err = parsers.BundleJava(location)
-
-	case "csharp":
-        binaryName := "csharp-parser"
-        if runtime.GOOS == "windows" {
-            binaryName = "csharp-parser.exe"
-        }
-        path = filepath.Join(location, "dist", binaryName)
-        template.RunCommand = path
-        completeView.Include = []string{"**/*.cs", "*.cs"}
-        completeView.Exclude = []string{"bin", "obj", "packages", ".vs", ".git",
-            "generated", "**/generated/**", "Generated", "**/Generated/**"}
-		template.Views["completeView"] = completeView
-        err = parsers.BundleCSharp(location)
-
-	default:
-		Sugar.Errorf("Language is not supported out of the box yet please create your own AST-parser using the specification on the github repository")
-	}
+// rootRelativeTo returns the current directory as a path relative to the config
+// directory. rootFolder is resolved against the config's directory, so this keeps
+// "the folder I ran init from" as the project root even when -l puts the config
+// somewhere else.
+func rootRelativeTo(cfgDir string) string {
+	cwd, err := os.Getwd()
 	if err != nil {
-		Sugar.Errorf("Problem bundling the ast_parser at location: %s\nwith error: %s", location, err)
-	} else {
-		Sugar.Infof("Wrote parser to %s", path)
+		return "."
 	}
+	absDir, err := filepath.Abs(cfgDir)
+	if err != nil {
+		return "."
+	}
+	rel, err := filepath.Rel(absDir, cwd)
+	if err != nil {
+		return "."
+	}
+	return filepath.ToSlash(rel)
+}
+
+// applyLanguage bundles the parser for name into location and points cfg at it.
+func applyLanguage(cfg *input.Input, name, location string) error {
+	lang, ok := languages[name]
+	if !ok {
+		return fmt.Errorf("language %q is not supported out of the box (supported: %s), "+
+			"create your own AST-parser using the specification on the github repository",
+			name, strings.Join(slices.Collect(maps.Keys(languages)), ", "))
+	}
+	if err := lang.bundle(location); err != nil {
+		return fmt.Errorf("bundling the ast_parser at %s: %w", location, err)
+	}
+
+	cfg.RunCommand = lang.runCommand
+	cfg.Files = lang.files
+	view := cfg.Views["completeView"]
+	view.Exclude = lang.exclude
+	cfg.Views["completeView"] = view
+
+	Sugar.Infof("Wrote parser to %s", location)
+	return nil
 }
 
 func init() {

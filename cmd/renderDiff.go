@@ -8,7 +8,6 @@ import (
 	"github.com/archlens/archlens/caching"
 	"github.com/archlens/archlens/export"
 	"github.com/archlens/archlens/graph"
-	"github.com/archlens/archlens/input"
 	"github.com/archlens/archlens/utils/gitutils"
 
 	"github.com/spf13/cobra"
@@ -47,57 +46,48 @@ tree is never touched. No cache is read or written.`,
 			return err
 		}
 
-		cfg, err := input.Load(configPath)
+		proj, err := loadProject(configPath)
 		if err != nil {
-			return fmt.Errorf("loading configuration: %w", err)
+			return err
 		}
 
 		if baseRef == "" {
-			if cfg.Github.Branch == "" {
+			if proj.cfg.Github.Branch == "" {
 				return fmt.Errorf("no base branch: set github.branch in archlens.json or pass [base-branch]")
 			}
-			baseRef = cfg.Github.Branch
+			baseRef = proj.cfg.Github.Branch
 		}
 
-		absRoot, err := filepath.Abs(cfg.RootFolder)
-		if err != nil {
-			return fmt.Errorf("resolving root folder: %w", err)
-		}
 		// The root folder may be a subdirectory of the repo; remember where.
-		prefix, err := gitutils.Prefix(absRoot)
+		prefix, err := gitutils.Prefix(proj.absRoot)
 		if err != nil {
-			return fmt.Errorf("%s is not inside a git repository: %w", absRoot, err)
+			return fmt.Errorf("%s is not inside a git repository: %w", proj.absRoot, err)
 		}
 
-		// The cache lives next to archlens.json, so running from a subfolder
-		// still finds the same cache. A nil RefCache means caching is off.
+		// A nil RefCache means caching is off.
 		var rc *caching.RefCache
 		if !noCache {
-			absCfg, err := filepath.Abs(configPath)
-			if err != nil {
-				return fmt.Errorf("resolving config path: %w", err)
-			}
 			rc = &caching.RefCache{
-				Dir:         filepath.Join(filepath.Dir(absCfg), ".archlens", "diff-cache"),
+				Dir:         filepath.Join(proj.cfgDir, ".archlens", "diff-cache"),
 				Keep:        6,
-				Fingerprint: caching.Fingerprint(cfg.RunCommand),
+				Fingerprint: caching.Fingerprint(proj.cfg.RunCommand),
 			}
 		}
 
-		baseGraphs, err := graphsAtRef(absRoot, prefix, baseRef, cfg, rc)
+		baseGraphs, err := graphsAtRef(proj, prefix, baseRef, rc)
 		if err != nil {
 			return err
 		}
-		headGraphs, err := graphsAtRef(absRoot, prefix, headRef, cfg, rc)
+		headGraphs, err := graphsAtRef(proj, prefix, headRef, rc)
 		if err != nil {
 			return err
 		}
 
-		for name := range cfg.Views {
+		for _, name := range proj.viewNames() {
 			diff := graph.Compare(baseGraphs[name], headGraphs[name])
 			title := fmt.Sprintf("%s (%s vs %s)", name, baseRef, headRef)
-			output := exporter.ExportDiff(diff, title, cfg.Name)
-			path, err := export.Save(exporter, cfg.SaveLocation, name+"_diff", output)
+			output := exporter.ExportDiff(diff, title, proj.cfg.Name)
+			path, err := export.Save(exporter, proj.cfg.SaveLocation, name+"_diff", output)
 			if err != nil {
 				return fmt.Errorf("saving diagram for %s: %w", name, err)
 			}
@@ -119,49 +109,44 @@ tree is never touched. No cache is read or written.`,
 
 // graphsAtRef checks ref out into a temporary worktree, parses every view's files
 // there and returns one graph per view. With rc == nil it uses a throwaway
-// in-memory cache purely for its parse-and-build logic; nothing is loaded from
-// or saved to disk.
-func graphsAtRef(repoDir, prefix, ref string, cfg *input.Input, rc *caching.RefCache) (map[string]*graph.Graph, error) {
-	wt, cleanup, err := gitutils.AddWorktree(repoDir, ref)
+// in-memory cache; nothing is loaded from or saved to disk.
+func graphsAtRef(p *project, prefix, ref string, rc *caching.RefCache) (map[string]*graph.Graph, error) {
+	wt, cleanup, err := gitutils.AddWorktree(p.absRoot, ref)
 	if err != nil {
 		return nil, fmt.Errorf("checking out %s: %w", ref, err)
 	}
 	defer cleanup()
 
 	root := filepath.Join(wt, filepath.FromSlash(prefix))
-	graphs := make(map[string]*graph.Graph, len(cfg.Views))
+	graphs := make(map[string]*graph.Graph, len(p.cfg.Views))
 
 	if _, err := os.Stat(root); err != nil {
 		// The root folder doesn't exist on this ref: treat it as empty.
 		Sugar.Warnf("%s: root folder not present, treating as empty", ref)
-		for name := range cfg.Views {
+		for name := range p.cfg.Views {
 			graphs[name] = graph.NewGraph()
 		}
 		return graphs, nil
 	}
 
-	viewFiles, union, err := resolveViewFiles(cfg, root)
-	if err != nil {
-		return nil, fmt.Errorf("%w (on %s)", err, ref)
-	}
-
 	Sugar.Infof("parsing %s", ref)
 
-	c := &caching.Cache{}
-	reparse := true
+	c, reparse := &caching.Cache{}, true
 	if rc != nil {
-		c, reparse = rc.Load(root, cfg.RunCommand), false
+		c, reparse = rc.Load(root, p.cfg.RunCommand), false
 	}
-	if err := c.Refresh(root, union, cfg.RunCommand, reparse); err != nil {
-		return nil, fmt.Errorf("parsing %s: %w", ref, err)
+	viewFiles, err := p.parse(c, root, reparse)
+	if err != nil {
+		return nil, fmt.Errorf("%w (on %s)", err, ref)
 	}
 	if rc != nil {
 		if err := rc.Save(c); err != nil {
 			Sugar.Warnf("saving cache for %s: %v", ref, err)
 		}
 	}
+
 	for name, files := range viewFiles {
-		graphs[name] = c.Graph(files, repoDir)
+		graphs[name] = c.Graph(files, root)
 	}
 	return graphs, nil
 }

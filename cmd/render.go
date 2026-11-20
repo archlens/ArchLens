@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/archlens/archlens/export"
-	"github.com/archlens/archlens/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -17,7 +16,9 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true // usage text is noise for runtime errors
+
 		full, _ := cmd.Flags().GetBool("parse-full")
 		format, _ := cmd.Flags().GetString("format")
 		watch, _ := cmd.Flags().GetBool("watch")
@@ -29,44 +30,44 @@ to quickly create a Cobra application.`,
 
 		proj, err := loadProject(configPath)
 		if err != nil {
-			Sugar.Error(err)
-			return
+			return err
 		}
 
 		if watch {
+			if cmd.Flags().Changed("format") {
+				Sugar.Warnf("--format is ignored with --watch, the live view is always html")
+			}
 			port, _ := cmd.Flags().GetInt("port")
 			view, _ := cmd.Flags().GetString("view")
-			if err := runWatch(cmd.Context(), proj, view, port, full); err != nil {
-				Sugar.Error(err)
-			}
-			return
+			return runWatch(cmd.Context(), proj, view, port, full)
 		}
 
 		exporter, err := newExporter(format)
 		if err != nil {
-			utils.Sugar.Errorf("Failed to create exporter: ", err.Error())
-			return
+			return err
 		}
 
 		viewFiles, err := proj.refresh(full)
 		if err != nil {
-			Sugar.Error(err)
-			return
+			return err
 		}
-		for name, files := range viewFiles {
+
+		for _, name := range proj.viewNames() { // sorted, so logs come out in a stable order
+			files := viewFiles[name]
 			Sugar.Debugf("%s: %d files: %v", name, len(files), files)
 			if len(files) == 0 {
 				continue
 			}
-			g := proj.graph(files)
+			g := proj.graph(name, files)
 			output := exporter.ExportGraph(g, name, proj.cfg.Name)
 			path, err := export.Save(exporter, proj.cfg.SaveLocation, name, output)
 			if err != nil {
-				Sugar.Errorf("Failed to save export: %v\n", err)
+				Sugar.Errorf("Failed to save export for %s: %v", name, err)
 				continue
 			}
 			Sugar.Infof("%s: %d nodes, %d edges, location: %s", name, g.TotalNodes, g.TotalEdges, path)
 		}
+		return nil
 	},
 }
 

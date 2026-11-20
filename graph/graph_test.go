@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -66,5 +67,34 @@ func Test_Graph(t *testing.T) {
 		if _, ok := parent.successors["5"]; ok {
 			t.Errorf("Node %s still has a dangling successor pointer to removed node 5", node)
 		}
+	}
+}
+
+func Test_Project_MergesSubpackages(t *testing.T) {
+	g := NewGraph()
+	tok := func(p string) FileDependency {
+		return FileDependency{"core/tokenizer/" + p, "core/tokenizer/" + p + "/" + p + ".py"}
+	}
+	g.AddFile("core/model/a", "core/model/a/x.py", tok("p"), tok("q"))
+	g.AddFile("core/model/b", "core/model/b/y.py", tok("p"), FileDependency{"util", "util/u.py"})
+	g.AddFile("core/model", "core/model/__init__.py", FileDependency{"core/model/a", "core/model/a/x.py"})
+
+	p := g.Project(func(pkg string) (string, bool) {
+		switch {
+		case strings.HasPrefix(pkg, "core/model"):
+			return "core/model", true
+		case strings.HasPrefix(pkg, "core/tokenizer"):
+			return "core/tokenizer", true
+		}
+		return "", false // util is dropped
+	})
+
+	if p.TotalNodes != 2 || p.TotalEdges != 1 {
+		t.Fatalf("got %d nodes, %d edges, want 2 and 1", p.TotalNodes, p.TotalEdges)
+	}
+	e := p.Edges()[0]
+	// x.py imports two tokenizer sub-packages and y.py one: still 2 files
+	if e.From != "core/model" || e.To != "core/tokenizer" || e.Count != 2 {
+		t.Errorf("edge = %+v", e)
 	}
 }
