@@ -70,7 +70,7 @@ tree is never touched. No cache is read or written.`,
 			rc = &caching.RefCache{
 				Dir:         filepath.Join(proj.cfgDir, ".archlens", "diff-cache"),
 				Keep:        6,
-				Fingerprint: caching.Fingerprint(proj.cfg.RunCommand),
+				Fingerprint: caching.Fingerprint(proj.cfg.RunCommand, proj.filters()),
 			}
 		}
 
@@ -146,7 +146,7 @@ func graphsAtRef(p *project, prefix, ref string, rc *caching.RefCache) (map[stri
 	}
 
 	for name, files := range viewFiles {
-		graphs[name] = c.Graph(files, root)
+		graphs[name] = c.Graph(files, root, p.filters())
 	}
 	return graphs, nil
 }

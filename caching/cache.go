@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/archlens/archlens/graph"
@@ -20,7 +21,7 @@ import (
 
 // cacheSchema changes when the shape of Entry changes, so cache files written
 // by an older shape are never loaded.
-const cacheSchemaVersion = "2"
+const cacheSchemaVersion = "3"
 
 type Entry struct {
 	Package      string               `json:"package"`
@@ -78,10 +79,10 @@ func gitHead(root string) (string, error) {
 }
 
 // Refresh brings the cache up to date for files, which must be sorted and unique.
-func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
+func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, filters parsers.FilterSet, reParseFlag bool) error {
 	head, herr := gitHead(root)
 	changes, cerr := gitChanges(root, c.Commit)
-	c.Fingerprint = Fingerprint(runCommand)
+	c.Fingerprint = Fingerprint(runCommand, filters)
 
 	// Reparse everything if git can't tell us what changed, or if the set of
 	// files changed (an added or removed file can change how imports resolve).
@@ -108,7 +109,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 	if c.Files == nil || full {
 		c.Files = map[string]Entry{}
 	}
-	for _, r := range parsers.GetASTs(list, root, cfgAbs, runCommand) {
+	for _, r := range parsers.GetASTs(list, root, cfgAbs, runCommand, filters) {
 		if r.Err != nil {
 			// TODO: Should abort instead of continuing
 			delete(c.Files, r.File) // not cached, so it's retried next run
@@ -136,7 +137,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
+func (c *Cache) Graph(files []string, rootFolder string, filter parsers.FilterSet) *graph.Graph {
 	restore := utils.WithWorkingDirectory(rootFolder)
 	defer restore()
 
@@ -146,8 +147,9 @@ func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
 		if !ok { // TODO: fails silently. Should probably say something about file not being in cache
 			continue
 		}
-		deps := make([]graph.FileDependency, len(e.Dependencies))
-		for i, d := range e.Dependencies {
+		kept := filter.Keep(e.Dependencies)
+		deps := make([]graph.FileDependency, len(kept))
+		for i, d := range kept {
 			info, err := os.Stat(d.File)
 			if err != nil {
 				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
@@ -162,13 +164,13 @@ func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
 	return g
 }
 
-func LoadCache(path, runCommand string) *Cache {
+func LoadCache(path, fingerprint string) *Cache {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
+	if json.Unmarshal(data, &c) != nil || c.Fingerprint != fingerprint {
 		utils.Sugar.Debug("Failed to load cache or cache invalid. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
 	}
@@ -230,11 +232,11 @@ func (r *RefCache) path(sha string) string {
 }
 
 // Load returns the cached parse closest to the checkout at root, or an empty Cache.
-func (r *RefCache) Load(root, runCommand string) *Cache {
+func (r *RefCache) Load(root, fingerprint string) *Cache {
 	best, bestN := &Cache{}, -1
 	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
 	for _, f := range files {
-		cand := LoadCache(f, runCommand)
+		cand := LoadCache(f, fingerprint)
 		if cand.Commit == "" || cand.Fingerprint != r.Fingerprint {
 			continue // empty, corrupt or from a different parser setup
 		}
@@ -270,7 +272,31 @@ func (r *RefCache) Save(c *Cache) error {
 	return nil
 }
 
-func Fingerprint(runCommand string) string {
-	sum := sha256.Sum256([]byte(cacheSchemaVersion + "\x00" + runCommand))
+func Fingerprint(runCommand string, filters parsers.FilterSet) string {
+	var b strings.Builder
+	field := func(s string) {
+		b.WriteString(strconv.Itoa(len(s)))
+		b.WriteByte(':')
+		b.WriteString(s)
+	}
+	list := func(l []string) {
+		b.WriteString(strconv.Itoa(len(l)))
+		b.WriteByte('[')
+		for _, s := range l {
+			field(s)
+		}
+		b.WriteByte(']')
+	}
+
+	field(cacheSchemaVersion)
+	field(runCommand)
+	b.WriteString(strconv.Itoa(len(filters)))
+	b.WriteByte(';')
+	for _, f := range filters {
+		list(f.Include)
+		list(f.Exclude)
+	}
+
+	sum := sha256.Sum256([]byte(b.String()))
 	return hex.EncodeToString(sum[:8])
 }
