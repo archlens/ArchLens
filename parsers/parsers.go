@@ -5,15 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
 	"sync"
 	"unicode"
-
-	"github.com/bmatcuk/doublestar/v4"
 )
 
 // Dependency is one internal import reported by a parser. File is the
@@ -33,61 +30,6 @@ type ASTResult struct {
 	File string
 	AST  *ASTNode
 	Err  error
-}
-
-// Filter selects packages by directory (relative to the project root).
-// Patterns are globs and match recursively: "cmd" matches cmd and cmd/x/y.
-type Filter struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
-}
-
-// FilterSet accepts a package if any of its filters does.
-type FilterSet []Filter
-
-func matchDir(pattern, dir string) bool {
-	pattern = path.Clean(filepath.ToSlash(pattern))
-	if pattern == "." {
-		return true // the root, recursively, is everything
-	}
-	if ok, _ := doublestar.Match(pattern, dir); ok {
-		return true
-	}
-	ok, _ := doublestar.Match(pattern+"/**", dir)
-	return ok
-}
-
-// Match reports whether the package directory dir is included and not excluded.
-func (f Filter) Match(dir string) bool {
-	dir = path.Clean(filepath.ToSlash(dir))
-	if !slices.ContainsFunc(f.Include, func(p string) bool { return matchDir(p, dir) }) {
-		return false
-	}
-	return !slices.ContainsFunc(f.Exclude, func(p string) bool { return matchDir(p, dir) })
-}
-
-func (s FilterSet) Match(dir string) bool {
-	return slices.ContainsFunc(s, func(f Filter) bool { return f.Match(dir) })
-}
-
-// depDir is the directory of the package a dependency points to.
-// Mirrors graph.AddFile: File == Package means File is the package path.
-func depDir(d Dependency) string {
-	if d.File == d.Package {
-		return path.Clean(filepath.ToSlash(d.File))
-	}
-	return path.Dir(filepath.ToSlash(d.File))
-}
-
-// Keep returns the dependencies whose package is accepted by the set.
-func (s FilterSet) Keep(deps []Dependency) []Dependency {
-	kept := make([]Dependency, 0, len(deps))
-	for _, d := range deps {
-		if s.Match(depDir(d)) {
-			kept = append(kept, d)
-		}
-	}
-	return kept
 }
 
 // splitCommand splits a command line such as `python3 "my dir/arch.py" --fast`
@@ -149,7 +91,7 @@ func workerCount(jobs int) int {
 // GetASTs concurrently parses each file in `files` (relative to rootDir)
 // and returns the collected results. Errors are captured per-file rather
 // than aborting the whole batch.
-func GetASTs(files []string, rootDir, cfgDir string, runCommand string, filters FilterSet) []ASTResult {
+func GetASTs(files []string, rootDir, cfgDir string, runCommand string) []ASTResult {
 	numWorkers := workerCount(len(files))
 	jobs := make(chan string, len(files))
 	resultsCh := make(chan ASTResult, len(files))
@@ -167,7 +109,7 @@ func GetASTs(files []string, rootDir, cfgDir string, runCommand string, filters 
 		go func() {
 			defer wg.Done()
 			for f := range jobs {
-				ast, err := GetAST(f, rootDir, cfgDir, runCommand, filters)
+				ast, err := GetAST(f, rootDir, cfgDir, runCommand)
 				resultsCh <- ASTResult{File: f, AST: ast, Err: err}
 			}
 		}()
@@ -185,7 +127,7 @@ func GetASTs(files []string, rootDir, cfgDir string, runCommand string, filters 
 	return results
 }
 
-func GetAST(filePath, rootDir, cfgDir, runCommand string, filters FilterSet) (*ASTNode, error) {
+func GetAST(filePath, rootDir, cfgDir, runCommand string) (*ASTNode, error) {
 	parts, err := splitCommand(runCommand)
 	if err != nil {
 		return nil, err

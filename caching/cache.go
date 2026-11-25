@@ -8,6 +8,7 @@ import (
 	"maps"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -17,6 +18,7 @@ import (
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/parsers"
 	"github.com/archlens/archlens/utils"
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 // cacheSchema changes when the shape of Entry changes, so cache files written
@@ -46,6 +48,61 @@ type RefCache struct {
 type Change struct {
 	Status byte   // 'M', 'A', 'D'
 	Path   string // relative to root
+}
+
+// Filter selects packages by directory (relative to the project root).
+// Patterns are globs and match recursively: "cmd" matches cmd and cmd/x/y.
+type Filter struct {
+	Include []string `json:"include"`
+	Exclude []string `json:"exclude"`
+}
+
+// FilterSet accepts a package if any of its filters does.
+type FilterSet []Filter
+
+func matchDir(pattern, dir string) bool {
+	pattern = path.Clean(filepath.ToSlash(pattern))
+	if pattern == "." {
+		return true // the root, recursively, is everything
+	}
+	if ok, _ := doublestar.Match(pattern, dir); ok {
+		return true
+	}
+	ok, _ := doublestar.Match(pattern+"/**", dir)
+	return ok
+}
+
+// Match reports whether the package directory dir is included and not excluded.
+func (f Filter) Match(dir string) bool {
+	dir = path.Clean(filepath.ToSlash(dir))
+	if !slices.ContainsFunc(f.Include, func(p string) bool { return matchDir(p, dir) }) {
+		return false
+	}
+	return !slices.ContainsFunc(f.Exclude, func(p string) bool { return matchDir(p, dir) })
+}
+
+func (s FilterSet) Match(dir string) bool {
+	return slices.ContainsFunc(s, func(f Filter) bool { return f.Match(dir) })
+}
+
+// depDir is the directory of the package a dependency points to.
+// Mirrors graph.AddFile: File == Package means File is the package path.
+func depDir(d parsers.Dependency) string {
+	if d.File == d.Package {
+		return path.Clean(filepath.ToSlash(d.File))
+	}
+	return path.Dir(filepath.ToSlash(d.File))
+}
+
+// Keep returns the dependencies whose package is accepted by the set.
+func (s FilterSet) Keep(deps []parsers.Dependency) []parsers.Dependency {
+	kept := make([]parsers.Dependency, 0, len(deps))
+	for _, d := range deps {
+		if s.Match(depDir(d)) {
+			kept = append(kept, d)
+		}
+	}
+	return kept
 }
 
 // gitChanges lists paths (relative to root, forward slashes) that differ from
@@ -79,7 +136,7 @@ func gitHead(root string) (string, error) {
 }
 
 // Refresh brings the cache up to date for files, which must be sorted and unique.
-func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, filters parsers.FilterSet, reParseFlag bool) error {
+func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, filters FilterSet, reParseFlag bool) error {
 	head, herr := gitHead(root)
 	changes, cerr := gitChanges(root, c.Commit)
 	c.Fingerprint = Fingerprint(runCommand, filters)
@@ -109,7 +166,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 	if c.Files == nil || full {
 		c.Files = map[string]Entry{}
 	}
-	for _, r := range parsers.GetASTs(list, root, cfgAbs, runCommand, filters) {
+	for _, r := range parsers.GetASTs(list, root, cfgAbs, runCommand) {
 		if r.Err != nil {
 			// TODO: Should abort instead of continuing
 			delete(c.Files, r.File) // not cached, so it's retried next run
@@ -137,7 +194,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string, rootFolder string, filter parsers.FilterSet) *graph.Graph {
+func (c *Cache) Graph(files []string, rootFolder string, filter FilterSet) *graph.Graph {
 	restore := utils.WithWorkingDirectory(rootFolder)
 	defer restore()
 
@@ -272,7 +329,7 @@ func (r *RefCache) Save(c *Cache) error {
 	return nil
 }
 
-func Fingerprint(runCommand string, filters parsers.FilterSet) string {
+func Fingerprint(runCommand string, filters FilterSet) string {
 	var b strings.Builder
 	field := func(s string) {
 		b.WriteString(strconv.Itoa(len(s)))

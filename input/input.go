@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/archlens/archlens/parsers"
+	"github.com/archlens/archlens/caching"
 	"github.com/archlens/archlens/utils"
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -56,8 +56,8 @@ func Load(path string) (*Input, error) {
 	return input, nil
 }
 
-func (v View) Filter() parsers.Filter {
-	return parsers.Filter{Include: v.Include, Exclude: v.Exclude}
+func (v View) Filter() caching.Filter {
+	return caching.Filter{Include: v.Include, Exclude: v.Exclude}
 }
 
 func matchFiles(patterns []string) (map[string]struct{}, error) {

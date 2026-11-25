@@ -11,7 +11,6 @@ import (
 	"github.com/archlens/archlens/export/mermaid"
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/input"
-	"github.com/archlens/archlens/parsers"
 )
 
 type project struct {
@@ -58,8 +57,8 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 }
 
 // filters returns one filter per view, in a stable order (it is fingerprinted).
-func (p *project) filters() parsers.FilterSet {
-	set := make(parsers.FilterSet, 0, len(p.cfg.Views))
+func (p *project) filters() caching.FilterSet {
+	set := make(caching.FilterSet, 0, len(p.cfg.Views))
 	for _, n := range p.viewNames() {
 		set = append(set, p.cfg.Views[n].Filter())
 	}
@@ -105,7 +104,7 @@ func loadProject(configPath string) (*project, error) {
 // graph builds the dependency graph for one view's files from cached parse
 // results. Call refresh first, since that is what loads the cache.
 func (p *project) graph(view string, files []string) *graph.Graph {
-	return p.cache.Graph(files, p.absRoot, parsers.FilterSet{p.cfg.Views[view].Filter()})
+	return p.cache.Graph(files, p.absRoot, caching.FilterSet{p.cfg.Views[view].Filter()})
 }
 
 // parse resolves every view's files under root and brings c up to date for them.
