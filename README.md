@@ -1,4 +1,4 @@
-# ArchLensGo <!-- omit in toc -->
+# ArchLens <!-- omit in toc -->
 
 <p align="center">
 <a href="https://github.com/archlens/ArchLensGo/actions/workflows/test.yml"> <img alt="GitHub Actions Workflow Status Tests" src="https://img.shields.io/github/actions/workflow/status/archlens/ArchLensGo/test.yml?label=tests"></a>
