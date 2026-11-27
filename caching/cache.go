@@ -99,16 +99,6 @@ func (c *Cache) SameFiles(files map[string]struct{}) bool {
 	return true
 }
 
-// ParserID changes whenever the parser script changes, invalidating the cache.
-func ParserID(script string) (string, error) {
-	data, err := os.ReadFile(script)
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:]), nil
-}
-
 func (r *RefCache) path(sha string) string {
 	return filepath.Join(r.Dir, sha+".json")
 }
