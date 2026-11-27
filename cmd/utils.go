@@ -11,6 +11,7 @@ import (
 	"github.com/archlens/archlens/export/mermaid"
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/input"
+	"github.com/archlens/archlens/parsers"
 )
 
 type project struct {
@@ -56,19 +57,19 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 	return viewFiles, union, nil
 }
 
-// filters returns one filter per view, in a stable order (it is fingerprinted).
-func (p *project) filters() caching.FilterSet {
-	set := make(caching.FilterSet, 0, len(p.cfg.Views))
-	for _, n := range p.viewNames() {
-		set = append(set, p.cfg.Views[n].Filter())
-	}
-	return set
-}
+// // filters returns one filter per view, in a stable order (it is fingerprinted).
+// func (p *project) views() []input.View {
+// 	set := make([]input.View, 0, len(p.cfg.Views))
+// 	for _, n := range p.viewNames() {
+// 		set = append(set, p.cfg.Views[n])
+// 	}
+// 	return set
+// }
 
 // refresh updates the working-tree cache on disk. Used by render and watch.
 func (p *project) refresh(full bool) (map[string][]string, error) {
 	if p.cache == nil {
-		p.cache = caching.LoadCache(p.cachePath(), caching.Fingerprint(p.cfg.RunCommand, p.filters()))
+		p.cache = caching.LoadCache(p.cachePath(), caching.Fingerprint(p.cfg.RunCommand))
 	}
 	viewFiles, err := p.parse(p.cache, p.absRoot, full)
 	if err != nil {
@@ -104,7 +105,10 @@ func loadProject(configPath string) (*project, error) {
 // graph builds the dependency graph for one view's files from cached parse
 // results. Call refresh first, since that is what loads the cache.
 func (p *project) graph(view string, files []string) *graph.Graph {
-	return p.cache.Graph(files, p.absRoot, caching.FilterSet{p.cfg.Views[view].Filter()})
+	keep := func(d parsers.Dependency) bool {
+		return p.cfg.Views[view].Match(parsers.DepDir(d))
+	}
+	return p.cache.Graph(files, p.absRoot, keep)
 }
 
 // parse resolves every view's files under root and brings c up to date for them.
@@ -114,7 +118,7 @@ func (p *project) parse(c *caching.Cache, root string, full bool) (map[string][]
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Refresh(root, p.cfgDir, union, p.cfg.RunCommand, p.filters(), full); err != nil {
+	if err := c.Refresh(root, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
 		return nil, fmt.Errorf("parsing: %w", err)
 	}
 	return viewFiles, nil

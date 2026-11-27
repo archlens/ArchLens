@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -30,6 +31,15 @@ type ASTResult struct {
 	File string
 	AST  *ASTNode
 	Err  error
+}
+
+// DepDir is the directory of the package a dependency points to.
+// Mirrors graph.AddFile: File == Package means File is the package path.
+func DepDir(d Dependency) string {
+	if d.File == d.Package {
+		return path.Clean(filepath.ToSlash(d.File))
+	}
+	return path.Dir(filepath.ToSlash(d.File))
 }
 
 // splitCommand splits a command line such as `python3 "my dir/arch.py" --fast`

@@ -8,17 +8,14 @@ import (
 	"maps"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/parsers"
 	"github.com/archlens/archlens/utils"
-	"github.com/bmatcuk/doublestar/v4"
 )
 
 // cacheSchema changes when the shape of Entry changes, so cache files written
@@ -48,61 +45,6 @@ type RefCache struct {
 type Change struct {
 	Status byte   // 'M', 'A', 'D'
 	Path   string // relative to root
-}
-
-// Filter selects packages by directory (relative to the project root).
-// Patterns are globs and match recursively: "cmd" matches cmd and cmd/x/y.
-type Filter struct {
-	Include []string `json:"include"`
-	Exclude []string `json:"exclude"`
-}
-
-// FilterSet accepts a package if any of its filters does.
-type FilterSet []Filter
-
-func matchDir(pattern, dir string) bool {
-	pattern = path.Clean(filepath.ToSlash(pattern))
-	if pattern == "." {
-		return true // the root, recursively, is everything
-	}
-	if ok, _ := doublestar.Match(pattern, dir); ok {
-		return true
-	}
-	ok, _ := doublestar.Match(pattern+"/**", dir)
-	return ok
-}
-
-// Match reports whether the package directory dir is included and not excluded.
-func (f Filter) Match(dir string) bool {
-	dir = path.Clean(filepath.ToSlash(dir))
-	if !slices.ContainsFunc(f.Include, func(p string) bool { return matchDir(p, dir) }) {
-		return false
-	}
-	return !slices.ContainsFunc(f.Exclude, func(p string) bool { return matchDir(p, dir) })
-}
-
-func (s FilterSet) Match(dir string) bool {
-	return slices.ContainsFunc(s, func(f Filter) bool { return f.Match(dir) })
-}
-
-// depDir is the directory of the package a dependency points to.
-// Mirrors graph.AddFile: File == Package means File is the package path.
-func depDir(d parsers.Dependency) string {
-	if d.File == d.Package {
-		return path.Clean(filepath.ToSlash(d.File))
-	}
-	return path.Dir(filepath.ToSlash(d.File))
-}
-
-// Keep returns the dependencies whose package is accepted by the set.
-func (s FilterSet) Keep(deps []parsers.Dependency) []parsers.Dependency {
-	kept := make([]parsers.Dependency, 0, len(deps))
-	for _, d := range deps {
-		if s.Match(depDir(d)) {
-			kept = append(kept, d)
-		}
-	}
-	return kept
 }
 
 // gitChanges lists paths (relative to root, forward slashes) that differ from
@@ -136,10 +78,10 @@ func gitHead(root string) (string, error) {
 }
 
 // Refresh brings the cache up to date for files, which must be sorted and unique.
-func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, filters FilterSet, reParseFlag bool) error {
+func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
 	head, herr := gitHead(root)
 	changes, cerr := gitChanges(root, c.Commit)
-	c.Fingerprint = Fingerprint(runCommand, filters)
+	c.Fingerprint = Fingerprint(runCommand)
 
 	// Reparse everything if git can't tell us what changed, or if the set of
 	// files changed (an added or removed file can change how imports resolve).
@@ -194,7 +136,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string, rootFolder string, filter FilterSet) *graph.Graph {
+func (c *Cache) Graph(files []string, rootFolder string, keep func(parsers.Dependency) bool) *graph.Graph {
 	restore := utils.WithWorkingDirectory(rootFolder)
 	defer restore()
 
@@ -204,9 +146,12 @@ func (c *Cache) Graph(files []string, rootFolder string, filter FilterSet) *grap
 		if !ok { // TODO: fails silently. Should probably say something about file not being in cache
 			continue
 		}
-		kept := filter.Keep(e.Dependencies)
-		deps := make([]graph.FileDependency, len(kept))
-		for i, d := range kept {
+		// kept := filter.Keep(e.Dependencies)
+		deps := make([]graph.FileDependency, len(e.Dependencies))
+		for i, d := range e.Dependencies {
+			if keep != nil && !keep(d) {
+				continue
+			}
 			info, err := os.Stat(d.File)
 			if err != nil {
 				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
@@ -329,31 +274,7 @@ func (r *RefCache) Save(c *Cache) error {
 	return nil
 }
 
-func Fingerprint(runCommand string, filters FilterSet) string {
-	var b strings.Builder
-	field := func(s string) {
-		b.WriteString(strconv.Itoa(len(s)))
-		b.WriteByte(':')
-		b.WriteString(s)
-	}
-	list := func(l []string) {
-		b.WriteString(strconv.Itoa(len(l)))
-		b.WriteByte('[')
-		for _, s := range l {
-			field(s)
-		}
-		b.WriteByte(']')
-	}
-
-	field(cacheSchemaVersion)
-	field(runCommand)
-	b.WriteString(strconv.Itoa(len(filters)))
-	b.WriteByte(';')
-	for _, f := range filters {
-		list(f.Include)
-		list(f.Exclude)
-	}
-
-	sum := sha256.Sum256([]byte(b.String()))
+func Fingerprint(runCommand string) string {
+	sum := sha256.Sum256([]byte(cacheSchemaVersion + "\x00" + runCommand))
 	return hex.EncodeToString(sum[:8])
 }

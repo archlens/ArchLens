@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/archlens/archlens/caching"
 	"github.com/archlens/archlens/utils"
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -33,6 +32,42 @@ type Input struct {
 	RunCommand   string          `json:"runCommand"`
 }
 
+func matchDir(pattern, dir string) bool {
+	pattern = path.Clean(filepath.ToSlash(pattern))
+	if pattern == "." {
+		return true // the root, recursively, is everything
+	}
+	if ok, _ := doublestar.Match(pattern, dir); ok {
+		return true
+	}
+	ok, _ := doublestar.Match(pattern+"/**", dir)
+	return ok
+}
+
+// Match reports whether the package directory dir is included and not excluded.
+func (v View) Match(dir string) bool {
+	dir = path.Clean(filepath.ToSlash(dir))
+	if !slices.ContainsFunc(v.Include, func(p string) bool { return matchDir(p, dir) }) {
+		return false
+	}
+	return !slices.ContainsFunc(v.Exclude, func(p string) bool { return matchDir(p, dir) })
+}
+
+// func Match(dir string, views []View) bool {
+// 	return slices.ContainsFunc(views, func(v View) bool { return v.Match(dir) })
+// }
+
+// // Keep returns the dependencies whose package is accepted by the set.
+// func (s FilterSet) Keep(deps []parsers.Dependency) []parsers.Dependency {
+// 	kept := make([]parsers.Dependency, 0, len(deps))
+// 	for _, d := range deps {
+// 		if s.Match(depDir(d)) {
+// 			kept = append(kept, d)
+// 		}
+// 	}
+// 	return kept
+// }
+
 func Load(path string) (*Input, error) {
 	input := &Input{}
 
@@ -56,9 +91,9 @@ func Load(path string) (*Input, error) {
 	return input, nil
 }
 
-func (v View) Filter() caching.Filter {
-	return caching.Filter{Include: v.Include, Exclude: v.Exclude}
-}
+// func (v View) Filter() caching.Filter {
+// 	return caching.Filter{Include: v.Include, Exclude: v.Exclude}
+// }
 
 func matchFiles(patterns []string) (map[string]struct{}, error) {
 	files := make(map[string]struct{})
@@ -101,11 +136,11 @@ func GetFiles(view *View, exts []string, rootDir string) ([]string, error) {
 		return nil, err
 	}
 
-	filter := view.Filter()
+	// filter := view.Filter()
 	var files []string
 	for f := range matched {
 		f = filepath.ToSlash(f)
-		if filter.Match(path.Dir(f)) {
+		if view.Match(path.Dir(f)) {
 			files = append(files, f)
 		}
 	}
