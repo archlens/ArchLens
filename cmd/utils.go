@@ -11,7 +11,6 @@ import (
 	"github.com/archlens/archlens/export/mermaid"
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/input"
-	"github.com/archlens/archlens/parsers"
 )
 
 type project struct {
@@ -106,9 +105,7 @@ func loadProject(configPath string) (*project, error) {
 // results. Call refresh first, since that is what loads the cache.
 func (p *project) graph(cache *caching.Cache, root, view string, files []string) *graph.Graph {
 	v := p.cfg.Views[view]
-	keep := func(d parsers.Dependency) bool {
-		return v.Match(parsers.DepDir(d))
-	}
+	keep := func(dep string) bool { return v.Match(dep) }
 	return cache.Graph(files, root, keep)
 }
 

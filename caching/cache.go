@@ -136,7 +136,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string, rootFolder string, keep func(parsers.Dependency) bool) *graph.Graph {
+func (c *Cache) Graph(files []string, rootFolder string, keep func(string) bool) *graph.Graph {
 	restore := utils.WithWorkingDirectory(rootFolder)
 	defer restore()
 
@@ -149,7 +149,7 @@ func (c *Cache) Graph(files []string, rootFolder string, keep func(parsers.Depen
 		// kept := filter.Keep(e.Dependencies)
 		deps := make([]graph.FileDependency, 0, len(e.Dependencies))
 		for _, d := range e.Dependencies {
-			if keep != nil && !keep(d) {
+			if keep != nil && !keep(d.File) {
 				continue
 			}
 			if info, err := os.Stat(d.File); err != nil {

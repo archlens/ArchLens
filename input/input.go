@@ -140,7 +140,7 @@ func GetFiles(view *View, exts []string, rootDir string) ([]string, error) {
 	var files []string
 	for f := range matched {
 		f = filepath.ToSlash(f)
-		if view.Match(path.Dir(f)) {
+		if view.Match(f) {
 			files = append(files, f)
 		}
 	}
