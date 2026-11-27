@@ -11,6 +11,7 @@ import (
 	"github.com/archlens/archlens/export/mermaid"
 	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/input"
+	"github.com/archlens/archlens/pipeline"
 )
 
 type project struct {
@@ -97,11 +98,13 @@ func loadProject(configPath string) (*project, error) {
 func (p *project) graph(cache *caching.Cache, root, view string, files []string) *graph.Graph {
 	v := p.cfg.Views[view]
 	keep := func(dep string) bool { return v.Match(dep) }
-	g := cache.Graph(files, root, keep)
+
+	// g := pipeline.Graph(files, root, keep)
+	g := pipeline.Graph(cache, files, root, keep)
 	if !v.MergeSubpackages() {
 		return g
 	}
-	return g.Merge(func(pkg graph.Package) graph.Package  {
+	return g.Merge(func(pkg graph.Package) graph.Package {
 		if r, ok := v.Root(pkg.Path); ok {
 			return graph.Package{Name: r, Path: r + "/"}
 		}
@@ -116,7 +119,7 @@ func (p *project) parse(c *caching.Cache, root string, full bool) (map[string][]
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Refresh(root, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
+	if err := pipeline.Refresh(c, root, p.cfgDir, union, p.cfg.RunCommand, full); err != nil {
 		return nil, fmt.Errorf("parsing: %w", err)
 	}
 	return viewFiles, nil
