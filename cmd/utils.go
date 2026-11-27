@@ -56,15 +56,6 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 	return viewFiles, union, nil
 }
 
-// // filters returns one filter per view, in a stable order (it is fingerprinted).
-// func (p *project) views() []input.View {
-// 	set := make([]input.View, 0, len(p.cfg.Views))
-// 	for _, n := range p.viewNames() {
-// 		set = append(set, p.cfg.Views[n])
-// 	}
-// 	return set
-// }
-
 // refresh updates the working-tree cache on disk. Used by render and watch.
 func (p *project) refresh(full bool) (map[string][]string, error) {
 	if p.cache == nil {

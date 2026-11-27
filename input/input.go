@@ -37,7 +37,7 @@ type Input struct {
 func matchDir(pattern, dir string) bool {
 	pattern = path.Clean(filepath.ToSlash(pattern))
 	if pattern == "." {
-		return true // the root, recursively, is everything
+		return true
 	}
 	if ok, _ := doublestar.Match(pattern, dir); ok {
 		return true
@@ -46,7 +46,7 @@ func matchDir(pattern, dir string) bool {
 	return ok
 }
 
-// Match reports whether the package directory dir is included and not excluded.
+// Match reports whether the package path is included and not excluded.
 func (v View) Match(dir string) bool {
 	dir = path.Clean(filepath.ToSlash(dir))
 	if !slices.ContainsFunc(v.Include, func(p string) bool { return matchDir(p, dir) }) {
@@ -56,21 +56,6 @@ func (v View) Match(dir string) bool {
 }
 
 func (v View) MergeSubpackages() bool { return v.Merge == nil || *v.Merge }
-
-// func Match(dir string, views []View) bool {
-// 	return slices.ContainsFunc(views, func(v View) bool { return v.Match(dir) })
-// }
-
-// // Keep returns the dependencies whose package is accepted by the set.
-// func (s FilterSet) Keep(deps []parsers.Dependency) []parsers.Dependency {
-// 	kept := make([]parsers.Dependency, 0, len(deps))
-// 	for _, d := range deps {
-// 		if s.Match(depDir(d)) {
-// 			kept = append(kept, d)
-// 		}
-// 	}
-// 	return kept
-// }
 
 func Load(path string) (*Input, error) {
 	input := &Input{}
@@ -95,10 +80,6 @@ func Load(path string) (*Input, error) {
 
 	return input, nil
 }
-
-// func (v View) Filter() caching.Filter {
-// 	return caching.Filter{Include: v.Include, Exclude: v.Exclude}
-// }
 
 func matchFiles(patterns []string) (map[string]struct{}, error) {
 	files := make(map[string]struct{})
