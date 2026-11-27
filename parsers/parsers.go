@@ -127,7 +127,7 @@ func GetASTs(files []string, rootDir, cfgDir string, runCommand string) []ASTRes
 	return results
 }
 
-func GetAST(filePath string, rootDir, cfgDir string, runCommand string) (*ASTNode, error) {
+func GetAST(filePath, rootDir, cfgDir, runCommand string) (*ASTNode, error) {
 	parts, err := splitCommand(runCommand)
 	if err != nil {
 		return nil, err

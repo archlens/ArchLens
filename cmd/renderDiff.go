@@ -133,7 +133,7 @@ func graphsAtRef(p *project, prefix, ref string, rc *caching.RefCache) (map[stri
 
 	c, reparse := &caching.Cache{}, true
 	if rc != nil {
-		c, reparse = rc.Load(root, p.cfg.RunCommand), false
+		c, reparse = rc.Load(root, rc.Fingerprint), false
 	}
 	viewFiles, err := p.parse(c, root, reparse)
 	if err != nil {
@@ -146,7 +146,7 @@ func graphsAtRef(p *project, prefix, ref string, rc *caching.RefCache) (map[stri
 	}
 
 	for name, files := range viewFiles {
-		graphs[name] = c.Graph(files, root)
+		graphs[name] = p.graph(c, root, name, files)
 	}
 	return graphs, nil
 }

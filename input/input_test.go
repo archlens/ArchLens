@@ -71,6 +71,27 @@ func chdir(t *testing.T, dir string) {
 	t.Cleanup(restore)
 }
 
+// checkCacheExclude verifies that Load kept the configured excludes, in order,
+// and added exactly one entry that excludes the cache directory (without
+// depending on the exact spelling of that entry) but nothing else.
+func checkCacheExclude(t *testing.T, name string, got View, configured []string) {
+	t.Helper()
+	if len(got.Exclude) != len(configured)+1 {
+		t.Errorf("view %q Exclude = %v, want %v plus one cache entry", name, got.Exclude, configured)
+		return
+	}
+	if !slices.Equal(got.Exclude[:len(configured)], configured) {
+		t.Errorf("view %q Exclude = %v, want it to start with %v", name, got.Exclude, configured)
+	}
+	cacheOnly := View{Include: []string{"."}, Exclude: got.Exclude[len(configured):]}
+	if cacheOnly.Match(".archlens/sub") {
+		t.Errorf("view %q: added entry %q does not exclude the cache directory", name, got.Exclude[len(configured):])
+	}
+	if !cacheOnly.Match("src") {
+		t.Errorf("view %q: added entry %q excludes more than the cache directory", name, got.Exclude[len(configured):])
+	}
+}
+
 // ---------- Load ----------
 
 func TestLoad_ParsesAllFields(t *testing.T) {
@@ -78,10 +99,11 @@ func TestLoad_ParsesAllFields(t *testing.T) {
 		"name": "demo",
 		"github": {"url": "https://github.com/archlens/demo", "branch": "main"},
 		"rootFolder": "src",
+		"files": ["*.py", "*.pyi"],
 		"saveLocation": "docs/arch",
 		"runCommand": "python3 ast_parser.py",
 		"views": {
-			"complete": {"include": ["**/*.py"], "exclude": ["venv/**"]}
+			"complete": {"include": ["pkg", "app/**"], "exclude": ["venv"]}
 		}
 	}`)
 
@@ -99,6 +121,9 @@ func TestLoad_ParsesAllFields(t *testing.T) {
 	if got.RootFolder != "src" {
 		t.Errorf("RootFolder = %q, want %q", got.RootFolder, "src")
 	}
+	if !slices.Equal(got.Files, []string{"*.py", "*.pyi"}) {
+		t.Errorf("Files = %v, want [*.py *.pyi]", got.Files)
+	}
 	if got.SaveLocation != "docs/arch" {
 		t.Errorf("SaveLocation = %q, want %q", got.SaveLocation, "docs/arch")
 	}
@@ -110,19 +135,17 @@ func TestLoad_ParsesAllFields(t *testing.T) {
 	if !ok {
 		t.Fatal("view \"complete\" missing")
 	}
-	if !slices.Equal(view.Include, []string{"**/*.py"}) {
+	if !slices.Equal(view.Include, []string{"pkg", "app/**"}) {
 		t.Errorf("Include = %v", view.Include)
 	}
-	if !slices.Equal(view.Exclude, []string{"venv/**", ".archlens/*"}) {
-		t.Errorf("Exclude = %v", view.Exclude)
-	}
+	checkCacheExclude(t, "complete", view, []string{"venv"})
 }
 
 func TestLoad_AppendsCacheExclusionToEveryView(t *testing.T) {
 	path := writeConfig(t, `{"views": {
-		"noExclude":    {"include": ["*.go"]},
-		"emptyExclude": {"include": ["*.go"], "exclude": []},
-		"withExclude":  {"include": ["*.go"], "exclude": ["vendor/**", "*_test.go"]}
+		"noExclude":    {"include": ["cmd"]},
+		"emptyExclude": {"include": ["cmd"], "exclude": []},
+		"withExclude":  {"include": ["cmd"], "exclude": ["vendor", "**/testdata"]}
 	}}`)
 
 	got, err := Load(path)
@@ -131,24 +154,22 @@ func TestLoad_AppendsCacheExclusionToEveryView(t *testing.T) {
 	}
 
 	want := map[string][]string{
-		"noExclude":    {".archlens/*"},
-		"emptyExclude": {".archlens/*"},
-		"withExclude":  {"vendor/**", "*_test.go", ".archlens/*"},
+		"noExclude":    nil,
+		"emptyExclude": {},
+		"withExclude":  {"vendor", "**/testdata"},
 	}
 	if len(got.Views) != len(want) {
 		t.Fatalf("got %d views, want %d", len(got.Views), len(want))
 	}
-	for name, wantExclude := range want {
+	for name, configured := range want {
 		view, ok := got.Views[name]
 		if !ok {
 			t.Errorf("view %q missing", name)
 			continue
 		}
-		if !slices.Equal(view.Exclude, wantExclude) {
-			t.Errorf("view %q Exclude = %v, want %v", name, view.Exclude, wantExclude)
-		}
-		if !slices.Equal(view.Include, []string{"*.go"}) {
-			t.Errorf("view %q Include = %v, want [*.go]", name, view.Include)
+		checkCacheExclude(t, name, view, configured)
+		if !slices.Equal(view.Include, []string{"cmd"}) {
+			t.Errorf("view %q Include = %v, want [cmd]", name, view.Include)
 		}
 	}
 }
@@ -190,6 +211,56 @@ func TestLoad_InvalidJSON(t *testing.T) {
 	}
 	if got != nil {
 		t.Errorf("got %+v, want nil", got)
+	}
+}
+
+// ---------- View.Match ----------
+
+func TestView_Match(t *testing.T) {
+	tests := []struct {
+		name string
+		view View
+		dir  string
+		want bool
+	}{
+		// include
+		{"package matches itself", View{Include: []string{"cmd"}}, "cmd", true},
+		{"package matches subpackages", View{Include: []string{"cmd"}}, "cmd/x/y", true},
+		{"package is not a prefix match", View{Include: []string{"cmd"}}, "cmdx", false},
+		{"package does not match its parent", View{Include: []string{"cmd/sub"}}, "cmd", false},
+		{"package does not match siblings", View{Include: []string{"cmd"}}, "export", false},
+		{"package does not match the root", View{Include: []string{"cmd"}}, ".", false},
+		{"dot matches the root", View{Include: []string{"."}}, ".", true},
+		{"dot matches everything", View{Include: []string{"."}}, "a/b/c", true},
+		{"trailing slash is ignored", View{Include: []string{"cmd/"}}, "cmd/x", true},
+		{"leading ./ is ignored", View{Include: []string{"./cmd"}}, "cmd", true},
+		{"dir is cleaned", View{Include: []string{"cmd"}}, "./cmd/", true},
+		{"glob include matches subpackages", View{Include: []string{"internal/*"}}, "internal/a", true},
+		{"glob include matches below them", View{Include: []string{"internal/*"}}, "internal/a/b", true},
+		{"glob include does not match its base", View{Include: []string{"internal/*"}}, "internal", false},
+		{"any include is enough", View{Include: []string{"cmd", "export"}}, "export/html", true},
+		{"no include matches nothing", View{}, "cmd", false},
+		{"exclude without include matches nothing", View{Exclude: []string{"vendor"}}, "cmd", false},
+
+		// exclude
+		{"exclude removes the package", View{Include: []string{"."}, Exclude: []string{"export/html"}}, "export/html", false},
+		{"exclude removes subpackages", View{Include: []string{"."}, Exclude: []string{"export/html"}}, "export/html/deep", false},
+		{"exclude keeps the parent", View{Include: []string{"."}, Exclude: []string{"export/html"}}, "export", true},
+		{"exclude is not a prefix match", View{Include: []string{"."}, Exclude: []string{"export/html"}}, "export/htmlx", true},
+		{"exclude wins over include", View{Include: []string{"cmd"}, Exclude: []string{"cmd"}}, "cmd", false},
+		{"exclude can carve out a subpackage", View{Include: []string{"cmd"}, Exclude: []string{"cmd/sub"}}, "cmd/sub/x", false},
+		{"glob exclude matches at any depth", View{Include: []string{"."}, Exclude: []string{"**/testdata"}}, "a/b/testdata", false},
+		{"glob exclude matches at the top", View{Include: []string{"."}, Exclude: []string{"**/testdata"}}, "testdata", false},
+		{"glob exclude below a match", View{Include: []string{"."}, Exclude: []string{"**/testdata"}}, "a/testdata/x", false},
+		{"glob exclude keeps other packages", View{Include: []string{"."}, Exclude: []string{"**/testdata"}}, "a/b", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.view.Match(tt.dir); got != tt.want {
+				t.Errorf("%+v.Match(%q) = %v, want %v", tt.view, tt.dir, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -285,45 +356,115 @@ func TestGetFiles(t *testing.T) {
 		"internal/app.go", "internal/app_test.go",
 		"vendor/lib/lib.go",
 		"docs/notes.md",
+		"cmd/run.go", "cmd/sub/deep.go",
+		"export/export.go", "export/html/page.go",
 	)
 
+	goExts := []string{"*.go"}
 	allGo := []string{
 		"main.go", "main_test.go",
 		"internal/app.go", "internal/app_test.go",
 		"vendor/lib/lib.go",
+		"cmd/run.go", "cmd/sub/deep.go",
+		"export/export.go", "export/html/page.go",
 	}
 
 	tests := []struct {
 		name string
 		view View
+		exts []string // goExts when nil
 		want []string
 	}{
 		{
-			name: "include only",
-			view: View{Include: []string{"**/*.go"}},
+			name: "dot selects the whole tree",
+			view: View{Include: []string{"."}},
 			want: allGo,
 		},
 		{
-			name: "exclude removes matches",
-			view: View{
-				Include: []string{"**/*.go"},
-				Exclude: []string{"vendor/**", "**/*_test.go"},
+			name: "package is searched recursively",
+			view: View{Include: []string{"cmd"}},
+			want: []string{"cmd/run.go", "cmd/sub/deep.go"},
+		},
+		{
+			name: "package does not include the root package",
+			view: View{Include: []string{"internal"}},
+			want: []string{"internal/app.go", "internal/app_test.go"},
+		},
+		{
+			name: "several packages are unioned",
+			view: View{Include: []string{"cmd", "export"}},
+			want: []string{"cmd/run.go", "cmd/sub/deep.go", "export/export.go", "export/html/page.go"},
+		},
+		{
+			name: "overlapping packages give each file once",
+			view: View{Include: []string{"cmd", "cmd/sub"}},
+			want: []string{"cmd/run.go", "cmd/sub/deep.go"},
+		},
+		{
+			name: "glob include",
+			view: View{Include: []string{"export/*"}},
+			want: []string{"export/html/page.go"},
+		},
+		{
+			name: "only files with a configured extension",
+			view: View{Include: []string{"."}},
+			want: allGo, // docs/notes.md is not here
+		},
+		{
+			name: "several extensions",
+			view: View{Include: []string{"docs", "cmd"}},
+			exts: []string{"*.go", "*.md"},
+			want: []string{"docs/notes.md", "cmd/run.go", "cmd/sub/deep.go"},
+		},
+		{
+			name: "other extension",
+			view: View{Include: []string{"."}},
+			exts: []string{"*.md"},
+			want: []string{"docs/notes.md"},
+		},
+		{
+			name: "exclude removes a package and its subpackages",
+			view: View{Include: []string{"."}, Exclude: []string{"cmd"}},
+			want: []string{
+				"main.go", "main_test.go",
+				"internal/app.go", "internal/app_test.go",
+				"vendor/lib/lib.go",
+				"export/export.go", "export/html/page.go",
 			},
-			want: []string{"main.go", "internal/app.go"},
+		},
+		{
+			name: "exclude a nested package keeps its parent",
+			view: View{Include: []string{"."}, Exclude: []string{"export/html", "vendor"}},
+			want: []string{
+				"main.go", "main_test.go",
+				"internal/app.go", "internal/app_test.go",
+				"cmd/run.go", "cmd/sub/deep.go",
+				"export/export.go",
+			},
+		},
+		{
+			name: "exclude a subpackage of an included package",
+			view: View{Include: []string{"cmd"}, Exclude: []string{"cmd/sub"}},
+			want: []string{"cmd/run.go"},
+		},
+		{
+			name: "glob exclude",
+			view: View{Include: []string{"cmd"}, Exclude: []string{"**/sub"}},
+			want: []string{"cmd/run.go"},
 		},
 		{
 			name: "exclude that matches nothing changes nothing",
-			view: View{Include: []string{"**/*.go"}, Exclude: []string{"*.rs"}},
-			want: allGo,
+			view: View{Include: []string{"internal"}, Exclude: []string{"nothing"}},
+			want: []string{"internal/app.go", "internal/app_test.go"},
 		},
 		{
-			name: "exclude wins over include for the same file",
-			view: View{Include: []string{"main.go"}, Exclude: []string{"main.go"}},
+			name: "exclude wins over include for the same package",
+			view: View{Include: []string{"cmd"}, Exclude: []string{"cmd"}},
 			want: nil,
 		},
 		{
 			name: "exclude without include yields nothing",
-			view: View{Exclude: []string{"**/*.go"}},
+			view: View{Exclude: []string{"cmd"}},
 			want: nil,
 		},
 		{
@@ -335,7 +476,11 @@ func TestGetFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GetFiles(&tt.view, root)
+			exts := tt.exts
+			if exts == nil {
+				exts = goExts
+			}
+			got, err := GetFiles(&tt.view, exts, root)
 			if err != nil {
 				t.Fatalf("GetFiles returned error: %v", err)
 			}
@@ -343,6 +488,36 @@ func TestGetFiles(t *testing.T) {
 				t.Errorf("GetFiles = %v, want %v", slashSorted(got), slashSorted(tt.want))
 			}
 		})
+	}
+}
+
+func TestGetFiles_ResultIsSortedWithForwardSlashes(t *testing.T) {
+	root := t.TempDir()
+	writeFiles(t, root, "z.go", "b/b.go", "a/sub/a.go", "a/a.go")
+
+	got, err := GetFiles(&View{Include: []string{"."}}, []string{"*.go"}, root)
+	if err != nil {
+		t.Fatalf("GetFiles returned error: %v", err)
+	}
+
+	want := []string{"a/a.go", "a/sub/a.go", "b/b.go", "z.go"}
+	if !slices.Equal(got, want) {
+		t.Errorf("GetFiles = %v, want %v (sorted, forward slashes, no slashSorted)", got, want)
+	}
+}
+
+func TestGetFiles_NoExtensions(t *testing.T) {
+	root := t.TempDir()
+	writeFiles(t, root, "main.go")
+
+	for _, exts := range [][]string{nil, {}} {
+		got, err := GetFiles(&View{Include: []string{"."}}, exts, root)
+		if err == nil {
+			t.Errorf("exts = %v: expected error, got files %v", exts, got)
+		}
+		if len(got) != 0 {
+			t.Errorf("exts = %v: got %v, want empty result on error", exts, got)
+		}
 	}
 }
 
@@ -355,7 +530,7 @@ func TestGetFiles_RestoresWorkingDirectory(t *testing.T) {
 		t.Fatalf("Getwd: %v", err)
 	}
 
-	if _, err := GetFiles(&View{Include: []string{"*.go"}}, root); err != nil {
+	if _, err := GetFiles(&View{Include: []string{"."}}, []string{"*.go"}, root); err != nil {
 		t.Fatalf("GetFiles returned error: %v", err)
 	}
 
@@ -369,7 +544,7 @@ func TestGetFiles_RestoresWorkingDirectory(t *testing.T) {
 }
 
 func TestGetFiles_MalformedPattern(t *testing.T) {
-	got, err := GetFiles(&View{Include: []string{"["}}, t.TempDir())
+	got, err := GetFiles(&View{Include: []string{"["}}, []string{"*.go"}, t.TempDir())
 	if err == nil {
 		t.Fatal("expected error for malformed pattern")
 	}
@@ -382,10 +557,11 @@ func TestGetFiles_MalformedPattern(t *testing.T) {
 func TestGetFiles_ExcludesCacheDirAfterLoad(t *testing.T) {
 	root := t.TempDir()
 	writeFiles(t, root, "main.py", "pkg/mod.py", ".archlens/cache.json")
+	anyFile := []string{"*"}
 
 	// Control: without the injected exclusion, the cache file is picked up
-	plain := View{Include: []string{"**/*"}}
-	got, err := GetFiles(&plain, root)
+	plain := View{Include: []string{"."}}
+	got, err := GetFiles(&plain, anyFile, root)
 	if err != nil {
 		t.Fatalf("GetFiles returned error: %v", err)
 	}
@@ -394,12 +570,12 @@ func TestGetFiles_ExcludesCacheDirAfterLoad(t *testing.T) {
 	}
 
 	// Through Load, the cache exclusion is added automatically
-	in, err := Load(writeConfig(t, `{"views": {"all": {"include": ["**/*"]}}}`))
+	in, err := Load(writeConfig(t, `{"files": ["*"], "views": {"all": {"include": ["."]}}}`))
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
 	view := in.Views["all"]
-	got, err = GetFiles(&view, root)
+	got, err = GetFiles(&view, in.Files, root)
 	if err != nil {
 		t.Fatalf("GetFiles returned error: %v", err)
 	}

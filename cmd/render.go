@@ -58,7 +58,7 @@ to quickly create a Cobra application.`,
 			if len(files) == 0 {
 				continue
 			}
-			g := proj.graph(files)
+			g := proj.graph(proj.cache, proj.absRoot, name, files)
 			output := exporter.ExportGraph(g, name, proj.cfg.Name)
 			path, err := export.Save(exporter, proj.cfg.SaveLocation, name, output)
 			if err != nil {

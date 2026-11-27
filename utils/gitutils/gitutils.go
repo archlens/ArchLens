@@ -3,12 +3,12 @@ package gitutils
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"errors"
 )
 
 const cachePattern = "**/.archlens/"
@@ -124,4 +124,34 @@ func FindRoot(dir string) (string, error) {
 
 	// Git prints forward slashes even on Windows
 	return filepath.FromSlash(strings.TrimSpace(string(out))), nil
+}
+
+// Changes lists paths (relative to root, forward slashes) that differ from
+// commit, plus untracked files that git doesn't ignore.
+func Changes(root, commit string) ([]string, error) {
+	var paths []string
+	for _, args := range [][]string{
+		{"diff", "--name-only", "--no-renames", "--relative", "-z", commit, "--", "."},
+		{"ls-files", "--others", "--exclude-standard", "-z"},
+	} {
+		out, err := exec.Command("git", append([]string{"-C", root}, args...)...).Output()
+		if err != nil {
+			return nil, err
+		}
+		for _, p := range bytes.Split(out, []byte{0}) {
+			if len(p) > 0 {
+				paths = append(paths, string(p))
+			}
+		}
+	}
+	return paths, nil
+}
+
+// Head returns the commit HEAD points to in the repo containing root.
+func Head(root string) (string, error) {
+	out, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }

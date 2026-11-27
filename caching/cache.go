@@ -1,26 +1,21 @@
 package caching
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"maps"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"slices"
 	"sort"
-	"strings"
 
-	"github.com/archlens/archlens/graph"
 	"github.com/archlens/archlens/parsers"
 	"github.com/archlens/archlens/utils"
+	"github.com/archlens/archlens/utils/gitutils"
 )
 
-// cacheSchema changes when the shape of Entry changes, so cache files written
-// by an older shape are never loaded.
-const cacheSchemaVersion = "2"
+// cacheSchemaVersion changes when the shape of Entry changes, so cache files
+// written by an older shape are never loaded.
+const cacheSchemaVersion = "3"
 
 type Entry struct {
 	Package      string               `json:"package"`
@@ -42,137 +37,24 @@ type RefCache struct {
 	Fingerprint string // changes when parse results could differ (ArchLens version, runCommand)
 }
 
-type Change struct {
-	Status byte   // 'M', 'A', 'D'
-	Path   string // relative to root
+// Fingerprint changes whenever parse results could differ.
+func Fingerprint(runCommand string) string {
+	sum := sha256.Sum256([]byte(cacheSchemaVersion + "\x00" + runCommand))
+	return hex.EncodeToString(sum[:8])
 }
 
-// gitChanges lists paths (relative to root, forward slashes) that differ from
-// commit, plus untracked files that git doesn't ignore.
-func gitChanges(root, commit string) ([]string, error) {
-	var paths []string
-	for _, args := range [][]string{
-		{"diff", "--name-only", "--no-renames", "--relative", "-z", commit, "--", "."},
-		{"ls-files", "--others", "--exclude-standard", "-z"},
-	} {
-		out, err := exec.Command("git", append([]string{"-C", root}, args...)...).Output()
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range bytes.Split(out, []byte{0}) {
-			if len(p) > 0 {
-				paths = append(paths, string(p))
-			}
-		}
-	}
-	return paths, nil
-}
-
-// gitHead returns the commit HEAD points to in the repo containing root.
-func gitHead(root string) (string, error) {
-	out, err := exec.Command("git", "-C", root, "rev-parse", "HEAD").Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
-}
-
-// Refresh brings the cache up to date for files, which must be sorted and unique.
-func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runCommand string, reParseFlag bool) error {
-	head, herr := gitHead(root)
-	changes, cerr := gitChanges(root, c.Commit)
-	c.Fingerprint = Fingerprint(runCommand)
-
-	// Reparse everything if git can't tell us what changed, or if the set of
-	// files changed (an added or removed file can change how imports resolve).
-	full := herr != nil || cerr != nil || c.Commit == "" || !c.sameFile(files) || reParseFlag
-
-	toParse := map[string]bool{}
-	if !full {
-		for _, p := range changes {
-			toParse[p] = true
-		}
-		for _, p := range c.Dirty {
-			toParse[p] = true
-		}
-	}
-
-	var list []string
-	for f := range files {
-		if _, cached := c.Files[f]; full || toParse[f] || !cached {
-			list = append(list, f)
-		}
-	}
-	utils.Sugar.Infof("parsed %d of %d files (full=%v)", len(list), len(files), full)
-
-	if c.Files == nil || full {
-		c.Files = map[string]Entry{}
-	}
-	for _, r := range parsers.GetASTs(list, root, cfgAbs, runCommand) {
-		if r.Err != nil {
-			// TODO: Should abort instead of continuing
-			delete(c.Files, r.File) // not cached, so it's retried next run
-			utils.Sugar.Errorf("%s: %v", r.File, r.Err)
-			continue
-		}
-		c.Files[r.File] = Entry{Package: r.AST.Package, Dependencies: r.AST.Dependencies}
-	}
-
-	for f := range c.Files {
-		if _, ok := files[f]; !ok {
-			delete(c.Files, f)
-		}
-	}
-
-	c.Commit, c.Known, c.Dirty = head, slices.Sorted(maps.Keys(files)), nil
-	if dirty, err := gitChanges(root, head); err == nil {
-		for _, p := range dirty {
-			if _, ok := files[p]; ok {
-				c.Dirty = append(c.Dirty, p)
-			}
-		}
-	}
-	return nil
-}
-
-// Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
-	restore := utils.WithWorkingDirectory(rootFolder)
-	defer restore()
-
-	g := graph.NewGraph()
-	for _, f := range files {
-		e, ok := c.Files[f]
-		if !ok { // TODO: fails silently. Should probably say something about file not being in cache
-			continue
-		}
-		deps := make([]graph.FileDependency, len(e.Dependencies))
-		for i, d := range e.Dependencies {
-			info, err := os.Stat(d.File)
-			if err != nil {
-				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
-			}
-			if info.IsDir() {
-				d.File += "/"
-			}
-			deps[i] = graph.FileDependency{Package: d.Package, File: d.File}
-		}
-		g.AddFile(e.Package, f, deps...)
-	}
-	return g
-}
-
-func LoadCache(path, runCommand string) *Cache {
+// LoadCache reads the cache at path. It returns an empty Cache if the file is
+// missing, corrupt or was written with a different fingerprint.
+func LoadCache(path, fingerprint string) *Cache {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
+	if json.Unmarshal(data, &c) != nil || c.Fingerprint != fingerprint {
 		utils.Sugar.Debug("Failed to load cache or cache invalid. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
 	}
-
 	return &c
 }
 
@@ -203,17 +85,9 @@ func (c *Cache) Save(path string) error {
 	return os.Rename(tmp.Name(), path)
 }
 
-// ParserID changes whenever the parser script changes, invalidating the cache.
-func ParserID(script string) (string, error) {
-	data, err := os.ReadFile(script)
-	if err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:]), nil
-}
-
-func (c *Cache) sameFile(files map[string]struct{}) bool {
+// SameFiles reports whether files is exactly the set the cache was last
+// refreshed with.
+func (c *Cache) SameFiles(files map[string]struct{}) bool {
 	if len(files) != len(c.Known) {
 		return false
 	}
@@ -230,15 +104,15 @@ func (r *RefCache) path(sha string) string {
 }
 
 // Load returns the cached parse closest to the checkout at root, or an empty Cache.
-func (r *RefCache) Load(root, runCommand string) *Cache {
+func (r *RefCache) Load(root, fingerprint string) *Cache {
 	best, bestN := &Cache{}, -1
 	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
 	for _, f := range files {
-		cand := LoadCache(f, runCommand)
+		cand := LoadCache(f, fingerprint)
 		if cand.Commit == "" || cand.Fingerprint != r.Fingerprint {
 			continue // empty, corrupt or from a different parser setup
 		}
-		changes, err := gitChanges(root, cand.Commit)
+		changes, err := gitutils.Changes(root, cand.Commit)
 		if err != nil {
 			continue // commit not in this repo
 		}
@@ -268,9 +142,4 @@ func (r *RefCache) Save(c *Cache) error {
 		_ = os.Remove(f)
 	}
 	return nil
-}
-
-func Fingerprint(runCommand string) string {
-	sum := sha256.Sum256([]byte(cacheSchemaVersion + "\x00" + runCommand))
-	return hex.EncodeToString(sum[:8])
 }
