@@ -16,6 +16,7 @@ import (
 type View struct {
 	Include []string `json:"include"`
 	Exclude []string `json:"exclude"`
+	Merge   *bool    `json:"merge,omitempty"`
 }
 
 type Github struct {
@@ -54,6 +55,8 @@ func (v View) Match(dir string) bool {
 	return !slices.ContainsFunc(v.Exclude, func(p string) bool { return matchDir(p, dir) })
 }
 
+func (v View) MergeSubpackages() bool { return v.Merge == nil || *v.Merge }
+
 // func Match(dir string, views []View) bool {
 // 	return slices.ContainsFunc(views, func(v View) bool { return v.Match(dir) })
 // }
@@ -86,6 +89,7 @@ func Load(path string) (*Input, error) {
 		input.Views[name] = View{
 			Include: view.Include,
 			Exclude: append(view.Exclude, ".archlens"),
+			Merge: view.Merge,
 		}
 	}
 

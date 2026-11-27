@@ -107,7 +107,9 @@ func (p *project) graph(cache *caching.Cache, root, view string, files []string)
 	v := p.cfg.Views[view]
 	keep := func(dep string) bool { return v.Match(dep) }
 	g := cache.Graph(files, root, keep)
-
+	if !v.MergeSubpackages() {
+		return g
+	}
 	return g.Merge(func(pkg graph.Package) graph.Package  {
 		if r, ok := v.Root(pkg.Path); ok {
 			return graph.Package{Name: r, Path: r + "/"}
