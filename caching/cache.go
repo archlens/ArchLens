@@ -147,19 +147,17 @@ func (c *Cache) Graph(files []string, rootFolder string, keep func(parsers.Depen
 			continue
 		}
 		// kept := filter.Keep(e.Dependencies)
-		deps := make([]graph.FileDependency, len(e.Dependencies))
-		for i, d := range e.Dependencies {
+		deps := make([]graph.FileDependency, 0, len(e.Dependencies))
+		for _, d := range e.Dependencies {
 			if keep != nil && !keep(d) {
 				continue
 			}
-			info, err := os.Stat(d.File)
-			if err != nil {
+			if info, err := os.Stat(d.File); err != nil {
 				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
-			}
-			if info.IsDir() {
+			} else if info.IsDir() {
 				d.File += "/"
 			}
-			deps[i] = graph.FileDependency{Package: d.Package, File: d.File}
+			deps = append(deps, graph.FileDependency{Package: d.Package, File: d.File})
 		}
 		g.AddFile(e.Package, f, deps...)
 	}

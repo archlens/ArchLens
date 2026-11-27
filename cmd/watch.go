@@ -36,7 +36,7 @@ func runWatch(ctx context.Context, p *project, view string, port int, full bool)
 		if len(files) == 0 {
 			return nil, fmt.Errorf("view %q matched no files", view)
 		}
-		g := p.graph(view, files)
+		g := p.graph(p.cache, p.absRoot, view, files)
 		Sugar.Infof("%s: %d nodes, %d edges", view, g.TotalNodes, g.TotalEdges)
 		return live.ExportGraph(g, view, p.cfg.Name), nil
 	}

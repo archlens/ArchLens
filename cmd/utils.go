@@ -104,11 +104,12 @@ func loadProject(configPath string) (*project, error) {
 
 // graph builds the dependency graph for one view's files from cached parse
 // results. Call refresh first, since that is what loads the cache.
-func (p *project) graph(view string, files []string) *graph.Graph {
+func (p *project) graph(cache *caching.Cache, root, view string, files []string) *graph.Graph {
+	v := p.cfg.Views[view]
 	keep := func(d parsers.Dependency) bool {
-		return p.cfg.Views[view].Match(parsers.DepDir(d))
+		return v.Match(parsers.DepDir(d))
 	}
-	return p.cache.Graph(files, p.absRoot, keep)
+	return cache.Graph(files, root, keep)
 }
 
 // parse resolves every view's files under root and brings c up to date for them.
