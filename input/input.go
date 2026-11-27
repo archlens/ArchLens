@@ -84,7 +84,7 @@ func Load(path string) (*Input, error) {
 	for name, view := range input.Views {
 		input.Views[name] = View{
 			Include: view.Include,
-			Exclude: append(view.Exclude, ".archlens/*"),
+			Exclude: append(view.Exclude, ".archlens"),
 		}
 	}
 
