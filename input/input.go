@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/archlens/archlens/utils"
 	"github.com/bmatcuk/doublestar/v4"
@@ -147,4 +148,30 @@ func GetFiles(view *View, exts []string, rootDir string) ([]string, error) {
 	slices.Sort(files)
 	utils.Sugar.Debugf("Files: %v", files)
 	return files, nil
+}
+
+// Root returns the directory that a package living in dir is merged into: the
+// shortest leading part of dir that one of the include patterns matches on its
+// own. With include ["cmd"], "cmd/sub/x" gives "cmd". With ["internal/*"],
+// "internal/a/b" gives "internal/a". The bool is false when nothing should be
+// merged: dir is unknown or the root, or only "." matches it.
+func (v View) Root(dir string) (string, bool) {
+	dir = path.Clean(filepath.ToSlash(dir))
+	if dir == "." {
+		return "", false
+	}
+	segments := strings.Split(dir, "/")
+	for i := 1; i <= len(segments); i++ {
+		prefix := strings.Join(segments[:i], "/")
+		for _, p := range v.Include {
+			p = path.Clean(filepath.ToSlash(p))
+			if p == "." {
+				continue // the whole tree: keep full detail
+			}
+			if ok, _ := doublestar.Match(p, prefix); ok {
+				return prefix, true
+			}
+		}
+	}
+	return "", false
 }

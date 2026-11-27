@@ -279,3 +279,49 @@ func (g *Graph) AddSuccessors(source string, successors ...string) error {
 	}
 	return nil
 }
+
+// Merge returns a new graph where every package is replaced by rename(pkg).
+// Packages renamed to the same name become one node. An edge between two
+// merged nodes sums the weights of all the edges it replaces and keeps all
+// their file links. Edges that end up inside one merged node are dropped.
+func (g *Graph) Merge(rename func(Package) Package) *Graph {
+	out := NewGraph()
+
+	newName := make(map[string]string, len(g.nodes))
+	for name, n := range g.nodes {
+		p := rename(Package{Name: name, Path: n.path})
+		newName[name] = p.Name
+		out.AddNodes(p.Name)
+		if p.Path != "" {
+			out.setPath(p.Name, p.Path)
+		}
+	}
+
+	for name, n := range g.nodes {
+		from := newName[name]
+		for succ := range n.successors {
+			to := newName[succ]
+			if to == from {
+				continue // now inside one node
+			}
+			fn, tn := out.nodes[from], out.nodes[to]
+			if _, ok := fn.successors[to]; !ok {
+				fn.successors[to] = tn
+				fn.outgoing++
+				tn.incoming++
+				out.TotalEdges++
+			}
+			fn.weights[to] += n.weights[succ]
+
+			links := fn.fileLinks[to]
+			if links == nil {
+				links = map[FileLink]struct{}{}
+				fn.fileLinks[to] = links
+			}
+			for l := range n.fileLinks[succ] {
+				links[l] = struct{}{}
+			}
+		}
+	}
+	return out
+}

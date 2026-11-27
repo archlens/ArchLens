@@ -106,7 +106,14 @@ func loadProject(configPath string) (*project, error) {
 func (p *project) graph(cache *caching.Cache, root, view string, files []string) *graph.Graph {
 	v := p.cfg.Views[view]
 	keep := func(dep string) bool { return v.Match(dep) }
-	return cache.Graph(files, root, keep)
+	g := cache.Graph(files, root, keep)
+
+	return g.Merge(func(pkg graph.Package) graph.Package  {
+		if r, ok := v.Root(pkg.Path); ok {
+			return graph.Package{Name: r, Path: r + "/"}
+		}
+		return pkg
+	})
 }
 
 // parse resolves every view's files under root and brings c up to date for them.
