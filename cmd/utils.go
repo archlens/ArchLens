@@ -44,13 +44,12 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 	viewFiles := make(map[string][]string, len(cfg.Views))
 	union := make(map[string]struct{})
 	for name, view := range cfg.Views {
-		files, err := input.GetFiles(&view, root)
+		files, err := input.GetFiles(&view, cfg.Files, root)
 		if err != nil {
 			return nil, nil, fmt.Errorf("getting files for view %s: %w", name, err)
 		}
-		for i, f := range files {
-			files[i] = filepath.ToSlash(filepath.Clean(f))
-			union[files[i]] = struct{}{}
+		for _, f := range files {
+			union[f] = struct{}{}
 		}
 		viewFiles[name] = files
 	}
@@ -60,7 +59,7 @@ func resolveViewFiles(cfg *input.Input, root string) (map[string][]string, map[s
 // refresh updates the working-tree cache on disk. Used by render and watch.
 func (p *project) refresh(full bool) (map[string][]string, error) {
 	if p.cache == nil {
-		p.cache = caching.LoadCache(p.cachePath(), p.cfg.RunCommand)
+		p.cache = caching.LoadCache(p.cachePath(), caching.Fingerprint(p.cfg.RunCommand))
 	}
 	viewFiles, err := p.parse(p.cache, p.absRoot, full)
 	if err != nil {
@@ -95,8 +94,19 @@ func loadProject(configPath string) (*project, error) {
 
 // graph builds the dependency graph for one view's files from cached parse
 // results. Call refresh first, since that is what loads the cache.
-func (p *project) graph(files []string) *graph.Graph {
-	return p.cache.Graph(files, p.absRoot)
+func (p *project) graph(cache *caching.Cache, root, view string, files []string) *graph.Graph {
+	v := p.cfg.Views[view]
+	keep := func(dep string) bool { return v.Match(dep) }
+	g := cache.Graph(files, root, keep)
+	if !v.MergeSubpackages() {
+		return g
+	}
+	return g.Merge(func(pkg graph.Package) graph.Package  {
+		if r, ok := v.Root(pkg.Path); ok {
+			return graph.Package{Name: r, Path: r + "/"}
+		}
+		return pkg
+	})
 }
 
 // parse resolves every view's files under root and brings c up to date for them.
@@ -112,7 +122,7 @@ func (p *project) parse(c *caching.Cache, root string, full bool) (map[string][]
 	return viewFiles, nil
 }
 
-// viewNames returns the configured view names, sorted.
+// viewNames returns the configured view names.
 func (p *project) viewNames() []string {
 	names := make([]string, 0, len(p.cfg.Views))
 	for n := range p.cfg.Views {

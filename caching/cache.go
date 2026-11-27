@@ -20,7 +20,7 @@ import (
 
 // cacheSchema changes when the shape of Entry changes, so cache files written
 // by an older shape are never loaded.
-const cacheSchemaVersion = "2"
+const cacheSchemaVersion = "3"
 
 type Entry struct {
 	Package      string               `json:"package"`
@@ -136,7 +136,7 @@ func (c *Cache) Refresh(root, cfgAbs string, files map[string]struct{}, runComma
 }
 
 // Graph builds a view's graph from cached results. It's cheap, so do it per run.
-func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
+func (c *Cache) Graph(files []string, rootFolder string, keep func(string) bool) *graph.Graph {
 	restore := utils.WithWorkingDirectory(rootFolder)
 	defer restore()
 
@@ -146,29 +146,31 @@ func (c *Cache) Graph(files []string,rootFolder string) *graph.Graph {
 		if !ok { // TODO: fails silently. Should probably say something about file not being in cache
 			continue
 		}
-		deps := make([]graph.FileDependency, len(e.Dependencies))
-		for i, d := range e.Dependencies {
-			info, err := os.Stat(d.File)
-			if err != nil {
-				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
+		// kept := filter.Keep(e.Dependencies)
+		deps := make([]graph.FileDependency, 0, len(e.Dependencies))
+		for _, d := range e.Dependencies {
+			if keep != nil && !keep(d.File) {
+				continue
 			}
-			if info.IsDir() {
+			if info, err := os.Stat(d.File); err != nil {
+				utils.Sugar.Errorf("Failed to stat file %s: %v", d.File, err)
+			} else if info.IsDir() {
 				d.File += "/"
 			}
-			deps[i] = graph.FileDependency{Package: d.Package, File: d.File}
+			deps = append(deps, graph.FileDependency{Package: d.Package, File: d.File})
 		}
 		g.AddFile(e.Package, f, deps...)
 	}
 	return g
 }
 
-func LoadCache(path, runCommand string) *Cache {
+func LoadCache(path, fingerprint string) *Cache {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return &Cache{}
 	}
 	var c Cache
-	if json.Unmarshal(data, &c) != nil || c.Fingerprint != Fingerprint(runCommand) {
+	if json.Unmarshal(data, &c) != nil || c.Fingerprint != fingerprint {
 		utils.Sugar.Debug("Failed to load cache or cache invalid. Returned empty cache")
 		return &Cache{} // corrupt cache: start over
 	}
@@ -230,11 +232,11 @@ func (r *RefCache) path(sha string) string {
 }
 
 // Load returns the cached parse closest to the checkout at root, or an empty Cache.
-func (r *RefCache) Load(root, runCommand string) *Cache {
+func (r *RefCache) Load(root, fingerprint string) *Cache {
 	best, bestN := &Cache{}, -1
 	files, _ := filepath.Glob(filepath.Join(r.Dir, "*.json"))
 	for _, f := range files {
-		cand := LoadCache(f, runCommand)
+		cand := LoadCache(f, fingerprint)
 		if cand.Commit == "" || cand.Fingerprint != r.Fingerprint {
 			continue // empty, corrupt or from a different parser setup
 		}
