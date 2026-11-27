@@ -19,6 +19,24 @@
                 "**/*_test.go"
             ]
         },
+        "simplerView": {
+            "include": [
+                "cmd",
+                "export",
+                "utils",
+                "pipeline",
+                "caching",
+                "graph",
+                "parsers",
+                "serve",
+                "input"
+            ],
+            "exclude": [
+                ".dagger",
+                "ast_parsers",
+                "**/*_test.go"
+            ]
+        },
         "smallerView": {
             "include": [
                 "cmd",
